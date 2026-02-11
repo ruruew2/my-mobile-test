@@ -1,0 +1,11 @@
+@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 여기에 나중에 추가하고 싶은 커스텀 스타일을 적으면 됩니다 */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f9fafb; /* 프로토타입 같은 깔끔한 밝은 회색 배경 */
+}

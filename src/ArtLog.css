@@ -1,0 +1,475 @@
+:root {
+  --bg-color: #f8f9fa;
+  --primary-black: #111;
+  --gray-text: #888;
+  --card-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.art-log-container {
+  max-width: 480px;
+  margin: 0 auto;
+  background-color: #fff;
+  font-family: 'Pretendard', sans-serif;
+  padding: 20px 20px 100px 20px; /* 🚩 하단 padding을 충분히 줘야 콘텐츠가 내비에 안 가려집니다 */
+  min-height: 100vh; /* 화면을 꽉 채우도록 설정 */
+  box-sizing: border-box;
+}
+
+/* Header */
+/* 상단 로고와 아이콘을 양옆으로 찢어줌 */
+.header {
+  display: flex;
+  justify-content: space-between; /* 🚩 로고(좌) <---> 아이콘(우) */
+  align-items: center; /* 수직 중앙 대칭 */
+  margin: 30px 20px 0; 
+  padding: 0 5px; /* 양옆 여백 살짝 조절 */
+  background: none;
+  box-shadow: none;
+}
+
+.header-icons {
+  display: flex;
+  gap: 12px;
+}
+
+.icon-item {
+  width: 40px;
+  height: 40px;
+  background-color: #f8f9fa;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative; /* 점 표시 기준 */
+}
+
+.icon-item:hover {
+  color: #FF6B6B; /* 마우스 올렸을 때 강조색 (선택사항) */
+}
+
+.logo {
+  font-size: 26px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -1.2px;
+  line-height: 1; /* 글자 주변 불필요한 행간 제거 */
+  margin-left: -5px; /* 시각적 세로줄 보정 */
+  margin-top: -2px; /* 🚩 폰트 특성상 아래로 쏠리는 현상 방지 */
+}
+
+.logo-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* 수평 중앙 정렬의 핵심 */
+  width: 100%;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  /* 🚩 헤더 패딩 25px과 똑같이 맞춰서 '감'과 'A'를 일렬로 배치 */
+  padding: 0 25px; 
+  margin-top: 12px;
+  margin-bottom: 25px;
+  line-height: 1.4;
+}
+
+/* AI Banner */
+.ai-banner {
+  background: #fff;
+  border-radius: 30px;
+  padding: 30px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid #eee;
+  margin-bottom: 40px;
+  text-align: center;
+}
+.ai-badge { font-size: 12px; font-weight: bold; color: #a0a0a0; margin-bottom: 20px; letter-spacing: 1px; }
+.ai-title { font-size: 24px; font-weight: bold; margin-bottom: 15px; line-height: 1.4; }
+.ai-desc { font-size: 14px; color: #666; margin-bottom: 25px; line-height: 1.6; padding: 0 10px; }
+.cta-button {
+  background: #000; color: #fff; border: none; padding: 15px 30px; border-radius: 50px;
+  font-weight: bold; width: 100%; display: flex; justify-content: center; gap: 10px;
+}
+
+/* 🔥 버튼 전체 호버 효과 */
+.cta-button:hover {
+  background-color: #2e2e2e;/* 배경색 살짝 밝게 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 그림자로 띄워주기 */
+}
+
+/* 🔥 아이콘 개별 호버 효과 */
+.cta-icon {
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s ease; /* 화살표 이동 부드럽게 */
+}
+
+.cta-button:hover .cta-icon {
+  transform: translateX(5px); /* 버튼 호버 시 화살표만 오른쪽으로 슥 이동 */
+}
+
+.update-time { font-size: 12px; color: #ccc; margin-top: 15px; font-weight: bold; }
+
+/* Section Common */
+.section { margin-bottom: 40px; }
+.section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+.section-header h3 { font-size: 20px; font-weight: bold; }
+.eng-sub { display: block; font-size: 11px; color: #aaa; margin-top: 4px; }
+.view-all { background: none; border: none; color: #999; font-weight: bold; font-size: 12px; }
+
+/* Trending Horizontal Scroll */
+.horizontal-scroll { display: flex; overflow-x: auto; gap: 20px; padding-bottom: 10px; scrollbar-width: none; }
+.exhibit-card { min-width: 280px; }
+.exhibit-image { 
+  height: 380px; background: #e0e0e0; border-radius: 20px; position: relative;
+  background-image: url('https://via.placeholder.com/280x380'); background-size: cover;
+}
+.tags { position: absolute; bottom: 15px; left: 15px; display: flex; gap: 5px; }
+.tag { background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; }
+.exhibit-info h4 { margin-top: 15px; font-size: 18px; }
+.author { color: #888; font-size: 14px; margin-top: 5px; }
+.location { font-size: 12px; color: #aaa; margin-top: 5px; }
+
+/* Docent List */
+.docent-card {
+  display: flex; align-items: center; padding: 15px; border-radius: 20px;
+  border: 1px solid #f0f0f0; margin-bottom: 15px;
+}
+.docent-avatar { width: 60px; height: 60px; background: #f5f5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-right: 15px; }
+.docent-info { flex: 1; }
+.docent-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.docent-name { font-weight: bold; font-size: 15px; }
+.docent-rating { font-size: 12px; color: #ffcc00; }
+.docent-sub { font-size: 12px; color: #888; }
+.docent-price { font-weight: bold; margin-top: 8px; font-size: 14px; }
+.docent-btn { background: #111; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: bold; }
+.ai-btn { background: #111; }
+
+/* Course Card */
+.course-card {
+  background: #fff; border: 1px solid #f0f0f0; padding: 25px; border-radius: 25px;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;
+}
+.course-tag { background: #f0f2f5; padding: 4px 10px; border-radius: 5px; font-size: 11px; color: #888; font-weight: bold; }
+.course-card h4 { font-size: 18px; margin: 10px 0; }
+.course-card p { font-size: 13px; color: #aaa; line-height: 1.4; }
+.course-icon { background: #000; color: #fff; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* 하단 내비게이션: 바닥에 딱 붙이기 */
+.bottom-nav {
+  position: fixed;    /* 🚩 핵심: 화면에 고정 */
+  bottom: 0;          /* 🚩 핵심: 바닥에 부착 */
+  left: 50%;          /* 🚩 핵심: 중앙 정렬 시작 */
+  transform: translateX(-50%); /* 🚩 핵심: 완벽한 가로 중앙 정렬 */
+  width: 100%;
+  max-width: 480px;   /* 🚩 중요: art-log-container와 동일한 너비 설정 */
+  height: 70px;       /* 높이 명시 */
+  background-color: #ffffff;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
+  z-index: 1000;      /* 다른 요소들보다 위에 보이도록 */
+  padding-bottom: env(safe-area-inset-bottom); /* 아이폰 하단 바 대응 */
+  box-sizing: border-box;
+}
+
+/* 3. 아이템 영역 (기존 유지 및 보정) */
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 아이콘과 텍스트 강조 효과 */
+.nav-item.active {
+  color: #000;
+}
+
+/* 아이콘 선 굵기를 조절하고 싶다면 추가하세요 */
+.nav-item svg {
+  stroke-width: 2px;
+}
+.nav-item { display: flex; flex-direction: column; align-items: center; font-size: 20px; color: #ccc; }
+.nav-item span { font-size: 11px; margin-top: 4px; color: #aaa; }
+.nav-item.active { color: #000; }
+.nav-item.active span {
+  color: #000;
+  font-weight: bold;
+}
+
+/* 모달 배경 (어둡게 처리) */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* 알림창 본체 */
+.notification-modal {
+  width: 90%;
+  max-width: 360px;
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modal-header h3 { font-size: 1.2rem; font-weight: bold; }
+.close-btn { background: none; border: none; cursor: pointer; color: #666; }
+
+/* 알림 리스트 */
+.notification-list { display: flex; flex-direction: column; gap: 20px; }
+
+/* 기본 알림 아이템 스타일 */
+.noti-item {
+  display: flex;
+  gap: 12px;
+  padding: 16px; /* 패딩을 줘서 배경색이 잘 보이게 합니다 */
+  border-radius: 16px;
+  transition: background-color 0.3s ease; /* 색 변화를 부드럽게 */
+}
+
+/* 🚩 안 읽은 알림: 연한 보라색 배경 */
+.noti-item.unread {
+  background-color: #f3efff; /* 아주 연한 보라색 */
+}
+
+/* 🚩 읽은 알림: 흰색 배경 */
+.noti-item.read {
+  background-color: #ffffff;
+}
+
+/* 안 읽은 알림 옆에 작은 점(Indicator)을 추가하고 싶다면? */
+.noti-item.unread .noti-title::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background-color: #7C4DFF;
+  border-radius: 50%;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.noti-icon-bg {
+  width: 40px; height: 40px;
+  background: #f5f7fa;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.noti-text { flex: 1; }
+.noti-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.noti-title { font-weight: 600; font-size: 0.95rem; }
+.noti-time { font-size: 0.75rem; color: #aaa; }
+.noti-desc { font-size: 0.85rem; color: #666; line-height: 1.4; }
+
+/* 하단 버튼 */
+.mark-all-btn {
+  width: 100%;
+  margin-top: 24px;
+  padding: 12px;
+  background: #f8f9fa;
+  border: none;
+  border-radius: 12px;
+  color: #888;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+
+/* 온보딩 레이아웃 */
+.onboarding-container {
+  padding: 24px;
+  background: #fff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.onboarding-title {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.tag-item {
+  padding: 12px 20px;
+  border-radius: 25px;
+  border: 1px solid #eee;
+  background: #fff;
+  color: #666;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.tag-item.active {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.submit-btn {
+  margin-top: auto;
+  width: 100%;
+  height: 56px;
+  border-radius: 28px;
+  background: #eee;
+  color: #999;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.submit-btn.active {
+  background: #000;
+  color: #fff;
+}
+
+
+/* 알림 벨 아이콘 컨테이너 */
+.icon-bell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+/* 🚩 빨간색 동그라미 점 스타일 */
+.notification-dot {
+  position: absolute;
+  top: 8px;    /* 위치는 디자인에 따라 조절하세요 */
+  right: 8px;
+  width: 8px;  /* 점 크기 */
+  height: 8px;
+  background-color: #FF3B30; /* 선명한 빨간색 */
+  border-radius: 50%;        /* 동그랗게 */
+  border: 2px solid #fff;    /* 종 아이콘과 겹칠 때 깔끔하게 흰색 테두리 */
+}
+
+/* 건너뛰기 텍스트 스타일 */
+.skip-text {
+  font-size: 14px;
+  color: #999;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* 좋아요 버튼 */
+.like-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.25);
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 5;
+}
+
+.like-btn:hover {
+  transform: scale(1.1);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.like-btn.liked {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* 수평 스크롤 박스 내 카드 간격 */
+.horizontal-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* 🚩 화살표 버튼 공통 스타일 */
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+  background: #fff;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.nav-btn.left { left: -10px; }
+.nav-btn.right { right: -10px; }
+
+/* 기존 스크롤 박스 수정 */
+.horizontal-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth; /* 부드러운 스크롤 */
+  scrollbar-width: none;   /* 파이어폭스 스크롤바 숨김 */
+  -ms-overflow-style: none; /* IE 스크롤바 숨김 */
+  padding: 10px 0;
+}
+
+.horizontal-scroll::-webkit-scrollbar {
+  display: none; /* 크롬, 사파리 스크롤바 숨김 */
+}
