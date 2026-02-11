@@ -23,11 +23,15 @@ def fetch_interpark_ranking():
         for item in root.findall('.//Item'):
             try:
                 # 데이터 꺼내기
+                place = item.find('Place').text
+                exclude_keywords = ["부산", "대구", "인천", "광주", "대전", "울산", "경기", "창원", "성남"]
+                if any(city in place for city in exclude_keywords):
+                    continue
                 rank = item.find('Rank').text           # 순위
                 title = item.find('PrdName').text       # 전시명
                 place = item.find('Place').text         # 장소
                 start_date = item.find('StartDate').text # 시작일
-                end_date = item.find('EndDate').text     # 종료일
+                end_date = item.find('EndDate').text      # 종료일
                 poster = item.find('Poster').text       # 포스터 URL
                 prd_url = item.find('DetailUrl').text    # 예매 상세주소
                 

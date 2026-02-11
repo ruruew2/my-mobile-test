@@ -48,6 +48,7 @@ def fetch_kopis_data():
         'cpage': 1,
         'rows': 10,       # 테스트니까 10개만 (너무 많으면 느려짐)
         'prfstate': '02', # 공연중
+        'signgucode': '11' # 서울시
     }
 
     response = requests.get(url, params=params)

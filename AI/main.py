@@ -6,6 +6,9 @@ from api_crawler import fetch_kopis_data
 from ai_service import recommend_exhibitions, generate_docent_audio, generate_course_text
 import os
 from dotenv import load_dotenv 
+from seoul_api import fetch_seoul_events
+from interpark_api import fetch_interpark_ranking
+from arthub_crawler import crawl_arthub
 
 # .env 파일 로드
 load_dotenv()
@@ -63,3 +66,42 @@ class CourseReq(BaseModel):
 def course(req: CourseReq):
     plan = generate_course_text(req.exh_name, req.location, req.who)
     return {"plan": plan}
+
+
+
+def get_unique_exhibitions():
+    # 1. 모든 소스에서 데이터 긁어모으기
+    all_data = []
+    all_data.extend(fetch_kopis_data())       # KOPIS
+    all_data.extend(fetch_seoul_events())     # 서울시
+    all_data.extend(fetch_interpark_ranking())# 인터파크
+    
+    print(f"📚 총 수집된 데이터: {len(all_data)}개 (중복 포함)")
+    
+    # 2. 중복 제거를 위한 딕셔너리 (Key: 제목+장소)
+    unique_dict = {}
+    
+    for item in all_data:
+        # 키 만들기: 공백 제거하고 제목+장소 합침 (예: "팀버튼특별전DDP")
+        # 이렇게 하면 출처가 달라도 제목과 장소가 같으면 같은 키가 됨
+        clean_title = item['title'].replace(" ", "")
+        clean_place = item['place'].replace(" ", "")
+        unique_key = f"{clean_title}_{clean_place}"
+        
+        if unique_key not in unique_dict:
+            # 처음 본 데이터면 저장
+            unique_dict[unique_key] = item
+        else:
+            # 이미 있는 데이터면? -> 정보 보강 (Merge)
+            # 예: 기존 데이터엔 이미지가 없는데, 새 데이터엔 있으면 채워넣기
+            existing = unique_dict[unique_key]
+            if not existing.get('image') and item.get('image'):
+                existing['image'] = item['image']
+            if not existing.get('price') and item.get('price'):
+                existing['price'] = item['price']
+                
+    # 3. 딕셔너리 값을 리스트로 변환
+    final_list = list(unique_dict.values())
+    print(f"✨ 중복 제거 후 최종 데이터: {len(final_list)}개")
+    
+    return final_list
