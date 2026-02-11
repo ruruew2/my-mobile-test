@@ -227,45 +227,119 @@ export default function App() {
   if (step === 'login') return <LoginPage onLoginSuccess={() => setStep('preference')} />;
   if (step === 'preference') return <PreferenceSelection onComplete={() => setStep('main')} />;
 
-  return (
-    <div className="art-log-container">
-      {activeTab === 'home' ? (
-        <>
-          <header className="header">
-            <h1 className="logo">ART-LOG</h1>
-            <div className="header-icons">
-              <div className="icon-item" onClick={() => setIsNotifyOpen(true)} style={{position: 'relative'}}>
-                <Bell size={24} />
-                {hasUnread && <span className="notification-dot"></span>}
-              </div>
-              <div className="icon-item"><User size={24} /></div>
+return (
+  <div className="art-log-container">
+    {activeTab === 'home' ? (
+      <>
+        {/* 1. 고정 헤더 */}
+        <header className="header">
+          <h1 className="logo">ART-LOG</h1>
+          <div className="header-icons">
+            <div className="icon-item" onClick={() => setIsNotifyOpen(true)} style={{position: 'relative'}}>
+              <Bell size={24} />
+              {hasUnread && <span className="notification-dot"></span>}
             </div>
-          </header>
+            <div className="icon-item"><User size={24} /></div>
+          </div>
+        </header>
           
           <div className="main-content-scroll">
-            <p className="subtitle">감각적인 예술 탐험을<br/>함께하는 개인 맞춤 큐레이션</p>
-            <section className="ai-banner">
-              <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
-              <h2 className="ai-title">"오늘은 종로의 감성에 빠져볼까요?"</h2>
-              <p className="ai-desc">평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로 산책 코스를 준비했어요.</p>
-              <button className="cta-button">추천 전시 보기 <ChevronRight size={20} className="cta-icon" /></button>
-            </section>
+          <p className="subtitle">감각적인 예술 탐험을<br/>함께하는 개인 맞춤 큐레이션</p>
+          <section className="ai-banner">
+            <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
+            <h2 className="ai-title">"오늘은 종로의 감성에 빠져볼까요?"</h2>
+            <p className="ai-desc">평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로 산책 코스를 준비했어요.</p>
+            <button className="cta-button">추천 전시 보기 <ChevronRight size={20} className="cta-icon" /></button>
+          </section>
             
-            <section className="section">
-              <div className="section-header"><h3>지금 화제인 전시</h3><button className="view-all">VIEW ALL</button></div>
-              <ExhibitCarousel>
-                <ExhibitCard tag="추상화" title="현대 추상의 영혼" location="국립현대미술관" />
-                <ExhibitCard tag="사진전" title="어제의 기록들" location="세종문화회관" />
-                <ExhibitCard tag="설치미술" title="공간의 재해석" location="DDP" />
-              </ExhibitCarousel>
-            </section>
-          </div>
-        </>
-      ) : activeTab === 'map' ? (
-        <MapPage />
-      ) : (
-        <div style={{padding: '100px 20px', textAlign: 'center'}}>준비 중인 페이지입니다.</div>
-      )}
+          {/* 화제 전시 섹션 */}
+          <section className="section">
+            <div className="section-header">
+              <h3>지금 화제인 전시</h3>
+              <button className="view-all">VIEW ALL</button>
+            </div>
+            <ExhibitCarousel>
+              <ExhibitCard tag="추상화" title="현대 추상의 영혼" location="국립현대미술관" />
+              <ExhibitCard tag="사진전" title="어제의 기록들" location="세종문화회관" />
+              <ExhibitCard tag="설치미술" title="공간의 재해석" location="DDP" />
+            </ExhibitCarousel>
+          </section>
+
+
+{/* 프리미엄 도슨트 섹션 */}
+          <section className="section">
+            <div className="section-header">
+              <div className="title-group">
+                <h3>프리미엄 도슨트</h3>
+                <span className="sub-title">EXPERT CURATION GUIDES</span>
+              </div>
+              <button className="view-all">전체보기</button>
+            </div>
+            <div className="docent-list">
+              <div className="docent-card active-guide">
+                <div className="docent-profile ai-bot">🤖</div>
+                <div className="docent-info">
+                  <div className="docent-name">아티 (AI 가이드) <span className="ai-tag">AI</span></div>
+                  <p className="docent-desc">추상화, 디지털 아트, 빠른 요약</p>
+                  <div className="docent-price">무료 (AI)</div>
+                </div>
+                <div className="docent-action">
+                  <div className="rating">⭐ 4.8 <span className="count">(1250)</span></div>
+                  <button className="action-btn black">해설 시작</button>
+                </div>
+              </div>
+              <div className="docent-card">
+                <div className="docent-profile">👩‍🎨</div>
+                <div className="docent-info">
+                  <div className="docent-name">김사랑 도슨트</div>
+                  <p className="docent-desc">현대미술, 미술사학</p>
+                  <div className="docent-price">45,000원</div>
+                </div>
+                <div className="docent-action">
+                  <div className="rating">⭐ 4.9 <span className="count">(320)</span></div>
+                  <button className="action-btn gray">예약하기</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+  {/* 🚩 추가 2: 추천 나들이 코스 섹션 */}
+  <section className="section">
+    <div className="section-header">
+      <div className="title-group">
+        <h3>추천 나들이 코스</h3>
+        <span className="sub-title">CURATED DAILY ROUTES</span>
+      </div>
+      <button className="view-all">전체보기</button>
+    </div>
+    <div className="course-list">
+      <div className="course-card">
+        <div className="course-content">
+          <span className="course-tag">힙 & 트렌디</span>
+          <h4>성수동 힙한 갤러리 투어</h4>
+          <p>영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.</p>
+        </div>
+        <div className="course-icon"><Compass size={20} /></div>
+      </div>
+      <div className="course-card">
+        <div className="course-content">
+          <span className="course-tag">차분함 & 클래식</span>
+          <h4>종로의 과거와 현재</h4>
+          <p>전통의 정취와 현대적 감각이 공존하는 깊이 있는 산책 코스입니다.</p>
+        </div>
+        <div className="course-icon"><Compass size={20} /></div>
+      </div>
+    </div>
+  </section>
+
+{/* 🚩 여기가 main-content-scroll의 끝입니다! */}
+        </div>
+      </>
+    ) : activeTab === 'map' ? (
+      <MapPage />
+    ) : (
+      <div style={{padding: '100px 20px', textAlign: 'center'}}>준비 중인 페이지입니다.</div>
+    )}
 
       <nav className="bottom-nav">
         <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
