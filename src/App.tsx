@@ -61,29 +61,77 @@ const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
   );
 };
 
-// --- [컴포넌트 2] 지도 페이지 ---
+// --- [컴포넌트 2] 지도 페이지 (드래그 기능 포함) ---
 const MapPage = () => {
+  const [activeFilter, setActiveFilter] = useState<string>('전체');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // 마우스 드래그 상태 관리
+  const [isDrag, setIsDrag] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+
+  const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
+
+  // 드래그 시작
+  const onDragStart = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsDrag(true);
+    // 현재 클릭한 위치와 기존 스크롤 위치 저장
+    setStartX(e.pageX + scrollRef.current.scrollLeft);
+  };
+
+  // 드래그 종료
+  const onDragEnd = () => {
+    setIsDrag(false);
+  };
+
+  // 드래그 중
+  const onDragMove = (e: React.MouseEvent) => {
+    if (!isDrag || !scrollRef.current) return;
+    e.preventDefault();
+    // 마우스 이동 거리만큼 스크롤 조절
+    scrollRef.current.scrollLeft = startX - e.pageX;
+  };
+
   return (
     <div className="map-view-container">
       <div className="map-bg">
         <div className="top-filter-wrapper">
-          <div className="filter-chips">
-            <span className="chip active">전체</span>
-            <span className="chip">무료전시</span>
-            <span className="chip">힙플레이스</span>
-            <span className="chip">조용한</span>
-            <span className="chip">얼리버드</span>
+          {/* 🚩 드래그 이벤트 및 ref 연결 */}
+          <div 
+            className="filter-chips" 
+            ref={scrollRef}
+            onMouseDown={onDragStart}
+            onMouseMove={onDragMove}
+            onMouseUp={onDragEnd}
+            onMouseLeave={onDragEnd}
+            style={{ 
+              cursor: isDrag ? 'grabbing' : 'grab',
+              userSelect: 'none' // 드래그 시 텍스트 선택 방지
+            }}
+          >
+            {filters.map((filter) => (
+              <span
+                key={filter}
+                className={`chip ${activeFilter === filter ? 'active' : ''}`}
+                onClick={() => setActiveFilter(filter)}
+                style={{ flexShrink: 0 }} // 옹졸함 방지 핵심
+              >
+                {filter}
+              </span>
+            ))}
           </div>
         </div>
+
         <div className="floating-pin pin1"><MapPin size={14} /> 현대 추상: 내면의 울림</div>
         <div className="floating-pin pin2"><MapPin size={14} /> 네온 드림: 디지털 아트</div>
         <div className="floating-pin pin3"><MapPin size={14} /> 공백의 조각</div>
       </div>
+
       <div className="map-bottom-sheet">
         <div className="sheet-handle"></div>
         <h3 className="sheet-title">내 주변 전시 <span className="count">3</span></h3>
-        
-        {/* 🚩 리스트 아이템들 (세로 정렬 보장) */}
         <div className="mini-list-container">
           <div className="mini-item">
             <div className="mini-thumb" style={{backgroundColor: '#eee'}}></div>
@@ -231,6 +279,7 @@ export default function App() {
         <div className="nav-item"><Gift size={24} /><span>기프트</span></div>
       </nav>
 
+      {/* 알림 모달 생략 (동일) */}
       {isNotifyOpen && (
         <div className="modal-overlay" onClick={() => setIsNotifyOpen(false)}>
           <div className="notification-modal" onClick={(e) => e.stopPropagation()}>

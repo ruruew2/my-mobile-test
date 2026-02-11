@@ -579,18 +579,77 @@
 
 .filter-chips {
   display: flex;
-  gap: 8px;
+  gap: 10px;
+  padding: 15px 16px; /* 위아래 여백을 살짝 더 주면 덜 답답해요 */
+  
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch; 
+  
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  /* 🚩 드래그 시 텍스트가 파랗게 선택되는 현상 방지 */
+  user-select: none; 
+  /* 🚩 드래그 중임을 알리는 커서 (App.tsx 설정과 연동) */
+  cursor: grab;
 }
 
+/* 스크롤바 숨기기 (오타 수정: ilter -> filter) */
+.filter-chips::-webkit-scrollbar {
+  display: none;
+}
+
+/* 마우스를 올렸을 때 (Hover) */
+.filter-chips .chip:hover {
+  background-color: #333; /* 완전 검정보다 살짝 연한 검정 혹은 취향껏 */
+  color: #fff;
+}
+
+/* 선택되었을 때 (Active) */
+.filter-chips .chip.active {
+  background-color: #000;
+  color: #fff;
+  font-weight: bold;
+}
 
 .chip {
-  background: white;
-  padding: 8px 15px;
-  border-radius: 20px;
-  font-size: 13px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  flex-shrink: 0; 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  padding: 8px 18px;
+  border-radius: 50px;
+  background-color: #fff;
+  color: #000; /* 기본 글자색 */
+  border: 1px solid #eee; /* 테두리가 있어야 흰 배경에서 존재감이 살아요 */
+  
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
-.chip.active { background: #000; color: #fff; }
+
+/* 🚩 선택되었을 때 (Active) */
+.chip.active {
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+  font-weight: bold;
+}
+
+/* 🚩 선택되지 않은 상태에서 마우스를 올렸을 때 */
+.chip:hover:not(.active) {
+  background-color: #333; 
+  color: #fff; /* 글자색도 꼭 같이 바꿔줘야 안 숨어요! */
+  border-color: #333;
+}
+
+/* 드래그 중일 때 커서 모양 변경 */
+.filter-chips:active {
+  cursor: grabbing;
+}
 
 /* 보라색 테두리 핀 */
 .map-pin {
@@ -650,11 +709,9 @@
   position: relative;
 }
 
-
-
 .filter-scroll {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
 }
 
@@ -690,7 +747,7 @@
 
 .pin1 { top: 120px; left: 10px; }
 .pin2 { top: 200px; left: 80px; }
-.pin3 { top: 280px; right: 20px; }
+.pin3 { top: 230px; right: 20px; }
 .pin4 { top: 380px; left: 20px; }
 
 /* 🚩 리스트 아이템들을 감싸는 컨테이너 */
