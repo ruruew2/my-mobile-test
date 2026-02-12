@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import './ArtLog.css';
 import './Login.css';
 import MyPage from './MyPage';
-import RootPage from './Root'; // 👈 RootPage를 import 했습니다.
+import RootPage from './Root';
 import LoginPage from "./LoginPage";
 import Giftshop from './GiftShop';
 import MapPage from "./Map.tsx"; 
@@ -116,11 +116,20 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home'); 
   const [isNotifyOpen, setIsNotifyOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // 🚩 스크롤 목적지 상태 추가
+  const [targetCourse, setTargetCourse] = useState<string | null>(null);
 
   const [notifications, setNotifications] = useState([
     { id: 1, icon: <Sparkles size={18} color="#7C4DFF" />, title: "새로운 추천 전시", desc: "성수동 전시가 오픈했어요!", time: "방금 전", isRead: false },
     { id: 2, icon: <CheckCircle2 size={18} color="#4CAF50" />, title: "도슨트 예약 완료", desc: "예약이 확정되었습니다.", time: "2시간 전", isRead: false }
   ]);
+
+  // 🚩 함수 수정: 이제 직접 스크롤하지 않고 목적지만 설정합니다.
+  const handleCourseClick = (courseId: string) => {
+    setTargetCourse(courseId);
+    setActiveTab('course');
+  };
 
   const markAsRead = (id: number) => {
     setNotifications(prev => prev.map(noti => noti.id === id ? { ...noti, isRead: true } : noti));
@@ -135,7 +144,6 @@ export default function App() {
 
   return (
     <div className="art-log-container">
-      {/* 화면 렌더링 조건문 수정 */}
       {activeTab === 'home' ? (
         <>
           <header className="header">
@@ -206,46 +214,41 @@ export default function App() {
               </div>
             </section>
 
-<section className="section">
-  <div className="section-header">
-    <div className="title-group">
-      <h3>추천 나들이 코스</h3>
-      <span className="sub-title">CURATED DAILY ROUTES</span>
-    </div>
-    <button className="view-all">전체보기</button>
-  </div>
+            <section className="section">
+              <div className="section-header">
+                <div className="title-group">
+                  <h3>추천 나들이 코스</h3>
+                  <span className="sub-title">CURATED DAILY ROUTES</span>
+                </div>
+                <button className="view-all">전체보기</button>
+              </div>
 
-  {/* 🚩 여기서부터가 중요! course-list는 딱 하나만 있어야 해요 */}
-  <div className="course-list">
-    
-    {/* 1. 성수동 코스 카드 */}
-    <div className="course-card" onClick={() => setActiveTab('course')}>
-      <div className="course-content">
-        <span className="course-tag">힙 & 트렌디</span>
-        <h4>성수동 힙한 갤러리 투어</h4>
-        <p>영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.</p>
-      </div>
-      <div className="course-icon"><Compass size={20} /></div>
-    </div>
+              <div className="course-list">
+                <div className="course-card" onClick={() => handleCourseClick('course-seongsu')}>
+                  <div className="course-content">
+                    <span className="course-tag">힙 & 트렌디</span>
+                    <h4>성수동 힙한 갤러리 투어</h4>
+                    <p>영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.</p>
+                  </div>
+                  <div className="course-icon"><Compass size={20} /></div>
+                </div>
 
-    {/* 2. 종로 코스 카드 (여기에 쏙 넣어드렸어요) */}
-    <div className="course-card" onClick={() => setActiveTab('course')}>
-      <div className="course-content">
-        <span className="course-tag">차분함 & 클래식</span>
-        <h4>종로의 과거와 현재</h4>
-        <p>전통의 정취와 현대적 감각이 공존하는 깊이 있는 산책 코스입니다.</p>
-      </div>
-      <div className="course-icon"><Compass size={20} /></div>
-    </div>
-
-  </div> {/* 🚩 course-list가 여기서 얌전하게 닫혀야 합니다 */}
-</section>
+                <div className="course-card" onClick={() => handleCourseClick('course-jongno')}>
+                  <div className="course-content">
+                    <span className="course-tag">차분함 & 클래식</span>
+                    <h4>종로의 과거와 현재</h4>
+                    <p>전통의 정취와 현대적 감각이 공존하는 깊이 있는 산책 코스입니다.</p>
+                  </div>
+                  <div className="course-icon"><Compass size={20} /></div>
+                </div>
+              </div>
+            </section>
           </div>
         </>
       ) : activeTab === 'map' ? (
         <MapPage />
-      ) : activeTab === 'course' ? ( // 👈 "준비중" 대신 RootPage가 나오도록 수정!
-        <RootPage />
+      ) : activeTab === 'course' ? (
+        <RootPage targetCourse={targetCourse} setTargetCourse={setTargetCourse} />
       ) : activeTab === 'gift' ? (
         <Giftshop />
       ) : activeTab === 'mypage' ? (
@@ -261,7 +264,6 @@ export default function App() {
         <div style={{padding: '100px 20px', textAlign: 'center'}}>준비 중인 페이지입니다.</div>
       )}
 
-      {/* 하단 내비게이션 바 */}
       <nav className="bottom-nav">
         <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
           <Home size={24} /><span>홈</span>
@@ -270,10 +272,7 @@ export default function App() {
           <Map size={24} /><span>지도</span>
         </div>
         <div className="nav-item"><Mic size={24} /><span>가이드</span></div>
-        <div 
-          className={`nav-item ${activeTab === 'course' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('course')}
-        >
+        <div className={`nav-item ${activeTab === 'course' ? 'active' : ''}`} onClick={() => setActiveTab('course')}>
           <Compass size={24} /><span>코스</span>
         </div>
         <div className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} onClick={() => setActiveTab('gift')}>
@@ -281,7 +280,6 @@ export default function App() {
         </div>
       </nav>
 
-      {/* 알림 모달 */}
       {isNotifyOpen && (
         <div className="modal-overlay" onClick={() => setIsNotifyOpen(false)}>
           <div className="notification-modal" onClick={(e) => e.stopPropagation()}>

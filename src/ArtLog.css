@@ -1307,9 +1307,17 @@
 
 .course-container {
   flex: 1; 
-  overflow-y: auto !important; /* 종로까지 스크롤 가능하게! */
-  height: calc(100vh - 70px); /* 하단바 높이 제외 */
+  overflow-y: auto !important; /* 이 속성이 있어야 내부 스크롤이 먹습니다 */
+  height: calc(100vh - 70px); 
   padding-bottom: 120px;
+  
+  /* 🚩 추가: 자식 요소의 스크롤 위치를 계산할 수 있도록 기준점을 줍니다 */
+  position: relative; 
+}
+
+/* 🚩 추가: 스크롤이 헤더에 가려지지 않게 여백 확보 */
+.course-card-main {
+  scroll-margin-top: 80px; /* 헤더 높이만큼 넉넉히 줘보세요 */
 }
 
 .course-card-main:last-child {
