@@ -1,49 +1,123 @@
-/* 기본 배경 및 레이아웃 */
+/* 1. 레이아웃 및 기본 테마 */
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #ffffff;
+    background-color: #fff;
     margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-
 .login-box {
     width: 100%;
     max-width: 360px;
     padding: 20px;
     text-align: center;
 }
-
 .logo {
     font-size: 38px;
     font-weight: 900;
     font-style: italic;
     margin-bottom: 5px;
     color: #000;
+    letter-spacing: -1px;
 }
-
 .slogan {
     font-size: 13px;
     color: #888;
     margin-bottom: 30px;
 }
 
-/* 로그인 입력 폼 */
+/* 2. 입력 그룹 및 래퍼 */
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+}
+.input-wrapper {
+    position: relative;
+    width: 100%;
 }
 
+/* 박스 내부 빨간 별표(*) */
+.req-mark {
+    position: absolute;
+    left: 10px;
+    top: 6px;
+    color: #ff4d4f;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 5;
+    pointer-events: none;
+}
+
+/* 입력창 기본 스타일 */
 .login-input {
-    padding: 14px;
+    width: 100%;
+    padding: 14px 12px;
     border: 1px solid #ddd;
     border-radius: 8px;
     font-size: 14px;
+    box-sizing: border-box;
     outline: none;
+    transition: border-color 0.2s;
+}
+.login-input:focus {
+    border-color: #888;
 }
 
+/* 별표가 있는 박스 패딩 */
+.inner-req .login-input {
+    padding-left: 24px;
+}
+
+/* 3. 비밀번호 보기 아이콘 버튼 */
+.pw-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    color: #bbb;
+    cursor: pointer;
+    transition: color 0.2s;
+    background: none;
+    border: none;
+    padding: 0;
+}
+.pw-toggle-btn:hover {
+    color: #666;
+}
+
+/* 중복확인 버튼 */
+.inline-check-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #007aff;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* 4. 상태 메시지 */
+.status-msg {
+    font-size: 11px;
+    text-align: left;
+    margin: -8px 0 5px 5px;
+}
+.status-msg.success {
+    color: #2ecc71;
+}
+.status-msg.error {
+    color: #e74c3c;
+}
+
+/* 5. 버튼 및 구분선 */
 .btn-main-login {
     background-color: #000;
     color: #fff;
@@ -51,19 +125,31 @@
     padding: 14px;
     border-radius: 8px;
     font-weight: bold;
-    cursor: pointer;
     font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.2s;
+}
+.btn-main-login:active {
+    opacity: 0.8;
+}
+.btn-signup-margin {
     margin-top: 5px;
+    margin-bottom: 20px !important;
 }
 
-/* 구분선 */
-.divider {
-    margin: 40px 0 25px;
+.divider,
+.divider-select {
+    margin: 25px 0;
     border-top: 1px solid #eee;
     position: relative;
 }
-
-.divider span {
+.divider-select {
+    border-top: 1px dashed #ddd;
+    margin: 15px 0 10px;
+}
+.divider span,
+.divider-select span {
     position: absolute;
     top: -9px;
     left: 50%;
@@ -74,14 +160,13 @@
     font-size: 11px;
 }
 
-/* 소셜 아이콘 가로 배치 (ㅁ ㅁ ㅁ ㅁ) */
+/* 6. 소셜 로그인 버튼 */
 .social-icon-wrapper {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin-bottom: 35px;
+    margin-bottom: 30px;
 }
-
 .social-icon-item {
     width: 50px;
     height: 50px;
@@ -90,49 +175,68 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    background-color: #fff;
-    transition: all 0.2s ease;
-    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
 }
-
-/* 이미지 크기 조절 */
-.social-icon-item img {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
+.social-icon-item:active {
+    transform: scale(0.95);
 }
-
-/* 카카오 배경색 */
 .kakao-bg {
     background-color: #fee500;
     border: none;
 }
-
-/* 네이버 배경색 및 이미지 보정 */
 .naver-bg {
-    background-color: #03c75a; /* 네이버 공식 초록색 */
+    background-color: #03c75a;
     border: none;
 }
 .naver-text {
-    color: #ffffff;
-    font-family: 'Arial Black', sans-serif; /* 두꺼운 폰트 적용 */
-    font-size: 22px; /* 다른 아이콘 로고 크기와 맞춤 */
+    color: #fff;
+    font-size: 22px;
     font-weight: 900;
 }
-
-.social-icon-item:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+.social-icon-item img {
+    width: 28px;
+    height: 28px;
 }
 
-/* 하단 푸터 */
+/* 7. 푸터 및 알림 */
 .login-footer {
+    margin-top: 15px;
     font-size: 13px;
     color: #888;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+.footer-bar {
+    color: #eee;
+}
+.go-back {
+    font-weight: bold;
+    color: #666;
+    text-decoration: underline;
+    cursor: pointer;
 }
 
-.footer-bar {
-    margin: 0 10px;
-    color: #eee;
+.welcome-toast {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #232323; /* 포인트 컬러 */
+  color: white;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+/* 서서히 나타났다 사라지는 애니메이션 (선택 사항) */
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -10px); }
+  15% { opacity: 1; transform: translate(-50%, 0); }
+  85% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -10px); }
 }

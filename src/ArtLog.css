@@ -10,10 +10,15 @@
   margin: 0 auto;
   background-color: #fff;
   font-family: 'Pretendard', sans-serif;
-  padding: 20px 20px 100px 20px; /* 🚩 하단 padding을 충분히 줘야 콘텐츠가 내비에 안 가려집니다 */
-  min-height: 100vh; /* 화면을 꽉 채우도록 설정 */
+  /* 🚩 수정: 하단 100px 패딩을 0으로 바꿉니다. */
+  padding: 20px 20px 0 20px; 
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 전체 바깥 스크롤 방지 */
   box-sizing: border-box;
 }
+
 
 /* Header */
 /* 상단 로고와 아이콘을 양옆으로 찢어줌 */
@@ -158,7 +163,11 @@
 .update-time { font-size: 12px; color: #ccc; margin-top: 15px; font-weight: bold; }
 
 /* Section Common */
-.section { margin-bottom: 40px; }
+/* 2. 나들이 코스 섹션 자체의 하단 여백 줄이기 */
+.section {
+  padding: 20px;
+  margin-bottom: 0px; /* 섹션 사이 마진을 없애서 쫀쫀하게 배치 */
+}
 .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
 .section-header h3 { font-size: 20px; font-weight: bold; }
 .eng-sub { display: block; font-size: 11px; color: #aaa; margin-top: 4px; }
@@ -989,12 +998,12 @@
 .action-btn.black { background: #000; color: #fff; }
 .action-btn.gray { background: #1c1c1e; color: #fff; }
 
-/* 추천 나들이 코스 스타일 */
+/* 4. 코스 리스트의 마지막 간격 조절 */
 .course-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
+  gap: 12px;
+  margin-bottom: 0px;  /* 리스트 자체의 하단 마진 삭제 */
 }
 
 .course-card {
@@ -1042,11 +1051,17 @@
 }
 
 .main-content-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding-bottom: 100px; /* 하단 네비게이션에 가려지지 않게 여유 공간 */
+  flex: 1;            /* 남는 모든 공간을 차지해서 하단 바까지 밀어붙임 */
+  overflow-y: auto;   /* 내용이 많아지면 이 영역 안에서만 스크롤 */
+  padding-bottom: 40px; /* 하단 바와 너무 딱 붙지 않게 약간의 여유만 */
+  
+  /* 스크롤바 숨기기 (선택 사항 - 깔끔한 디자인용) */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
-
+.main-content-scroll::-webkit-scrollbar {
+  display: none;
+}
 
 
 
@@ -1173,11 +1188,12 @@
   transition: all 0.2s ease-in-out; /* 변화를 부드럽게 만드는 마법의 속성 */
 }
 
-/* 🚩 로그아웃 버튼 호버 효과 */
+/* 🚩 호버 효과 확실히 강조 */
 .logout-btn:hover {
-  background-color: #fff1f0; /* 배경색을 아주 연한 빨간색으로 변경 */
-  color: #d70000; /* 글자색을 좀 더 진하게 */
-  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.1); /* 미세한 빨간색 그림자 */
+  background-color: #ffe0dd !important; /* 아주 연한 빨간색 */
+  color: #d70000 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.15);
 }
 
 /* 클릭했을 때 살짝 눌리는 효과 */
@@ -1222,3 +1238,57 @@
 }
 
 
+/* 로그인 유도 버튼 스타일 & 호버 */
+.login-move-btn {
+  width: 100%;
+  padding: 16px;
+  background-color: #333;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 40px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login-move-btn:hover {
+  background-color: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+
+/* 마우스를 올렸을 때(Hover) 배경색 변경 */
+.menu-row-item:hover,
+.stat-card-item:hover {
+  background-color: #e7e7e7 !important; /* 아주 연한 회색 */
+  transition: background-color 0.2s ease;
+}
+
+/* 로그아웃 버튼 전용 호버 (기존 CSS가 있다면 확인) */
+.logout-btn:hover {
+  background-color: #fff0f0 !important;
+  color: #ff0000 !important;
+}
+
+.login-move-btn:hover {
+  background-color: #333 !important;
+}
+
+
+/* 1. 크롬, 사파리, 최신 엣지 브라우저에서 스크롤바 숨기기 */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 2. 인터넷 익스플로러, 구형 엣지 브라우저에서 스크롤바 숨기기 */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+}
+
+/* 3. 파이어폭스 브라우저에서 스크롤바 숨기기 */
+.hide-scrollbar {
+  scrollbar-width: none;
+}

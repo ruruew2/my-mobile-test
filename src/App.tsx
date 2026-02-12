@@ -1,140 +1,84 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react'; // 👈 useEffect 추가!!
 import './ArtLog.css';
 import './Login.css';
 import MyPage from './MyPage';
+import LoginPage from "./LoginPage";
+import Giftshop from './GiftShop';
+import MapPage from "./Map.tsx"; // 뒤에 .tsx를 붙여보세요.
 import { 
-  Home, Map, Mic, Compass, Gift, Bell, User, Heart,
-  X, Sparkles, CheckCircle2, ChevronRight, MapPin
+  Home, Map, Mic, Compass, Bell, User, Heart,
+  X, Sparkles, CheckCircle2, ChevronRight, MapPin,
+  Gift
 } from 'lucide-react';
-
-// --- [컴포넌트 0] 로그인 페이지 ---
-const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
-  return (
-    <div className="login-container">
-      <div className="login-box">
-        <h1 className="logo">ART-LOG</h1>
-        <p className="slogan">당신의 모든 예술적 순간을 데이터로 기록하다</p>
-        <div className="input-group">
-          <input type="text" placeholder="아이디" className="login-input" />
-          <input type="password" placeholder="비밀번호" className="login-input" />
-          <button className="btn-main-login" onClick={onLoginSuccess}>로그인</button>
-        </div>
-        <div className="divider"><span>소셜 로그인</span></div>
-        <div className="social-icon-wrapper">
-          <a href="#google" className="social-icon-item"><img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="G" /></a>
-          <a href="#kakao" className="social-icon-item kakao-bg"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/KakaoTalk_logo.svg" alt="K" /></a>
-          <a href="#naver" className="social-icon-item naver-bg"><span className="naver-text">N</span></a>
-        </div>
-        <div className="login-footer">
-          <span>회원가입</span><span className="footer-bar">|</span><span>비밀번호 찾기</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- [컴포넌트 1] 취향 선택 화면 --- // 추가
+// --- [컴포넌트 1] 취향 선택 화면 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
   const [selected, setSelected] = useState<string[]>([]);
-    const tags = [
+  const [toast, setToast] = useState(false); // 토스트 표시 여부 상태
+
+  const tags = [
     "#미디어아트", "#추상화", "#사진전", "#미니멀리즘", 
     "#현대미술", "#팝아트", "#서양화", "#동양화", 
     "#설치미술", "#인터랙티브", "#뮤지컬", "#연극", 
     "#클래식", "#재즈", "#몰입형전시", "#건축전", 
     "#아트페어", "#오브제", "#한국화"
   ];
+
+  // 1. 화면이 켜지자마자 실행되는 효과
+  useEffect(() => {
+    setToast(true); // 메시지 보여주기
+    const timer = setTimeout(() => {
+      setToast(false); // 2초 뒤에 숨기기
+    }, 2000);
+
+    return () => clearTimeout(timer); // 컴포넌트가 사라질 때 타이머 청소
+  }, []);
+
   const toggleTag = (tag: string) => {
     setSelected(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
+
   return (
-    <div className="onboarding-container">
+    <div className="onboarding-container" style={{ position: 'relative' }}>
+      
+      {/* 2. 환영 메시지 (토스트) UI */}
+      {toast && (
+        <div className="welcome-toast">
+          환영합니다!
+        </div>
+      )}
+
       <div className="onboarding-header">
-        <div className="progress-bar-container"><div className="progress-bar-fill" style={{ width: '40%' }}></div></div>
+        <div className="progress-bar-container">
+          <div className="progress-bar-fill" style={{ width: '40%' }}></div>
+        </div>
         <span className="skip-text" onClick={onComplete}>건너뛰기</span>
       </div>
+
       <div className="onboarding-content">
         <h2 className="onboarding-title">어떤 스타일에<br />관심이 있으신가요?</h2>
         <div className="tag-grid">
           {tags.map(tag => (
-            <button key={tag} className={`tag-item ${selected.includes(tag) ? 'active' : ''}`} onClick={() => toggleTag(tag)}>{tag}</button>
+            <button 
+              key={tag} 
+              className={`tag-item ${selected.includes(tag) ? 'active' : ''}`} 
+              onClick={() => toggleTag(tag)}
+            >
+              {tag}
+            </button>
           ))}
         </div>
       </div>
-      <button className={`submit-btn ${selected.length > 0 ? 'active' : ''}`} disabled={selected.length === 0} onClick={onComplete}>
+
+      <button 
+        className={`submit-btn ${selected.length > 0 ? 'active' : ''}`} 
+        disabled={selected.length === 0} 
+        onClick={onComplete}
+      >
         {selected.length > 0 ? `${selected.length}개 선택 완료` : '선택해주세요'}
       </button>
     </div>
   );
 };
-
-// --- [컴포넌트 2] 지도 페이지 ---
-const MapPage = () => {
-  const [activeFilter, setActiveFilter] = useState<string>('전체');
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [isDrag, setIsDrag] = useState(false);
-  const [startX, setStartX] = useState(0);
-
-  const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
-
-  const onDragStart = (e: React.MouseEvent) => {
-    if (!scrollRef.current) return;
-    setIsDrag(true);
-    setStartX(e.pageX + scrollRef.current.scrollLeft);
-  };
-  const onDragEnd = () => setIsDrag(false);
-  const onDragMove = (e: React.MouseEvent) => {
-    if (!isDrag || !scrollRef.current) return;
-    e.preventDefault();
-    scrollRef.current.scrollLeft = startX - e.pageX;
-  };
-
-  return (
-    <div className="map-view-container">
-      <div className="map-bg">
-        <div className="top-filter-wrapper">
-          <div 
-            className="filter-chips" 
-            ref={scrollRef}
-            onMouseDown={onDragStart}
-            onMouseMove={onDragMove}
-            onMouseUp={onDragEnd}
-            onMouseLeave={onDragEnd}
-            style={{ cursor: isDrag ? 'grabbing' : 'grab', userSelect: 'none' }}
-          >
-            {filters.map((filter) => (
-              <span
-                key={filter}
-                className={`chip ${activeFilter === filter ? 'active' : ''}`}
-                onClick={() => setActiveFilter(filter)}
-                style={{ flexShrink: 0 }}
-              >
-                {filter}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className="floating-pin pin1"><MapPin size={14} /> 현대 추상: 내면의 울림</div>
-        <div className="floating-pin pin2"><MapPin size={14} /> 네온 드림: 디지털 아트</div>
-        <div className="floating-pin pin3"><MapPin size={14} /> 공백의 조각</div>
-      </div>
-      <div className="map-bottom-sheet">
-        <div className="sheet-handle"></div>
-        <h3 className="sheet-title">내 주변 전시 <span className="count">3</span></h3>
-        <div className="mini-list-container">
-          <div className="mini-item">
-            <div className="mini-thumb" style={{backgroundColor: '#eee'}}></div>
-            <div className="mini-desc"><h4>현대 추상의 영혼</h4><p>📍 국립현대미술관</p></div>
-          </div>
-          <div className="mini-item">
-            <div className="mini-thumb" style={{backgroundColor: '#ddd'}}></div>
-            <div className="mini-desc"><h4>네온 드림: 디지털 아트</h4><p>📍 워커힐 빛의 시어터</p></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // --- [컴포넌트 3] 화제 전시 카드 ---
 const ExhibitCard = ({ title, location, tag, imgUrl }: any) => {
   const [liked, setLiked] = useState(false);
@@ -180,6 +124,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home'); 
   const [isNotifyOpen, setIsNotifyOpen] = useState(false);
   
+  // 전역 로그인 상태 관리
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   const [notifications, setNotifications] = useState([
     { id: 1, icon: <Sparkles size={18} color="#7C4DFF" />, title: "새로운 추천 전시", desc: "성수동 전시가 오픈했어요!", time: "방금 전", isRead: false },
     { id: 2, icon: <CheckCircle2 size={18} color="#4CAF50" />, title: "도슨트 예약 완료", desc: "예약이 확정되었습니다.", time: "2시간 전", isRead: false }
@@ -193,7 +140,7 @@ export default function App() {
   };
   const hasUnread = notifications.some(n => !n.isRead);
 
-  if (step === 'login') return <LoginPage onLoginSuccess={() => setStep('preference')} />;
+  if (step === 'login') return <LoginPage onLoginSuccess={() => { setIsLoggedIn(true); setStep('preference'); }} />;
   if (step === 'preference') return <PreferenceSelection onComplete={() => setStep('main')} />;
 
   return (
@@ -303,12 +250,16 @@ export default function App() {
       ) : activeTab === 'map' ? (
         <MapPage />
       ) : activeTab === 'mypage' ? (
-<MyPage 
+        <MyPage 
+          isLoggedIn={isLoggedIn}
+          setIsLoggedIn={setIsLoggedIn}
           onLogout={() => {
-            setStep('login');      // 1. 로그인 페이지(step)로 이동
-            setActiveTab('home');  // 2. 탭은 다시 '홈'으로 초기화 (다음에 로그인했을 때 첫 화면)
+            setStep('login');      
+            setActiveTab('home');  
           }} 
         />  
+        ) : activeTab === 'gift' ? (
+        <Giftshop />
       ) : (
         <div style={{padding: '100px 20px', textAlign: 'center'}}>준비 중인 페이지입니다.</div>
       )}
@@ -323,9 +274,9 @@ export default function App() {
         </div>
         <div className="nav-item"><Mic size={24} /><span>가이드</span></div>
         <div className="nav-item"><Compass size={24} /><span>코스</span></div>
-        <div className={`nav-item ${activeTab === 'mypage' ? 'active' : ''}`} onClick={() => setActiveTab('mypage')}>
-          <User size={24} /><span>마이</span>
-        </div>
+<div className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} onClick={() => setActiveTab('gift')}>
+    <Gift size={24} /><span>기프트</span>
+  </div>
       </nav>
 
       {/* 알림 모달 */}
@@ -354,4 +305,3 @@ export default function App() {
     </div>
   );
 }
-
