@@ -153,8 +153,8 @@ export default function App() {
             <p className="subtitle">감각적인 예술 탐험을<br/>함께하는 개인 맞춤 큐레이션</p>
             <section className="ai-banner">
               <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
-              <h2 className="ai-title">"오늘은 종로의 감성에 빠져볼까요?"</h2>
-              <p className="ai-desc">평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로 산책 코스를 준비했어요.</p>
+              <h2 className="ai-title">" 오늘은 종로의 감성에 빠져볼까요? "</h2>
+              <p className="ai-desc">평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로<br></br> 산책 코스를 준비했어요. user 님, 오늘 하루도 좋은 하루 되세요!</p>
               <button className="cta-button">추천 전시 보기 <ChevronRight size={20} className="cta-icon" /></button>
             </section>
               
@@ -206,25 +206,40 @@ export default function App() {
               </div>
             </section>
 
-            <section className="section">
-              <div className="section-header">
-                <div className="title-group">
-                  <h3>추천 나들이 코스</h3>
-                  <span className="sub-title">CURATED DAILY ROUTES</span>
-                </div>
-                <button className="view-all">전체보기</button>
-              </div>
-              <div className="course-list">
-                <div className="course-card" onClick={() => setActiveTab('course')}> {/* 클릭 시 코스탭으로 이동 */}
-                  <div className="course-content">
-                    <span className="course-tag">힙 & 트렌디</span>
-                    <h4>성수동 힙한 갤러리 투어</h4>
-                    <p>영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.</p>
-                  </div>
-                  <div className="course-icon"><Compass size={20} /></div>
-                </div>
-              </div>
-            </section>
+<section className="section">
+  <div className="section-header">
+    <div className="title-group">
+      <h3>추천 나들이 코스</h3>
+      <span className="sub-title">CURATED DAILY ROUTES</span>
+    </div>
+    <button className="view-all">전체보기</button>
+  </div>
+
+  {/* 🚩 여기서부터가 중요! course-list는 딱 하나만 있어야 해요 */}
+  <div className="course-list">
+    
+    {/* 1. 성수동 코스 카드 */}
+    <div className="course-card" onClick={() => setActiveTab('course')}>
+      <div className="course-content">
+        <span className="course-tag">힙 & 트렌디</span>
+        <h4>성수동 힙한 갤러리 투어</h4>
+        <p>영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.</p>
+      </div>
+      <div className="course-icon"><Compass size={20} /></div>
+    </div>
+
+    {/* 2. 종로 코스 카드 (여기에 쏙 넣어드렸어요) */}
+    <div className="course-card" onClick={() => setActiveTab('course')}>
+      <div className="course-content">
+        <span className="course-tag">차분함 & 클래식</span>
+        <h4>종로의 과거와 현재</h4>
+        <p>전통의 정취와 현대적 감각이 공존하는 깊이 있는 산책 코스입니다.</p>
+      </div>
+      <div className="course-icon"><Compass size={20} /></div>
+    </div>
+
+  </div> {/* 🚩 course-list가 여기서 얌전하게 닫혀야 합니다 */}
+</section>
           </div>
         </>
       ) : activeTab === 'map' ? (

@@ -9,6 +9,15 @@
   /* 핵심: 내용이 길어지면 스크롤이 생기게 합니다 */
   overflow-y: auto; 
   display: block; 
+
+  /* 🚩 핵심: 스크롤바 숨기기 (모든 브라우저 대응) */
+  -ms-overflow-style: none; /* 인터넷 익스플로러, 엣지 */
+  scrollbar-width: none;  /* 파이어폭스 */
+}
+
+/* 크롬, 사파리, 오페라, 안드로이드 웹뷰용 */
+.course-container::-webkit-scrollbar {
+  display: none;
 }
 
 .course-header h2 {

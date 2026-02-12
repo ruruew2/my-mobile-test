@@ -114,7 +114,11 @@
   line-height: 1.4;
   margin-bottom: 12px;
   color: #000;
-  word-break: keep-all; /* 한글 단어 단위 끊김 방지 */
+  word-break: keep-all;
+  
+  /* 🚩 핵심: 텍스트 자체를 중앙으로! */
+  text-align: center; 
+  width: 100%; /* 부모 너비를 다 써야 중앙 정렬이 보입니다 */
 }
 
 .ai-desc {
@@ -129,7 +133,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: auto; /* 🚩 버튼 길이를 텍스트에 맞춤 (필요시 100%) */
+  width: 100%; /* 🚩 버튼 길이를 텍스트에 맞춤 (필요시 100%) */
   min-width: 360px;
   padding: 15px 20px;
   background-color: #000;
@@ -1049,6 +1053,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.course-icon:hover {
+  background-color: #000000; 
+  transform: scale(1.1);      /* 10% 커짐 */
+  box-shadow: 0 4px 12px rgba(93, 69, 255, 0.3); /* 보라색 그림자 */
 }
 
 .main-content-scroll {
