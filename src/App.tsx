@@ -184,7 +184,7 @@ export default function App() {
                   <h3>프리미엄 도슨트</h3>
                   <span className="sub-title">EXPERT CURATION GUIDES</span>
                 </div>
-                <button className="view-all">전체보기</button>
+                <button className="view-all">전체보기</button> /* 나중에 도슨트 만들면 이동 */
               </div>
               <div className="docent-list">
                 <div className="docent-card active-guide">
@@ -220,8 +220,11 @@ export default function App() {
                   <h3>추천 나들이 코스</h3>
                   <span className="sub-title">CURATED DAILY ROUTES</span>
                 </div>
-                <button className="view-all">전체보기</button>
-              </div>
+{/* 🚩 onClick 추가: 'course' 탭으로 이동 */}
+    <button className="view-all" onClick={() => setActiveTab('course')}>
+      전체보기
+    </button>
+  </div>
 
               <div className="course-list">
                 <div className="course-card" onClick={() => handleCourseClick('course-seongsu')}>

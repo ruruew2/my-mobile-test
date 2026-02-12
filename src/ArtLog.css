@@ -176,7 +176,22 @@
 .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
 .section-header h3 { font-size: 20px; font-weight: bold; }
 .eng-sub { display: block; font-size: 11px; color: #aaa; margin-top: 4px; }
-.view-all { background: none; border: none; color: #999; font-weight: bold; font-size: 12px; }
+
+/* 기본 상태 */
+.view-all { 
+  background: none; 
+  border: none; 
+  color: #999; 
+  font-weight: bold; 
+  font-size: 12px; 
+  cursor: pointer; /* 버튼이므로 마우스 커서를 손가락 모양으로 추가하는 것이 좋습니다 */
+  transition: color 0.2s ease; /* 부드러운 색상 변화를 위해 추가 */
+}
+
+/* 마우스 호버 상태 (앞에 점 . 을 꼭 붙여야 합니다) */
+.view-all:hover {
+  color: #000000; /* 바뀔 색상만 작성 */
+}
 
 /* Trending Horizontal Scroll */
 .horizontal-scroll { display: flex; overflow-x: auto; gap: 20px; padding-bottom: 10px; scrollbar-width: none; }
