@@ -1046,3 +1046,209 @@
   overflow-y: auto;
   padding-bottom: 100px; /* 하단 네비게이션에 가려지지 않게 여유 공간 */
 }
+
+
+
+
+/* MyPage Styles */
+.mypage-container {
+  padding: 0 20px;
+}
+
+.user-profile-section {
+  display: flex;
+  align-items: center;
+  padding: 30px 0;
+  margin-bottom: 20px;
+}
+
+.profile-img {
+  width: 70px;
+  height: 70px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin-right: 20px;
+}
+
+.profile-info h2 {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.profile-info p {
+  font-size: 14px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 20px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+.stat-value {
+  display: block;
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #aaa;
+}
+
+/* 메뉴 리스트 스타일 */
+.menu-group {
+  margin-bottom: 30px;
+}
+
+.menu-group h4 {
+  font-size: 13px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-left: 5px;
+}
+
+.menu-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  padding: 18px 20px;
+  border-radius: 16px;
+  border: 1px solid #f0f0f0;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  border-color: #000;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.menu-icon {
+  color: #111;
+}
+
+/* 기본 로그아웃 버튼 스타일 */
+.logout-btn {
+  width: 100%;
+  padding: 16px;
+  background-color: #f8f8f8; /* 연한 회색 배경 */
+  color: #ff3b30; /* 로그아웃은 보통 경고의 의미로 빨간색 계열을 씁니다 */
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 40px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out; /* 변화를 부드럽게 만드는 마법의 속성 */
+}
+
+/* 🚩 로그아웃 버튼 호버 효과 */
+.logout-btn:hover {
+  background-color: #fff1f0; /* 배경색을 아주 연한 빨간색으로 변경 */
+  color: #d70000; /* 글자색을 좀 더 진하게 */
+  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.1); /* 미세한 빨간색 그림자 */
+}
+
+/* 클릭했을 때 살짝 눌리는 효과 */
+.logout-btn:active {
+  transform: translateY(0);
+  background-color: #ffe5e3;
+}
+
+.profile-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* 이미지가 원형 밖으로 나가지 않게 */
+  font-size: 40px;
+}
+
+.profile-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* 비율 유지하며 꽉 채움 */
+}
+
+.camera-badge {
+  position: absolute;
+  /* 🚩 값을 0에서 늘려주면 안쪽으로 겹쳐지듯 들어옵니다 */
+  bottom: 2px; 
+  right: 12px; 
+  
+  background-color: #333;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  z-index: 10; /* 이미지보다 위에 오도록 확인 */
+}
+
+
+
+/* 로그아웃 상태일 때 나타나는 로그인 유도 버튼 */
+.login-move-btn {
+  width: 100%;
+  padding: 16px;
+  background-color: #333; /* 앱의 메인 블랙 테마 */
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 40px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 로그인 버튼 호버 */
+.login-move-btn:hover {
+  background-color: #000;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 기존 로그아웃 버튼 호버 (이전에 드린 코드) */
+.logout-btn:hover {
+  background-color: #fff1f0;
+  color: #d70000;
+  transform: translateY(-2px);
+}

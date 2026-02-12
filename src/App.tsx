@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react';
 import './ArtLog.css';
 import './Login.css';
+import MyPage from './MyPage';
 import { 
   Home, Map, Mic, Compass, Gift, Bell, User, Heart,
-  X, Sparkles, CheckCircle2, ChevronRight, MapPin, Filter, Star
+  X, Sparkles, CheckCircle2, ChevronRight, MapPin
 } from 'lucide-react';
 
 // --- [컴포넌트 0] 로그인 페이지 ---
@@ -21,7 +22,6 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
         <div className="divider"><span>소셜 로그인</span></div>
         <div className="social-icon-wrapper">
           <a href="#google" className="social-icon-item"><img src="https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png" alt="G" /></a>
-          <a href="#apple" className="social-icon-item"><img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="A" /></a>
           <a href="#kakao" className="social-icon-item kakao-bg"><img src="https://upload.wikimedia.org/wikipedia/commons/e/e3/KakaoTalk_logo.svg" alt="K" /></a>
           <a href="#naver" className="social-icon-item naver-bg"><span className="naver-text">N</span></a>
         </div>
@@ -33,10 +33,16 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
   );
 };
 
-// --- [컴포넌트 1] 취향 선택 화면 ---
+// --- [컴포넌트 1] 취향 선택 화면 --- // 추가
 const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
   const [selected, setSelected] = useState<string[]>([]);
-  const tags = ["#미디어아트", "#추상화", "#사진전", "#미니멀리즘", "#현대미술", "#팝아트", "#서양화", "#동양화", "#설치미술", "#인터랙티브"];
+    const tags = [
+    "#미디어아트", "#추상화", "#사진전", "#미니멀리즘", 
+    "#현대미술", "#팝아트", "#서양화", "#동양화", 
+    "#설치미술", "#인터랙티브", "#뮤지컬", "#연극", 
+    "#클래식", "#재즈", "#몰입형전시", "#건축전", 
+    "#아트페어", "#오브제", "#한국화"
+  ];
   const toggleTag = (tag: string) => {
     setSelected(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
@@ -61,36 +67,24 @@ const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
   );
 };
 
-// --- [컴포넌트 2] 지도 페이지 (드래그 기능 포함) ---
+// --- [컴포넌트 2] 지도 페이지 ---
 const MapPage = () => {
   const [activeFilter, setActiveFilter] = useState<string>('전체');
   const scrollRef = useRef<HTMLDivElement>(null);
-  
-  // 마우스 드래그 상태 관리
   const [isDrag, setIsDrag] = useState(false);
   const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
 
-  // 드래그 시작
   const onDragStart = (e: React.MouseEvent) => {
     if (!scrollRef.current) return;
     setIsDrag(true);
-    // 현재 클릭한 위치와 기존 스크롤 위치 저장
     setStartX(e.pageX + scrollRef.current.scrollLeft);
   };
-
-  // 드래그 종료
-  const onDragEnd = () => {
-    setIsDrag(false);
-  };
-
-  // 드래그 중
+  const onDragEnd = () => setIsDrag(false);
   const onDragMove = (e: React.MouseEvent) => {
     if (!isDrag || !scrollRef.current) return;
     e.preventDefault();
-    // 마우스 이동 거리만큼 스크롤 조절
     scrollRef.current.scrollLeft = startX - e.pageX;
   };
 
@@ -98,7 +92,6 @@ const MapPage = () => {
     <div className="map-view-container">
       <div className="map-bg">
         <div className="top-filter-wrapper">
-          {/* 🚩 드래그 이벤트 및 ref 연결 */}
           <div 
             className="filter-chips" 
             ref={scrollRef}
@@ -106,29 +99,24 @@ const MapPage = () => {
             onMouseMove={onDragMove}
             onMouseUp={onDragEnd}
             onMouseLeave={onDragEnd}
-            style={{ 
-              cursor: isDrag ? 'grabbing' : 'grab',
-              userSelect: 'none' // 드래그 시 텍스트 선택 방지
-            }}
+            style={{ cursor: isDrag ? 'grabbing' : 'grab', userSelect: 'none' }}
           >
             {filters.map((filter) => (
               <span
                 key={filter}
                 className={`chip ${activeFilter === filter ? 'active' : ''}`}
                 onClick={() => setActiveFilter(filter)}
-                style={{ flexShrink: 0 }} // 옹졸함 방지 핵심
+                style={{ flexShrink: 0 }}
               >
                 {filter}
               </span>
             ))}
           </div>
         </div>
-
         <div className="floating-pin pin1"><MapPin size={14} /> 현대 추상: 내면의 울림</div>
         <div className="floating-pin pin2"><MapPin size={14} /> 네온 드림: 디지털 아트</div>
         <div className="floating-pin pin3"><MapPin size={14} /> 공백의 조각</div>
       </div>
-
       <div className="map-bottom-sheet">
         <div className="sheet-handle"></div>
         <h3 className="sheet-title">내 주변 전시 <span className="count">3</span></h3>
@@ -140,10 +128,6 @@ const MapPage = () => {
           <div className="mini-item">
             <div className="mini-thumb" style={{backgroundColor: '#ddd'}}></div>
             <div className="mini-desc"><h4>네온 드림: 디지털 아트</h4><p>📍 워커힐 빛의 시어터</p></div>
-          </div>
-          <div className="mini-item">
-            <div className="mini-thumb" style={{backgroundColor: '#ccc'}}></div>
-            <div className="mini-desc"><h4>공백의 조각</h4><p>📍 아라리오 갤러리</p></div>
           </div>
         </div>
       </div>
@@ -173,19 +157,10 @@ const ExhibitCard = ({ title, location, tag, imgUrl }: any) => {
 const ExhibitCarousel = ({ children }: { children: React.ReactNode }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftBtn, setShowLeftBtn] = useState(false);
-
-  const handleScroll = () => {
-    if (scrollRef.current) {
-      setShowLeftBtn(scrollRef.current.scrollLeft > 10);
-    }
-  };
-
+  const handleScroll = () => { if (scrollRef.current) setShowLeftBtn(scrollRef.current.scrollLeft > 10); };
   const scroll = (dir: 'left' | 'right') => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' });
-    }
+    if (scrollRef.current) scrollRef.current.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' });
   };
-
   return (
     <div className="carousel-wrapper">
       {showLeftBtn && (
@@ -193,12 +168,8 @@ const ExhibitCarousel = ({ children }: { children: React.ReactNode }) => {
           <ChevronRight size={24} style={{ transform: 'rotate(180deg)' }} />
         </button>
       )}
-      <div className="horizontal-scroll" ref={scrollRef} onScroll={handleScroll}>
-        {children}
-      </div>
-      <button className="nav-btn right" onClick={() => scroll('right')}>
-        <ChevronRight size={24} />
-      </button>
+      <div className="horizontal-scroll" ref={scrollRef} onScroll={handleScroll}>{children}</div>
+      <button className="nav-btn right" onClick={() => scroll('right')}><ChevronRight size={24} /></button>
     </div>
   );
 };
@@ -217,130 +188,132 @@ export default function App() {
   const markAsRead = (id: number) => {
     setNotifications(prev => prev.map(noti => noti.id === id ? { ...noti, isRead: true } : noti));
   };
-
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(noti => ({ ...noti, isRead: true })));
   };
-
   const hasUnread = notifications.some(n => !n.isRead);
 
   if (step === 'login') return <LoginPage onLoginSuccess={() => setStep('preference')} />;
   if (step === 'preference') return <PreferenceSelection onComplete={() => setStep('main')} />;
 
-return (
-  <div className="art-log-container">
-    {activeTab === 'home' ? (
-      <>
-        {/* 1. 고정 헤더 */}
-        <header className="header">
-          <h1 className="logo">ART-LOG</h1>
-          <div className="header-icons">
-            <div className="icon-item" onClick={() => setIsNotifyOpen(true)} style={{position: 'relative'}}>
-              <Bell size={24} />
-              {hasUnread && <span className="notification-dot"></span>}
+  return (
+    <div className="art-log-container">
+      {activeTab === 'home' ? (
+        <>
+          <header className="header">
+            <h1 className="logo">ART-LOG</h1>
+            <div className="header-icons">
+              <div className="icon-item" onClick={() => setIsNotifyOpen(true)} style={{position: 'relative'}}>
+                <Bell size={24} />
+                {hasUnread && <span className="notification-dot"></span>}
+              </div>
+              <div className="icon-item" onClick={() => setActiveTab('mypage')}><User size={24} /></div>
             </div>
-            <div className="icon-item"><User size={24} /></div>
-          </div>
-        </header>
-          
-          <div className="main-content-scroll">
-          <p className="subtitle">감각적인 예술 탐험을<br/>함께하는 개인 맞춤 큐레이션</p>
-          <section className="ai-banner">
-            <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
-            <h2 className="ai-title">"오늘은 종로의 감성에 빠져볼까요?"</h2>
-            <p className="ai-desc">평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로 산책 코스를 준비했어요.</p>
-            <button className="cta-button">추천 전시 보기 <ChevronRight size={20} className="cta-icon" /></button>
-          </section>
+          </header>
             
-          {/* 화제 전시 섹션 */}
-          <section className="section">
-            <div className="section-header">
-              <h3>지금 화제인 전시</h3>
-              <button className="view-all">VIEW ALL</button>
-            </div>
-            <ExhibitCarousel>
-              <ExhibitCard tag="추상화" title="현대 추상의 영혼" location="국립현대미술관" />
-              <ExhibitCard tag="사진전" title="어제의 기록들" location="세종문화회관" />
-              <ExhibitCard tag="설치미술" title="공간의 재해석" location="DDP" />
-            </ExhibitCarousel>
-          </section>
-
-
-{/* 프리미엄 도슨트 섹션 */}
-          <section className="section">
-            <div className="section-header">
-              <div className="title-group">
-                <h3>프리미엄 도슨트</h3>
-                <span className="sub-title">EXPERT CURATION GUIDES</span>
+          <div className="main-content-scroll">
+            <p className="subtitle">감각적인 예술 탐험을<br/>함께하는 개인 맞춤 큐레이션</p>
+            <section className="ai-banner">
+              <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
+              <h2 className="ai-title">"오늘은 종로의 감성에 빠져볼까요?"</h2>
+              <p className="ai-desc">평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로 산책 코스를 준비했어요.</p>
+              <button className="cta-button">추천 전시 보기 <ChevronRight size={20} className="cta-icon" /></button>
+            </section>
+              
+            {/* 화제 전시 섹션 */}
+            <section className="section">
+              <div className="section-header">
+                <h3>지금 화제인 전시</h3>
+                <button className="view-all">VIEW ALL</button>
               </div>
-              <button className="view-all">전체보기</button>
-            </div>
-            <div className="docent-list">
-              <div className="docent-card active-guide">
-                <div className="docent-profile ai-bot">🤖</div>
-                <div className="docent-info">
-                  <div className="docent-name">아티 (AI 가이드) <span className="ai-tag">AI</span></div>
-                  <p className="docent-desc">추상화, 디지털 아트, 빠른 요약</p>
-                  <div className="docent-price">무료 (AI)</div>
+              <ExhibitCarousel>
+                <ExhibitCard tag="추상화" title="현대 추상의 영혼" location="국립현대미술관" />
+                <ExhibitCard tag="사진전" title="어제의 기록들" location="세종문화회관" />
+                <ExhibitCard tag="설치미술" title="공간의 재해석" location="DDP" />
+              </ExhibitCarousel>
+            </section>
+
+            {/* 프리미엄 도슨트 섹션 */}
+            <section className="section">
+              <div className="section-header">
+                <div className="title-group">
+                  <h3>프리미엄 도슨트</h3>
+                  <span className="sub-title">EXPERT CURATION GUIDES</span>
                 </div>
-                <div className="docent-action">
-                  <div className="rating">⭐ 4.8 <span className="count">(1250)</span></div>
-                  <button className="action-btn black">해설 시작</button>
+                <button className="view-all">전체보기</button>
+              </div>
+              <div className="docent-list">
+                <div className="docent-card active-guide">
+                  <div className="docent-profile ai-bot">🤖</div>
+                  <div className="docent-info">
+                    <div className="docent-name">아티 (AI 가이드) <span className="ai-tag">AI</span></div>
+                    <p className="docent-desc">추상화, 디지털 아트, 빠른 요약</p>
+                    <div className="docent-price">무료 (AI)</div>
+                  </div>
+                  <div className="docent-action">
+                    <div className="rating">⭐ 4.8 <span className="count">(1250)</span></div>
+                    <button className="action-btn black">해설 시작</button>
+                  </div>
+                </div>
+                <div className="docent-card">
+                  <div className="docent-profile">👩‍🎨</div>
+                  <div className="docent-info">
+                    <div className="docent-name">김사랑 도슨트</div>
+                    <p className="docent-desc">현대미술, 미술사학</p>
+                    <div className="docent-price">45,000원</div>
+                  </div>
+                  <div className="docent-action">
+                    <div className="rating">⭐ 4.9 <span className="count">(320)</span></div>
+                    <button className="action-btn gray">예약하기</button>
+                  </div>
                 </div>
               </div>
-              <div className="docent-card">
-                <div className="docent-profile">👩‍🎨</div>
-                <div className="docent-info">
-                  <div className="docent-name">김사랑 도슨트</div>
-                  <p className="docent-desc">현대미술, 미술사학</p>
-                  <div className="docent-price">45,000원</div>
+            </section>
+
+            {/* 추천 나들이 코스 섹션 */}
+            <section className="section">
+              <div className="section-header">
+                <div className="title-group">
+                  <h3>추천 나들이 코스</h3>
+                  <span className="sub-title">CURATED DAILY ROUTES</span>
                 </div>
-                <div className="docent-action">
-                  <div className="rating">⭐ 4.9 <span className="count">(320)</span></div>
-                  <button className="action-btn gray">예약하기</button>
+                <button className="view-all">전체보기</button>
+              </div>
+              <div className="course-list">
+                <div className="course-card">
+                  <div className="course-content">
+                    <span className="course-tag">힙 & 트렌디</span>
+                    <h4>성수동 힙한 갤러리 투어</h4>
+                    <p>영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.</p>
+                  </div>
+                  <div className="course-icon"><Compass size={20} /></div>
+                </div>
+                <div className="course-card">
+                  <div className="course-content">
+                    <span className="course-tag">차분함 & 클래식</span>
+                    <h4>종로의 과거와 현재</h4>
+                    <p>전통의 정취와 현대적 감각이 공존하는 깊이 있는 산책 코스입니다.</p>
+                  </div>
+                  <div className="course-icon"><Compass size={20} /></div>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </div>
+        </>
+      ) : activeTab === 'map' ? (
+        <MapPage />
+      ) : activeTab === 'mypage' ? (
+<MyPage 
+          onLogout={() => {
+            setStep('login');      // 1. 로그인 페이지(step)로 이동
+            setActiveTab('home');  // 2. 탭은 다시 '홈'으로 초기화 (다음에 로그인했을 때 첫 화면)
+          }} 
+        />  
+      ) : (
+        <div style={{padding: '100px 20px', textAlign: 'center'}}>준비 중인 페이지입니다.</div>
+      )}
 
-  {/* 🚩 추가 2: 추천 나들이 코스 섹션 */}
-  <section className="section">
-    <div className="section-header">
-      <div className="title-group">
-        <h3>추천 나들이 코스</h3>
-        <span className="sub-title">CURATED DAILY ROUTES</span>
-      </div>
-      <button className="view-all">전체보기</button>
-    </div>
-    <div className="course-list">
-      <div className="course-card">
-        <div className="course-content">
-          <span className="course-tag">힙 & 트렌디</span>
-          <h4>성수동 힙한 갤러리 투어</h4>
-          <p>영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.</p>
-        </div>
-        <div className="course-icon"><Compass size={20} /></div>
-      </div>
-      <div className="course-card">
-        <div className="course-content">
-          <span className="course-tag">차분함 & 클래식</span>
-          <h4>종로의 과거와 현재</h4>
-          <p>전통의 정취와 현대적 감각이 공존하는 깊이 있는 산책 코스입니다.</p>
-        </div>
-        <div className="course-icon"><Compass size={20} /></div>
-      </div>
-    </div>
-  </section>
-
-{/* 🚩 여기가 main-content-scroll의 끝입니다! */}
-        </div>
-      </>
-    ) : activeTab === 'map' ? (
-      <MapPage />
-    ) : (
-      <div style={{padding: '100px 20px', textAlign: 'center'}}>준비 중인 페이지입니다.</div>
-    )}
-
+      {/* 하단 내비게이션 바 */}
       <nav className="bottom-nav">
         <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
           <Home size={24} /><span>홈</span>
@@ -350,10 +323,12 @@ return (
         </div>
         <div className="nav-item"><Mic size={24} /><span>가이드</span></div>
         <div className="nav-item"><Compass size={24} /><span>코스</span></div>
-        <div className="nav-item"><Gift size={24} /><span>기프트</span></div>
+        <div className={`nav-item ${activeTab === 'mypage' ? 'active' : ''}`} onClick={() => setActiveTab('mypage')}>
+          <User size={24} /><span>마이</span>
+        </div>
       </nav>
 
-      {/* 알림 모달 생략 (동일) */}
+      {/* 알림 모달 */}
       {isNotifyOpen && (
         <div className="modal-overlay" onClick={() => setIsNotifyOpen(false)}>
           <div className="notification-modal" onClick={(e) => e.stopPropagation()}>
@@ -379,3 +354,4 @@ return (
     </div>
   );
 }
+
