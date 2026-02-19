@@ -38,7 +38,7 @@ const GiftShop = () => {
     const allProducts = [
         {
             id: 26,
-            category: '몽환적인',
+            category: '문구/사무',
             title: '궁 엽서 세트',
             price: '15,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479831/stationery_postcard_main.jpg',
@@ -53,7 +53,7 @@ const GiftShop = () => {
         },
         {
             id: 22,
-            category: '톡톡튀는',
+            category: '문구/사무',
             title: '반가유상 스티커',
             price: '2,500원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479837/stationery_sticker_main.jpg',
@@ -67,7 +67,7 @@ const GiftShop = () => {
         },
         {
             id: 24,
-            category: '정갈한',
+            category: '문구/사무',
             title: '호두령패 자석',
             price: '10,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479823/stationery_magnet_main.jpg',
@@ -81,7 +81,7 @@ const GiftShop = () => {
         },
         {
             id: 1,
-            category: '감각적인',
+            category: '패션/생활',
             title: '납작 달항아리 파우치',
             price: '18,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479805/fashion_pouch_main.jpg',
@@ -95,7 +95,7 @@ const GiftShop = () => {
         },
         {
             id: 4, // 누락 복구
-            category: '감각적인',
+            category: '패션/생활',
             title: '고양이 카드지갑',
             price: '20,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479810/fashion_wallet_main.jpg',
@@ -109,7 +109,7 @@ const GiftShop = () => {
         },
         {
             id: 7, // 누락 복구
-            category: '감각적인',
+            category: '패션/생활',
             title: '데니 태극기 키링',
             price: '20,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479800/fashion_keyring_main.jpg',
@@ -123,7 +123,7 @@ const GiftShop = () => {
         },
         {
             id: 9,
-            category: '감각적인',
+            category: '소품',
             title: '반가유상 미니어처',
             price: '65,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479818/prop_mini_main.jpg',
@@ -137,7 +137,7 @@ const GiftShop = () => {
         },
         {
             id: 13,
-            category: '정갈한',
+            category: '인테리어',
             title: '행운의 북어벨',
             price: '35,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479795/decor_fishbell_main.jpg',
@@ -151,7 +151,7 @@ const GiftShop = () => {
         },
         {
             id: 16,
-            category: '우아한',
+            category: '주방/식기',
             title: '취객선비 변색 잔세트',
             price: '26,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479843/tableware_cup_main.jpg',
@@ -165,7 +165,7 @@ const GiftShop = () => {
         },
         {
             id: 18,
-            category: '우아한',
+            category: '주방/식기',
             title: '자개 텀블러(무궁화)',
             price: '54,000원',
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479850/tableware_tumbler_main.jpg',
