@@ -14,25 +14,37 @@
     display: none;
 }
 
-/* [2] 헤더 및 카테고리 (원본 코드 유지) */
+/* [2] 헤더 영역 복구 */
 .shop-header {
+    width: 100%;
     margin-bottom: 20px;
+    /* display: flex; 를 절대 넣지 마세요 (세로 배치 방해함) */
 }
+
+
 .header-title-row {
     display: flex;
+    justify-content: space-between; /* 좌우 끝으로 밀기 */
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
+    width: 100%;
+    margin-bottom: 12px;
 }
+
+
+/* 서브페이지(장바구니 등) 제목이 쏠리지 않게 */
 .header-title-row h2 {
-    font-size: 22px;
-    font-weight: bold;
-    margin: 0;
+    margin-left: 10px;
+    flex: 1; /* 제목이 남은 공간을 다 차지해서 아이콘을 밀어내지 않게 조절 */
 }
+
+
+/* 설명글 스타일 - 독립된 행 유지 */
 .shop-description {
-    color: #888;
+    color: #666;
     font-size: 14px;
     margin: 0;
+    padding-left: 2px;
+    display: block; /* 한 줄 전체 차지 */
 }
 
 .category-container {
@@ -314,42 +326,103 @@
 .title-left {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
-/* 🚩 아이콘 그룹 스타일 */
+.title-left h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 0;
+    color: #000;
+}
+
+
+
+/* 오른쪽 아이콘 그룹 */
 .header-icon-group {
     display: flex;
-    gap: 12px; /* 아이콘 사이 간격 */
+    gap: 16px;
     align-items: center;
 }
 
+/* 아이콘 버튼 초기화 */
 .icon-btn {
     background: none;
     border: none;
-    padding: 5px;
-    position: relative;
+    padding: 4px;
     cursor: pointer;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #000;
 }
 
 /* 숫자 배지 (좋아요/장바구니 개수 표시) */
 .badge {
     position: absolute;
-    top: -2px;
-    right: -2px;
+    top: -4px;
+    right: -4px;
     background-color: #FF4B4B;
     color: white;
     font-size: 10px;
     font-weight: bold;
-    min-width: 16px;
-    height: 16px;
+    min-width: 17px;
+    height: 17px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 1.5px solid #fff;
+    border: 2px solid #fff;
+}
+
+/* 가격과 수량 조절기 레이아웃 */
+.price-quantity-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.price-quantity-row .detail-price {
+    margin-bottom: 0; /* 기존 마진 제거 */
+    font-size: 22px;
+}
+
+/* 수량 조절기 디자인 */
+.quantity-counter {
+    display: flex;
+    align-items: center;
+    background: #f1f1f1;
+    border-radius: 30px;
+    padding: 5px 15px;
+    gap: 15px;
+}
+
+.quantity-counter button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #333;
+    padding: 0 5px;
+}
+
+.quantity-counter span {
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* 구매 버튼 내 수량 표시 강조 */
+.buy-button {
+    transition: all 0.2s ease;
+}
+
+.buy-button:active {
+    transform: scale(0.98);
+    opacity: 0.9;
 }

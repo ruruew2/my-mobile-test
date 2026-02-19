@@ -10,17 +10,27 @@ const GiftShop = () => {
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [currentImgIdx, setCurrentImgIdx] = useState(0);
     const [likedItems, setLikedItems] = useState<number[]>([]);
+    const [cartItems, setCartItems] = useState<any[]>([]); 
+    const [quantity, setQuantity] = useState(1); 
     
-    // 🚩 화면 모드: 'main'(목록), 'wishlist'(좋아요), 'cart'(장바구니)
     const [viewMode, setViewMode] = useState<'main' | 'wishlist' | 'cart'>('main');
 
-    // 상세보기 진입 시 스크롤 상단 이동
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (selectedProduct) setQuantity(1); 
     }, [selectedProduct, viewMode]);
 
     const toggleLike = (id: number) => {
         setLikedItems((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
+    };
+
+    const removeFromCart = (id: number) => {
+        setCartItems(prev => prev.filter(item => item.id !== id));
+    };
+
+    const handleQty = (type: 'plus' | 'minus') => {
+        if (type === 'plus') setQuantity(prev => prev + 1);
+        else if (type === 'minus' && quantity > 1) setQuantity(prev => prev - 1);
     };
 
     // --- 데이터 영역 (원본 유지) ---
@@ -132,54 +142,22 @@ const GiftShop = () => {
     if (viewMode === 'wishlist') {
         const likedProducts = allProducts.filter(p => likedItems.includes(p.id));
         return (
-            <div className="gift-shop-wrapper">
-                <div className="shop-header">
-                    <div className="header-title-row">
-                        <button className="back-button" onClick={() => setViewMode('main')} style={{marginBottom: 0}}>
-                            <ArrowLeft size={24} />
-                        </button>
-                        <h2 style={{flex: 1, marginLeft: '10px'}}>좋아요</h2>
-                    </div>
-                </div>
-                <div className="product-list" style={{paddingTop: '20px'}}>
-                    {likedProducts.length === 0 ? (
-                        <p style={{textAlign: 'center', padding: '100px 0', color: '#888'}}>좋아요 한 상품이 없습니다.</p>
-                    ) : (
-                        likedProducts.map(item => (
-                            <div key={item.id} className="product-card" style={{display: 'flex', padding: '15px', gap: '15px', alignItems: 'center'}}>
-                                <img src={item.image} alt={item.title} style={{width: '70px', height: '70px', borderRadius: '10px', objectFit: 'cover'}} />
-                                <div style={{flex: 1}}>
-                                    <h3 style={{fontSize: '16px', margin: '0 0 5px 0'}}>{item.title}</h3>
-                                    <p style={{fontWeight: 'bold', margin: 0}}>{item.price}</p>
-                                </div>
-                                <button onClick={() => toggleLike(item.id)} style={{background: 'none', border: 'none', color: '#ff4b4b', cursor: 'pointer'}}>
-                                    <Trash2 size={20} />
-                                </button>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
+            <Wishlist 
+                likedProducts={likedProducts} 
+                onBack={() => setViewMode('main')} 
+                onRemove={toggleLike} 
+            />
         );
     }
 
     // --- [화면 4] 장바구니 화면 ---
     if (viewMode === 'cart') {
         return (
-            <div className="gift-shop-wrapper">
-                <div className="shop-header">
-                    <div className="header-title-row">
-                        <button className="back-button" onClick={() => setViewMode('main')} style={{marginBottom: 0}}>
-                            <ArrowLeft size={24} />
-                        </button>
-                        <h2 style={{flex: 1, marginLeft: '10px'}}>장바구니</h2>
-                    </div>
-                </div>
-                <div style={{textAlign: 'center', padding: '100px 0'}}>
-                    <ShoppingBag size={48} style={{color: '#eee', marginBottom: '10px'}} />
-                    <p style={{color: '#888'}}>장바구니가 비어있습니다.</p>
-                </div>
-            </div>
+            <Cart 
+                cartItems={cartItems} 
+                onBack={() => setViewMode('main')} 
+                onRemove={removeFromCart} 
+            />
         );
     }
 
@@ -231,9 +209,29 @@ const GiftShop = () => {
                                 />
                             </button>
                         </div>
-                        <p className="detail-price">{selectedProduct.price}</p>
+
+                        <div className="price-quantity-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <p className="detail-price" style={{ margin: 0 }}>{selectedProduct.price}</p>
+                            <div className="quantity-counter" style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#f5f5f5', padding: '5px 15px', borderRadius: '20px' }}>
+                                <button onClick={() => handleQty('minus')} style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}>-</button>
+                                <span style={{ fontWeight: 'bold' }}>{quantity}</span>
+                                <button onClick={() => handleQty('plus')} style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}>+</button>
+                            </div>
+                        </div>
+
                         <p className="detail-description">{selectedProduct.description}</p>
-                        <button className="buy-button">구매하기</button>
+                        
+                        <button 
+                            className="buy-button"
+                            onClick={() => {
+                                const itemWithQty = { ...selectedProduct, quantity };
+                                setCartItems(prev => [...prev, itemWithQty]);
+                                setViewMode('cart');
+                                setSelectedProduct(null);
+                            }}
+                        >
+                            {quantity}개 장바구니 담기
+                        </button>
                     </div>
                 </div>
             </div>
@@ -241,28 +239,35 @@ const GiftShop = () => {
     }
 
     // --- [화면 2] 목록 메인 화면 ---
+// --- [화면 2] 목록 메인 화면 ---
     return (
         <div className="gift-shop-wrapper">
+            {/* 상단 헤더 영역 - 구조 단순화 */}
             <div className="shop-header">
                 <div className="header-title-row">
+                    {/* 왼쪽 제목 세트 */}
                     <div className="title-left">
                         <ShoppingBag size={24} /> 
                         <h2>아트 기프트 숍</h2>
                     </div>
+                    
+                    {/* 오른쪽 아이콘 세트 */}
                     <div className="header-icon-group">
                         <button className="icon-btn" onClick={() => setViewMode('wishlist')}>
-                            <Heart size={22} />
+                            <Heart size={24} fill={likedItems.length > 0 ? "#000" : "none"} />
                             {likedItems.length > 0 && <span className="badge">{likedItems.length}</span>}
                         </button>
                         <button className="icon-btn" onClick={() => setViewMode('cart')}>
-                            <ShoppingBag size={22} />
-                            <span className="badge">0</span>
+                            <ShoppingBag size={24} />
+                            {cartItems.length > 0 && <span className="badge">{cartItems.length}</span>}
                         </button>
                     </div>
                 </div>
+                {/* 설명글은 row 밖으로 빼서 무조건 아래로 가게 함 */}
                 <p className="shop-description">전시의 감동을 특별한 굿즈로 간직하세요.</p>
             </div>
 
+            {/* 카테고리 탭 (기존 코드 유지) */}
             <div className="category-container">
                 {categories.map((tab) => (
                     <button
@@ -275,9 +280,10 @@ const GiftShop = () => {
                 ))}
             </div>
 
+            {/* 상품 리스트 (기존 코드 유지) */}
             <div className="product-list">
                 {filteredProducts.map((item) => (
-                    <div key={item.id} className="product-card">
+                    <div key={item.id} className="product-card" onClick={() => setSelectedProduct(item)}>
                         <div className="product-image-container">
                             <div className="category-tag">{item.category}</div>
                             <img src={item.image} alt={item.title} className="product-image" />
@@ -288,11 +294,7 @@ const GiftShop = () => {
                                     toggleLike(item.id);
                                 }}
                             >
-                                <Heart
-                                    size={20}
-                                    fill={likedItems.includes(item.id) ? '#FF4B4B' : 'none'}
-                                    stroke={likedItems.includes(item.id) ? '#FF4B4B' : '#000'}
-                                />
+                                <Heart size={20} fill={likedItems.includes(item.id) ? '#FF4B4B' : 'none'} stroke={likedItems.includes(item.id) ? '#FF4B4B' : '#000'} />
                             </button>
                         </div>
                         <div className="product-info">
@@ -300,9 +302,7 @@ const GiftShop = () => {
                                 <h3>{item.title}</h3>
                                 <span className="product-price">{item.price}</span>
                             </div>
-                            <button className="detail-btn" onClick={() => setSelectedProduct(item)}>
-                                상세보기
-                            </button>
+                            <button className="detail-btn">상세보기</button>
                         </div>
                     </div>
                 ))}
