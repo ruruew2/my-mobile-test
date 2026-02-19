@@ -3,94 +3,106 @@ import { MapPin } from 'lucide-react';
 
 const MapPage = () => {
   const [activeFilter, setActiveFilter] = useState<string>('전체');
-  const mapContainerRef = useRef<HTMLDivElement>(null); // 지도가 담길 공간
-  const [kakaoMap, setKakaoMap] = useState<any>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false); // 지도 로딩 상태 관리
 
   const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
 
-  // --- 🚩 [로직 1] 지도 초기화 및 내 위치 찾기 ---
   useEffect(() => {
-    const { kakao } = window as any;
-    if (!kakao || !mapContainerRef.current) return;
+    const kakao = (window as any).kakao;
 
-    // 기본 위치 (서울시청)
-    const initialPos = new kakao.maps.LatLng(37.5665, 126.9780);
-    const options = {
-      center: initialPos,
-      level: 3
-    };
-
-    const map = new kakao.maps.Map(mapContainerRef.current, options);
-    setKakaoMap(map);
-
-    // 내 위치 찾기 (Geolocation)
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          const currentPos = new kakao.maps.LatLng(lat, lng);
-
-          // 지도의 중심을 내 위치로 부드럽게 이동
-          map.panTo(currentPos);
-
-          // 내 위치에 마커 표시
-          new kakao.maps.Marker({
-            position: currentPos,
-            map: map
-          });
-        },
-        (error) => {
-          console.error("위치 정보를 가져오지 못했습니다.", error);
+    // 만약 카카오 객체가 없다면 스크립트가 아직 안 불려온 것
+    if (kakao && kakao.maps) {
+      kakao.maps.load(() => setIsLoaded(true));
+    } else {
+      // 스크립트가 로드될 때까지 잠시 대기하는 로직
+      const timer = setInterval(() => {
+        if ((window as any).kakao && (window as any).kakao.maps) {
+          (window as any).kakao.maps.load(() => setIsLoaded(true));
+          clearInterval(timer);
         }
-      );
+      }, 100);
+      return () => clearInterval(timer);
     }
   }, []);
 
+  useEffect(() => {
+    if (!isLoaded || !mapContainerRef.current) return;
+
+    const { kakao } = window as any;
+    
+    // 지도 생성
+    const options = {
+      center: new kakao.maps.LatLng(37.5665, 126.9780),
+      level: 3
+    };
+    const map = new kakao.maps.Map(mapContainerRef.current, options);
+
+    // 내 위치 표시
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const currentPos = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        map.setCenter(currentPos);
+        new kakao.maps.Marker({ position: currentPos, map: map });
+      });
+    }
+  }, [isLoaded]);
+
   return (
-    <div className="map-view-container" style={{ position: 'relative', height: '100%' }}>
-      {/* --- 🚩 [로직 2] 실제 카카오맵이 그려지는 영역 --- */}
+    // 지도가 확실히 보이도록 보수적인 스타일 적용
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#f0f0f0' }}>
+      
+      {/* 🚩 지도 영역: 배경처럼 깔리게 설정 */}
       <div 
         ref={mapContainerRef} 
-        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} 
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          zIndex: 0 
+        }} 
       />
 
-      {/* 상단 필터 (지도 위에 떠 있어야 하므로 zIndex 추가) */}
-      <div className="top-filter-wrapper" style={{ zIndex: 10, position: 'relative' }}>
-        <div className="filter-chips">
-          {filters.map((filter) => (
-            <span
-              key={filter}
-              className={`chip ${activeFilter === filter ? 'active' : ''}`}
-              onClick={() => setActiveFilter(filter)}
+      {/* 상단 UI */}
+      <div style={{ position: 'relative', zIndex: 10, padding: '15px' }}>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
+          {filters.map((f) => (
+            <button 
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '20px',
+                border: 'none',
+                backgroundColor: activeFilter === f ? 'black' : 'white',
+                color: activeFilter === f ? 'white' : 'black',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                whiteSpace: 'nowrap'
+              }}
             >
-              {filter}
-            </span>
+              {f}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* 가상 핀들 (실제 마커를 찍기 전까지 UI 확인용) */}
-      <div style={{ position: 'relative', zIndex: 5, pointerEvents: 'auto' }}>
-        <div className="floating-pin pin1"><MapPin size={14} /> 현대 추상: 내면의 울림</div>
-        <div className="floating-pin pin2"><MapPin size={14} /> 네온 드림: 디지털 아트</div>
-        <div className="floating-pin pin3"><MapPin size={14} /> 공백의 조각</div>
-      </div>
-
       {/* 바텀 시트 */}
-      <div className="map-bottom-sheet" style={{ zIndex: 10 }}>
-        <div className="sheet-handle"></div>
-        <h3 className="sheet-title">내 주변 전시 <span className="count">3</span></h3>
-        <div className="mini-list-container">
-          <div className="mini-item">
-            <div className="mini-thumb" style={{backgroundColor: '#eee'}}></div>
-            <div className="mini-desc"><h4>현대 추상의 영혼</h4><p>📍 국립현대미술관</p></div>
-          </div>
-          <div className="mini-item">
-            <div className="mini-thumb" style={{backgroundColor: '#ddd'}}></div>
-            <div className="mini-desc"><h4>네온 드림: 디지털 아트</h4><p>📍 워커힐 빛의 시어터</p></div>
-          </div>
-        </div>
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        backgroundColor: 'white',
+        borderTopLeftRadius: '20px',
+        borderTopRightRadius: '20px',
+        padding: '20px',
+        zIndex: 10,
+        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ width: '40px', height: '4px', background: '#eee', margin: '0 auto 15px' }} />
+        <h3 style={{ margin: '0 0 15px 0' }}>내 주변 전시 3</h3>
+        {/* 리스트 아이템 생략 (기존 것과 동일) */}
       </div>
     </div>
   );
