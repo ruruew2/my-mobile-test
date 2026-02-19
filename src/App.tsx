@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ArtLog.css';
 import './Login.css';
+import './GuidePage.css'; 
 import MyPage from './MyPage';
 import RootPage from './Root';
 import LoginPage from "./LoginPage";
 import Giftshop from './GiftShop';
 import MapPage from "./Map.tsx"; 
+import GuidePage from "./GuidePage"; 
+
 import { 
   Home, Map, Mic, Compass, Bell, User, Heart,
   X, Sparkles, CheckCircle2, ChevronRight, MapPin,
@@ -17,13 +20,13 @@ const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
   const [selected, setSelected] = useState<string[]>([]);
   const [toast, setToast] = useState(false);
 
-  const tags = [
-    "#미디어아트", "#추상화", "#사진전", "#미니멀리즘", 
-    "#현대미술", "#팝아트", "#서양화", "#동양화", 
-    "#설치미술", "#인터랙티브", "#뮤지컬", "#연극", 
-    "#클래식", "#재즈", "#몰입형전시", "#건축전", 
-    "#아트페어", "#오브제", "#한국화"
-  ];
+const tags = [
+  "#화려한", "#몽환적인", "#생생한", "#정갈한", 
+  "#트렌디한", "#톡톡튀는", "#우아한", "#은은한", 
+  "#과감한", "#능동적인", "#웅장한", "#깊이있는", 
+  "#고전적인", "#자유로운", "#압도적인", "#입체적인", 
+  "#다채로운", "#섬세한"
+];
 
   useEffect(() => {
     setToast(true);
@@ -116,16 +119,22 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home'); 
   const [isNotifyOpen, setIsNotifyOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
-  // 🚩 스크롤 목적지 상태 추가
   const [targetCourse, setTargetCourse] = useState<string | null>(null);
+
+  // 🚩 [추가] 가이드 페이지 진입 시 서브 탭 상태 (기본 'human')
+  const [guideSubTab, setGuideSubTab] = useState<'human' | 'ai'>('human');
 
   const [notifications, setNotifications] = useState([
     { id: 1, icon: <Sparkles size={18} color="#7C4DFF" />, title: "새로운 추천 전시", desc: "성수동 전시가 오픈했어요!", time: "방금 전", isRead: false },
     { id: 2, icon: <CheckCircle2 size={18} color="#4CAF50" />, title: "도슨트 예약 완료", desc: "예약이 확정되었습니다.", time: "2시간 전", isRead: false }
   ]);
 
-  // 🚩 함수 수정: 이제 직접 스크롤하지 않고 목적지만 설정합니다.
+  // 🚩 [추가] 가이드 탭으로 이동하면서 서브 탭을 설정하는 함수
+const navigateToGuide = (subType: 'human' | 'ai') => {
+  setGuideSubTab(subType);
+  setActiveTab('guide'); 
+};
+
   const handleCourseClick = (courseId: string) => {
     setTargetCourse(courseId);
     setActiveTab('course');
@@ -169,7 +178,7 @@ export default function App() {
             <section className="section">
               <div className="section-header">
                 <h3>지금 화제인 전시</h3>
-                <button className="view-all">VIEW ALL</button>
+                <button className="view-all">전체보기</button>
               </div>
               <ExhibitCarousel>
                 <ExhibitCard tag="추상화" title="현대 추상의 영혼" location="국립현대미술관" />
@@ -178,28 +187,37 @@ export default function App() {
               </ExhibitCarousel>
             </section>
 
+            {/* --- 🚩 프리미엄 도슨트 섹션 연결 --- */}
             <section className="section">
               <div className="section-header">
                 <div className="title-group">
                   <h3>프리미엄 도슨트</h3>
                   <span className="sub-title">EXPERT CURATION GUIDES</span>
                 </div>
-                <button className="view-all">전체보기</button> {/* 추후 도슨트/가이드 탭 활성화 시 탭 이동 로직 추가 필요 */}
+                {/* 🚩 수정: navigateToGuide('human') 연결 */}
+                <button className="view-all" onClick={() => navigateToGuide('human')}>
+                  전체보기
+                </button>
               </div>
               <div className="docent-list">
-                <div className="docent-card active-guide">
-                  <div className="docent-profile ai-bot">🤖</div>
-                  <div className="docent-info">
-                    <div className="docent-name">아티 (AI 가이드) <span className="ai-tag">AI</span></div>
-                    <p className="docent-desc">추상화, 디지털 아트, 빠른 요약</p>
-                    <div className="docent-price">무료 (AI)</div>
-                  </div>
-                  <div className="docent-action">
-                    <div className="rating">⭐ 4.8 <span className="count">(1250)</span></div>
-                    <button className="action-btn black">해설 시작</button>
-                  </div>
+              {/* 🚩 아티 카드: 클릭 시 'ai' 탭으로 바로 이동 */}
+              <div className="docent-card active-guide" onClick={() => navigateToGuide('ai')}>
+                <div className="docent-profile ai-bot">🤖</div>
+                <div className="docent-info">
+                  <div className="docent-name">아티 (AI 가이드) <span className="ai-tag">AI</span></div>
+                  <p className="docent-desc">추상화, 디지털 아트, 빠른 요약</p>
+                  <div className="docent-price">무료 (AI)</div>
                 </div>
-                <div className="docent-card">
+                  <div className="docent-action">
+                  <div className="rating">⭐ 4.8 <span className="count">(1250)</span></div>
+                  {/* 🚩 수정: navigateToGuide('ai') 연결 */}
+                  <button className="action-btn black" onClick={(e) => { e.stopPropagation(); navigateToGuide('ai'); }}>
+                    해설 시작
+                  </button>
+                </div>
+              </div>
+                {/* 🚩 수정: navigateToGuide('human') 연결 */}
+                <div className="docent-card" onClick={() => navigateToGuide('human')}>
                   <div className="docent-profile">👩‍🎨</div>
                   <div className="docent-info">
                     <div className="docent-name">김사랑 도슨트</div>
@@ -220,11 +238,8 @@ export default function App() {
                   <h3>추천 나들이 코스</h3>
                   <span className="sub-title">CURATED DAILY ROUTES</span>
                 </div>
-{/* 🚩 onClick 추가: 'course' 탭으로 이동 */}
-    <button className="view-all" onClick={() => setActiveTab('course')}>
-      전체보기
-    </button>
-  </div>
+                <button className="view-all" onClick={() => setActiveTab('course')}>전체보기</button>
+              </div>
 
               <div className="course-list">
                 <div className="course-card" onClick={() => handleCourseClick('course-seongsu')}>
@@ -250,6 +265,9 @@ export default function App() {
         </>
       ) : activeTab === 'map' ? (
         <MapPage />
+      ) : activeTab === 'guide' ? (
+        // 🚩 수정: GuidePage에 initialTab 전달
+        <GuidePage initialTab={guideSubTab} />
       ) : activeTab === 'course' ? (
         <RootPage targetCourse={targetCourse} setTargetCourse={setTargetCourse} />
       ) : activeTab === 'gift' ? (
@@ -267,22 +285,30 @@ export default function App() {
         <div style={{padding: '100px 20px', textAlign: 'center'}}>준비 중인 페이지입니다.</div>
       )}
 
+{/* --- 🚩 하단 내비게이션 (오타 완전 수정) --- */}
       <nav className="bottom-nav">
-        <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-          <Home size={24} /><span>홈</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}>
-          <Map size={24} /><span>지도</span>
-        </div>
-        <div className="nav-item"><Mic size={24} /><span>가이드</span></div>
-        <div className={`nav-item ${activeTab === 'course' ? 'active' : ''}`} onClick={() => setActiveTab('course')}>
-          <Compass size={24} /><span>코스</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} onClick={() => setActiveTab('gift')}>
-          <Gift size={24} /><span>기프트</span>
-        </div>
+        <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}><Home size={24} /><span>홈</span></div>
+        <div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}><Map size={24} /><span>지도</span></div>
+        <div className={`nav-item ${activeTab === 'guide' ? 'active' : ''}`} onClick={() => navigateToGuide('human')}><Mic size={24} /><span>가이드</span></div>
+        <div className={`nav-item ${activeTab === 'course' ? 'active' : ''}`} onClick={() => setActiveTab('course')}><Compass size={24} /><span>코스</span></div>
+<div 
+  className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} 
+  onClick={() => {
+    // 이미 기프트 탭일 때 또 누르면 강제로 새로고침 효과 주기
+    if (activeTab === 'gift') {
+      setActiveTab(''); // 잠시 비웠다가
+      setTimeout(() => setActiveTab('gift'), 10); // 다시 기프트로 설정
+    } else {
+      setActiveTab('gift');
+    }
+  }}
+>
+  <Gift size={24} />
+  <span>기프트</span>
+</div>
       </nav>
 
+      {/* --- 알림 모달 --- */}
       {isNotifyOpen && (
         <div className="modal-overlay" onClick={() => setIsNotifyOpen(false)}>
           <div className="notification-modal" onClick={(e) => e.stopPropagation()}>

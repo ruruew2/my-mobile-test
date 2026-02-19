@@ -1,29 +1,44 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
+
+// TypeScript 환경을 위한 선언
+declare global {
+  interface Window {
+    kakao: any;
+  }
+}
 
 const MapPage = () => {
   const [activeFilter, setActiveFilter] = useState<string>('전체');
-  const mapContainerRef = useRef<HTMLDivElement>(null); // 지도가 담길 공간
-  const [kakaoMap, setKakaoMap] = useState<any>(null);
-
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
 
-  // --- 🚩 [로직 1] 지도 초기화 및 내 위치 찾기 ---
   useEffect(() => {
-    const { kakao } = window as any;
-    if (!kakao || !mapContainerRef.current) return;
+    const { kakao } = window;
 
-    // 기본 위치 (서울시청)
-    const initialPos = new kakao.maps.LatLng(37.5665, 126.9780);
+    // 1. 카카오 객체가 있는지 확인
+    if (kakao && kakao.maps) {
+      // 2. autoload=false로 설정했을 경우 load 콜백 내에서 실행해야 함
+      kakao.maps.load(() => {
+        initMap();
+      });
+    } else {
+      console.error("카카오맵 스크립트가 index.html에 없거나 로드되지 않았습니다.");
+    }
+  }, []);
+
+  const initMap = () => {
+    if (!mapContainerRef.current) return;
+
+    const { kakao } = window;
     const options = {
-      center: initialPos,
+      center: new kakao.maps.LatLng(37.5665, 126.9780), // 기본 위치: 서울 시청
       level: 3
     };
 
+    // 지도 생성
     const map = new kakao.maps.Map(mapContainerRef.current, options);
-    setKakaoMap(map);
 
-    // 내 위치 찾기 (Geolocation)
+    // 내 위치 가져오기 (성공 시 마커 표시 및 이동)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -31,66 +46,78 @@ const MapPage = () => {
           const lng = position.coords.longitude;
           const currentPos = new kakao.maps.LatLng(lat, lng);
 
-          // 지도의 중심을 내 위치로 부드럽게 이동
-          map.panTo(currentPos);
-
-          // 내 위치에 마커 표시
+          // 내 위치 마커
           new kakao.maps.Marker({
             position: currentPos,
             map: map
           });
+
+          // 내 위치로 지도 중심 이동
+          map.setCenter(currentPos);
         },
         (error) => {
-          console.error("위치 정보를 가져오지 못했습니다.", error);
+          console.warn("위치 정보 권한을 거부하셨거나 가져올 수 없습니다.", error);
         }
       );
     }
-  }, []);
+  };
 
   return (
-    <div className="map-view-container" style={{ position: 'relative', height: '100%' }}>
-      {/* --- 🚩 [로직 2] 실제 카카오맵이 그려지는 영역 --- */}
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#eee' }}>
+      
+      {/* 🚩 지도 영역: height가 0이 되지 않도록 100% 설정 확인 */}
       <div 
         ref={mapContainerRef} 
-        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} 
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          position: 'absolute', 
+          top: 0,
+          left: 0,
+          zIndex: 0 
+        }} 
       />
 
-      {/* 상단 필터 (지도 위에 떠 있어야 하므로 zIndex 추가) */}
-      <div className="top-filter-wrapper" style={{ zIndex: 10, position: 'relative' }}>
-        <div className="filter-chips">
-          {filters.map((filter) => (
-            <span
-              key={filter}
-              className={`chip ${activeFilter === filter ? 'active' : ''}`}
-              onClick={() => setActiveFilter(filter)}
+      {/* 상단 필터 UI */}
+      <div style={{ position: 'relative', zIndex: 10, padding: '15px' }}>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px' }}>
+          {filters.map((f) => (
+            <button 
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '20px',
+                border: 'none',
+                backgroundColor: activeFilter === f ? 'black' : 'white',
+                color: activeFilter === f ? 'white' : 'black',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
             >
-              {filter}
-            </span>
+              {f}
+            </button>
           ))}
         </div>
       </div>
 
-      {/* 가상 핀들 (실제 마커를 찍기 전까지 UI 확인용) */}
-      <div style={{ position: 'relative', zIndex: 5, pointerEvents: 'none' }}>
-        <div className="floating-pin pin1"><MapPin size={14} /> 현대 추상: 내면의 울림</div>
-        <div className="floating-pin pin2"><MapPin size={14} /> 네온 드림: 디지털 아트</div>
-        <div className="floating-pin pin3"><MapPin size={14} /> 공백의 조각</div>
-      </div>
-
       {/* 바텀 시트 */}
-      <div className="map-bottom-sheet" style={{ zIndex: 10 }}>
-        <div className="sheet-handle"></div>
-        <h3 className="sheet-title">내 주변 전시 <span className="count">3</span></h3>
-        <div className="mini-list-container">
-          <div className="mini-item">
-            <div className="mini-thumb" style={{backgroundColor: '#eee'}}></div>
-            <div className="mini-desc"><h4>현대 추상의 영혼</h4><p>📍 국립현대미술관</p></div>
-          </div>
-          <div className="mini-item">
-            <div className="mini-thumb" style={{backgroundColor: '#ddd'}}></div>
-            <div className="mini-desc"><h4>네온 드림: 디지털 아트</h4><p>📍 워커힐 빛의 시어터</p></div>
-          </div>
-        </div>
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        backgroundColor: 'white',
+        borderTopLeftRadius: '24px',
+        borderTopRightRadius: '24px',
+        padding: '20px',
+        zIndex: 10,
+        boxShadow: '0 -4px 12px rgba(0,0,0,0.08)'
+      }}>
+        <div style={{ width: '40px', height: '4px', background: '#e5e5e5', borderRadius: '2px', margin: '0 auto 16px' }} />
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 'bold' }}>내 주변 전시</h3>
+        <p style={{ color: '#888', fontSize: '14px', margin: 0 }}>지도를 움직여 다양한 예술 공간을 찾아보세요.</p>
       </div>
     </div>
   );

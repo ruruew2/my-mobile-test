@@ -1,0 +1,428 @@
+/* [1] 전체 컨테이너: 원본 유지 및 스크롤 끝까지 보장 */
+.gift-shop-wrapper {
+    padding: 20px;
+    background-color: #fff;
+    min-height: 100vh;
+    display: block;
+    box-sizing: border-box;
+    height: auto !important;
+    overflow-y: auto !important;
+}
+
+/* 스크롤바 숨기기 (원본 유지) */
+.gift-shop-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+/* [2] 헤더 영역 복구 */
+.shop-header {
+    width: 100%;
+    margin-bottom: 20px;
+    /* display: flex; 를 절대 넣지 마세요 (세로 배치 방해함) */
+}
+
+
+.header-title-row {
+    display: flex;
+    justify-content: space-between; /* 좌우 끝으로 밀기 */
+    align-items: center;
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+
+/* 서브페이지(장바구니 등) 제목이 쏠리지 않게 */
+.header-title-row h2 {
+    margin-left: 10px;
+    flex: 1; /* 제목이 남은 공간을 다 차지해서 아이콘을 밀어내지 않게 조절 */
+}
+
+
+/* 설명글 스타일 - 독립된 행 유지 */
+.shop-description {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+    padding-left: 2px;
+    display: block; /* 한 줄 전체 차지 */
+}
+
+.category-container {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    white-space: nowrap;
+    margin-bottom: 20px;
+    padding: 5px 20px;
+    margin-left: -20px;
+    margin-right: -20px;
+    scrollbar-width: none;
+}
+.category-btn {
+    padding: 10px 22px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #fff;
+    color: #888;
+    border: 1px solid #eee;
+}
+.category-btn.active {
+    background-color: #000;
+    color: #fff;
+    border: none;
+}
+
+/* [3] 상품 목록: 바닥 여백 최적화 */
+.product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    /* 🚩 기존 120px -> 100px로 줄여서 탭 바와 적당한 거리 유지 */
+    padding-bottom: 100px; 
+}
+
+
+.product-card {
+    border-radius: 20px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    position: relative;
+    cursor: pointer;
+}
+.product-image-container {
+    height: 320px;
+    background-color: #f9f9f9;
+    position: relative;
+}
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.category-tag {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    z-index: 5;
+}
+
+.like-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-info {
+    padding: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+.product-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+.product-price {
+    font-size: 16px;
+    font-weight: 700;
+}
+.detail-btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    background-color: #f5f5f5;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* [4] 상세보기 화면: 스크롤 여백 최적화 */
+.gift-shop-wrapper.detail-view {
+    /* 🚩 기존 400px -> 140px로 대폭 축소! 
+       구매 버튼이 고정이 아니더라도 페이지 끝과 너무 멀어지지 않게 합니다. */
+    padding-bottom: 140px !important;
+}
+
+.back-button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+.detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- [수정 및 추가] 갤러리 시스템 (레퍼런스 스타일) --- */
+.detail-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.main-image-container {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #f5f5f5;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.main-detail-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.thumbnail-list {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 5px 0;
+    scrollbar-width: none; /* Firefox */
+}
+
+.thumbnail-list::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+.thumbnail-item {
+    width: 75px;
+    height: 75px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    background: #f9f9f9;
+}
+
+.thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 클릭된 썸네일 강조 스타일 */
+.thumbnail-item.active {
+    border-color: #000;
+}
+
+.thumbnail-item:hover {
+    opacity: 0.8;
+}
+
+/* --- 상세보기 텍스트 정보 영역 --- */
+.detail-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.detail-like-btn {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.detail-price {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.detail-description {
+    color: #666;
+    line-height: 1.7;
+    font-size: 16px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+    margin-bottom: 30px;
+}
+
+/* [5] 구매하기 버튼: 위치 및 간격 조정 */
+.buy-button {
+    width: 100%;
+    padding: 18px; /* 패딩 살짝 줄여서 덜 거대하게 */
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 16px; /* 폰트 사이즈 살짝 조절 */
+    cursor: pointer;
+    
+    /* 🚩 마진을 줄여 본문과 딱 붙게 만들고, 
+       만약 fixed로 쓰실 거면 아래 주석을 해제하세요. */
+    margin-top: 10px; 
+    
+    display: block;
+    position: relative;
+    z-index: 10;
+}
+
+.buy-button:active {
+    background: #333;
+}
+
+
+.fixed-buy-wrapper {
+    position: fixed;
+    bottom: 80px; 
+    left: 0;
+    right: 0;
+    padding: 0 20px;
+    background: transparent;
+    z-index: 1000;
+}
+
+
+
+/* 헤더 타이틀 행 전체 설정 */
+.header-title-row {
+    display: flex;
+    justify-content: space-between; /* 왼쪽 제목과 오른쪽 아이콘 분리 */
+    align-items: center;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.title-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.title-left h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 0;
+    color: #000;
+}
+
+
+
+/* 오른쪽 아이콘 그룹 */
+.header-icon-group {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* 아이콘 버튼 초기화 */
+.icon-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 숫자 배지 (좋아요/장바구니 개수 표시) */
+.badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: #FF4B4B;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    min-width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+}
+
+/* 가격과 수량 조절기 레이아웃 */
+.price-quantity-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.price-quantity-row .detail-price {
+    margin-bottom: 0; /* 기존 마진 제거 */
+    font-size: 22px;
+}
+
+/* 수량 조절기 디자인 */
+.quantity-counter {
+    display: flex;
+    align-items: center;
+    background: #f1f1f1;
+    border-radius: 30px;
+    padding: 5px 15px;
+    gap: 15px;
+}
+
+.quantity-counter button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #333;
+    padding: 0 5px;
+}
+
+.quantity-counter span {
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* 구매 버튼 내 수량 표시 강조 */
+.buy-button {
+    transition: all 0.2s ease;
+}
+
+.buy-button:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+}

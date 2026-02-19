@@ -1,0 +1,107 @@
+/* [1] 헤더 영역: 화살표와 제목이 겹치지 않게 */
+.wishlist-page .shop-header,
+.cart-page .shop-header {
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.wishlist-page .header-title-row,
+.cart-page .header-title-row {
+    display: flex !important;
+    align-items: center !important;
+    padding: 16px 20px !important;
+    gap: 12px !important; /* 화살표와 글자 사이 간격 */
+}
+
+.wishlist-page .page-title,
+.cart-page .page-title {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    margin: 0 !important; /* 마진 초기화 */
+    line-height: 1 !important;
+}
+
+.back-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 4px !important;
+}
+
+/* [2] 리스트 컨테이너 여백 */
+.sub-page-list {
+    padding: 10px 20px 100px !important;
+}
+
+/* [3] 가로형 카드: 강제 가로 정렬 */
+.horizontal-card {
+    display: flex !important;
+    flex-direction: row !important; /* 세로로 쌓이는 것 방지 */
+    align-items: center !important;
+    background: #fff !important;
+    border-radius: 16px !important;
+    padding: 12px !important;
+    margin-bottom: 12px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 이미지 크기 강제 고정 */
+.card-img-wrapper {
+    width: 80px !important;
+    height: 80px !important;
+    min-width: 80px !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    margin-right: 15px !important;
+}
+
+.card-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+/* [4] 정보 영역: 중간에서 확장 */
+.card-info {
+    flex: 1 !important; /* 남은 공간 다 차지 */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-width: 0; /* 텍스트 넘침 방지 */
+}
+
+.card-info .item-title {
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    margin: 0 0 4px 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-info .price {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #111 !important;
+    margin: 0 !important;
+}
+
+/* [5] 삭제 버튼: 오른쪽 끝 고정 */
+.remove-btn {
+    background: #fdf2f2 !important;
+    color: #ff4b4b !important;
+    border: none !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    margin-left: 10px !important;
+    cursor: pointer;
+}
