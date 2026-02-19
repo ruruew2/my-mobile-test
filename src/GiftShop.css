@@ -1,88 +1,76 @@
-/* 전체 컨테이너 */
+/* [1] 전체 컨테이너: 원본 유지 및 스크롤 끝까지 보장 */
 .gift-shop-wrapper {
     padding: 20px;
     background-color: #fff;
-    height: 100vh;
-    overflow-y: auto;
-    scrollbar-width: none; /* Firefox 스크롤바 숨김 */
-    -ms-overflow-style: none; /* IE, Edge 스크롤바 숨김 */
+    min-height: 100vh;
+    display: block;
+    box-sizing: border-box;
+    height: auto !important;
+    overflow-y: auto !important;
 }
 
+/* 스크롤바 숨기기 (원본 유지) */
 .gift-shop-wrapper::-webkit-scrollbar {
-    display: none; /* Chrome, Safari 스크롤바 숨김 */
+    display: none;
 }
 
-/* 헤더 영역 */
+/* [2] 헤더 및 카테고리 (원본 코드 유지) */
 .shop-header {
     margin-bottom: 20px;
 }
-
 .header-title-row {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
 }
-
 .header-title-row h2 {
     font-size: 22px;
     font-weight: bold;
     margin: 0;
 }
-
 .shop-description {
     color: #888;
     font-size: 14px;
     margin: 0;
 }
 
-/* 카테고리 탭 (가로 스크롤 핵심) */
 .category-container {
     display: flex;
     gap: 10px;
     overflow-x: auto;
     white-space: nowrap;
     margin-bottom: 20px;
-    padding: 5px 20px; /* 좌우 패딩을 주어 시작과 끝에 여백 확보 */
-    margin-left: -20px; /* 부모 패딩 상쇄 */
+    padding: 5px 20px;
+    margin-left: -20px;
     margin-right: -20px;
-    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
-
-.category-container::-webkit-scrollbar {
-    display: none;
-}
-
 .category-btn {
     padding: 10px 22px;
     border-radius: 25px;
     font-weight: 600;
-    flex-shrink: 0; /* 버튼이 찌그러지지 않게 함 */
     font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    background-color: #fff;
+    color: #888;
+    border: 1px solid #eee;
 }
-
 .category-btn.active {
     background-color: #000;
     color: #fff;
     border: none;
 }
 
-.category-btn.inactive {
-    background-color: #fff;
-    color: #888;
-    border: 1px solid #eee;
-}
-
-/* 상품 리스트 */
+/* [3] 상품 목록: 바닥 여백 최적화 */
 .product-list {
     display: flex;
     flex-direction: column;
     gap: 25px;
-    padding-bottom: 120px;
+    /* 🚩 기존 120px -> 100px로 줄여서 탭 바와 적당한 거리 유지 */
+    padding-bottom: 100px; 
 }
+
 
 .product-card {
     border-radius: 20px;
@@ -90,8 +78,18 @@
     background-color: #fff;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
     position: relative;
+    cursor: pointer;
 }
-
+.product-image-container {
+    height: 320px;
+    background-color: #f9f9f9;
+    position: relative;
+}
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 .category-tag {
     position: absolute;
     top: 15px;
@@ -101,18 +99,23 @@
     border-radius: 6px;
     font-size: 11px;
     font-weight: bold;
-    z-index: 1;
+    z-index: 5;
 }
 
-.product-image-container {
-    height: 320px;
-    background-color: #f9f9f9;
-}
-
-.product-image-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.like-button {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.8) !important;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .product-info {
@@ -121,27 +124,178 @@
     justify-content: space-between;
     align-items: flex-end;
 }
-
 .product-info h3 {
     margin: 0 0 8px 0;
     font-size: 18px;
     font-weight: bold;
-    color: #111;
 }
-
 .product-price {
     font-size: 16px;
     font-weight: 700;
-    color: #111;
 }
-
 .detail-btn {
     padding: 10px 18px;
     border-radius: 10px;
     border: none;
     background-color: #f5f5f5;
-    color: #333;
     font-weight: bold;
-    font-size: 13px;
     cursor: pointer;
+}
+
+/* [4] 상세보기 화면: 스크롤 여백 최적화 */
+.gift-shop-wrapper.detail-view {
+    /* 🚩 기존 400px -> 140px로 대폭 축소! 
+       구매 버튼이 고정이 아니더라도 페이지 끝과 너무 멀어지지 않게 합니다. */
+    padding-bottom: 140px !important;
+}
+
+.back-button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    padding: 0;
+}
+
+.detail-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- [수정 및 추가] 갤러리 시스템 (레퍼런스 스타일) --- */
+.detail-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.main-image-container {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #f5f5f5;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.main-detail-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.thumbnail-list {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 5px 0;
+    scrollbar-width: none; /* Firefox */
+}
+
+.thumbnail-list::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
+.thumbnail-item {
+    width: 75px;
+    height: 75px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    background: #f9f9f9;
+}
+
+.thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 클릭된 썸네일 강조 스타일 */
+.thumbnail-item.active {
+    border-color: #000;
+}
+
+.thumbnail-item:hover {
+    opacity: 0.8;
+}
+
+/* --- 상세보기 텍스트 정보 영역 --- */
+.detail-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.detail-like-btn {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.detail-price {
+    font-size: 22px;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.detail-description {
+    color: #666;
+    line-height: 1.7;
+    font-size: 16px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+    margin-bottom: 30px;
+}
+
+/* [5] 구매하기 버튼: 위치 및 간격 조정 */
+.buy-button {
+    width: 100%;
+    padding: 18px; /* 패딩 살짝 줄여서 덜 거대하게 */
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 16px; /* 폰트 사이즈 살짝 조절 */
+    cursor: pointer;
+    
+    /* 🚩 마진을 줄여 본문과 딱 붙게 만들고, 
+       만약 fixed로 쓰실 거면 아래 주석을 해제하세요. */
+    margin-top: 10px; 
+    
+    display: block;
+    position: relative;
+    z-index: 10;
+}
+
+.buy-button:active {
+    background: #333;
+}
+
+
+.fixed-buy-wrapper {
+    position: fixed;
+    bottom: 80px; 🚩 탭 바 바로 위
+    left: 0;
+    right: 0;
+    padding: 0 20px;
+    background: transparent;
+    z-index: 1000;
 }

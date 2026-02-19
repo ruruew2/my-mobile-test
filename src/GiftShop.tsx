@@ -9,10 +9,11 @@ const GiftShop = () => {
     const [likedItems, setLikedItems] = useState<number[]>([]);
 
     useEffect(() => {
-        window.scrollTo(0, 0);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }, [selectedProduct]);
 
     const toggleLike = (id: number) => {
+        ``;
         setLikedItems((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
     };
 
@@ -91,6 +92,7 @@ const GiftShop = () => {
             category: '인테리어',
             title: '행운의 북어벨',
             price: '35,000원',
+            price_num: 35000,
             image: 'https://res.cloudinary.com/ddr95otqk/image/upload/v1770949209/decor_fishbell_main_kmeofv.jpg',
             description: '평안과 복을 기원하는 도어벨입니다.',
             isMain: true,
@@ -122,101 +124,48 @@ const GiftShop = () => {
 
     // --- [화면 1] 상세보기 화면 ---
     if (selectedProduct) {
-        // detailImages가 없으면 기본 image라도 나오도록 설정
         const displayImages =
             selectedProduct.detailImages && selectedProduct.detailImages.length > 0
                 ? selectedProduct.detailImages
                 : [selectedProduct.image];
 
         return (
-            <div className="gift-shop-wrapper" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+            <div className="gift-shop-wrapper detail-view">
                 <button
+                    className="back-button"
                     onClick={() => {
                         setSelectedProduct(null);
                         setCurrentImgIdx(0);
                     }}
-                    style={{
-                        border: 'none',
-                        background: 'none',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        marginBottom: '20px',
-                    }}
                 >
-                    <ArrowLeft size={24} /> <span style={{ marginLeft: '10px', fontSize: '18px' }}>목록으로</span>
+                    <ArrowLeft size={24} /> <span>목록으로</span>
                 </button>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <div
-                        style={{
-                            position: 'relative',
-                            width: '100%',
-                            maxWidth: '700px',
-                            aspectRatio: '1/1',
-                            background: '#f5f5f5',
-                            borderRadius: '20px',
-                            overflow: 'hidden',
-                        }}
-                    >
-                        {/* 🚩 사진 출력 경로 수정 (displayImages 사용) */}
-                        <img
-                            src={displayImages[currentImgIdx]}
-                            alt="detail"
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
 
-                        {displayImages.length > 1 && (
-                            <div
-                                style={{
-                                    position: 'absolute',
-                                    width: '100%',
-                                    top: '50%',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    transform: 'translateY(-50%)',
-                                    padding: '0 10px',
-                                }}
-                            >
-                                <button
-                                    onClick={() =>
-                                        setCurrentImgIdx(
-                                            (prev) => (prev - 1 + displayImages.length) % displayImages.length,
-                                        )
-                                    }
-                                    style={{
-                                        background: 'rgba(255,255,255,0.7)',
-                                        border: 'none',
-                                        borderRadius: '50%',
-                                        width: '40px',
-                                        height: '40px',
-                                        cursor: 'pointer',
-                                    }}
+                <div className="detail-content">
+                    {/* --- [수정] 레퍼런스 스타일의 갤러리 영역 --- */}
+                    <div className="detail-gallery">
+                        <div className="main-image-container">
+                            <img src={displayImages[currentImgIdx]} alt="detail" className="main-detail-image" />
+                        </div>
+
+                        {/* 하단 썸네일 리스트: 2개 이상일 때만 표시하거나 항상 표시 가능 */}
+                        <div className="thumbnail-list">
+                            {displayImages.map((img: string, idx: number) => (
+                                <div
+                                    key={idx}
+                                    className={`thumbnail-item ${currentImgIdx === idx ? 'active' : ''}`}
+                                    onClick={() => setCurrentImgIdx(idx)}
                                 >
-                                    <ChevronLeft />
-                                </button>
-                                <button
-                                    onClick={() => setCurrentImgIdx((prev) => (prev + 1) % displayImages.length)}
-                                    style={{
-                                        background: 'rgba(255,255,255,0.7)',
-                                        border: 'none',
-                                        borderRadius: '50%',
-                                        width: '40px',
-                                        height: '40px',
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    <ChevronRight />
-                                </button>
-                            </div>
-                        )}
+                                    <img src={img} alt={`thumb-${idx}`} />
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <div style={{ width: '100%', maxWidth: '700px', marginTop: '30px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h2 style={{ fontSize: '28px' }}>{selectedProduct.title}</h2>
-                            <button
-                                onClick={() => toggleLike(selectedProduct.id)}
-                                style={{ border: 'none', background: 'none', cursor: 'pointer' }}
-                            >
+
+                    <div className="detail-info-section">
+                        <div className="detail-header-row">
+                            <h2>{selectedProduct.title}</h2>
+                            <button className="detail-like-btn" onClick={() => toggleLike(selectedProduct.id)}>
                                 <Heart
                                     size={30}
                                     fill={likedItems.includes(selectedProduct.id) ? '#FF4B4B' : 'none'}
@@ -224,35 +173,10 @@ const GiftShop = () => {
                                 />
                             </button>
                         </div>
-                        <p style={{ fontSize: '24px', fontWeight: 'bold', margin: '10px 0' }}>
-                            {selectedProduct.price}
-                        </p>
-                        <p
-                            style={{
-                                color: '#666',
-                                lineHeight: '1.6',
-                                fontSize: '17px',
-                                borderTop: '1px solid #eee',
-                                paddingTop: '20px',
-                            }}
-                        >
-                            {selectedProduct.description}
-                        </p>
-                        <button
-                            style={{
-                                width: '100%',
-                                padding: '20px',
-                                background: '#000',
-                                color: '#fff',
-                                border: 'none',
-                                borderRadius: '15px',
-                                marginTop: '30px',
-                                fontWeight: 'bold',
-                                fontSize: '18px',
-                            }}
-                        >
-                            구매하기
-                        </button>
+                        <p className="detail-price">{selectedProduct.price}</p>
+                        <p className="detail-description">{selectedProduct.description}</p>
+
+                        <button className="buy-button">구매하기</button>
                     </div>
                 </div>
             </div>
@@ -268,6 +192,7 @@ const GiftShop = () => {
                 </div>
                 <p className="shop-description">전시의 감동을 특별한 굿즈로 간직하세요.</p>
             </div>
+
             <div className="category-container">
                 {categories.map((tab) => (
                     <button
@@ -279,50 +204,24 @@ const GiftShop = () => {
                     </button>
                 ))}
             </div>
+
             <div className="product-list">
                 {filteredProducts.map((item) => (
                     <div key={item.id} className="product-card">
-                        <div className="product-image-container" style={{ position: 'relative' }}>
-                            {/* 🚩 1. 카테고리 태그 복구 */}
-                            <div
-                                className="category-tag"
-                                style={{
-                                    position: 'absolute',
-                                    top: '12px',
-                                    left: '12px',
-                                    zIndex: 5,
-                                    background: 'rgba(0,0,0,0.6)',
-                                    color: '#fff',
-                                    padding: '4px 10px',
-                                    borderRadius: '4px',
-                                    fontSize: '12px',
-                                }}
-                            >
-                                {item.category}
-                            </div>
+                        <div className="product-image-container">
+                            <div className="category-tag">{item.category}</div>
 
-                            <img
-                                src={item.image}
-                                alt={item.title}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
+                            <img src={item.image} alt={item.title} className="product-image" />
 
                             <button
+                                className="like-button"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     toggleLike(item.id);
                                 }}
-                                style={{
-                                    position: 'absolute',
-                                    top: '12px',
-                                    right: '12px',
-                                    background: 'none',
-                                    border: 'none',
-                                    zIndex: 10,
-                                }}
                             >
                                 <Heart
-                                    size={24}
+                                    size={20}
                                     fill={likedItems.includes(item.id) ? '#FF4B4B' : 'none'}
                                     stroke={likedItems.includes(item.id) ? '#FF4B4B' : '#000'}
                                 />

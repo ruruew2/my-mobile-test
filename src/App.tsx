@@ -130,10 +130,10 @@ export default function App() {
   ]);
 
   // 🚩 [추가] 가이드 탭으로 이동하면서 서브 탭을 설정하는 함수
-  const navigateToGuide = (subType: 'human' | 'ai') => {
-    setGuideSubTab(subType);
-    setActiveTab('guide');
-  };
+const navigateToGuide = (subType: 'human' | 'ai') => {
+  setGuideSubTab(subType);
+  setActiveTab('guide'); 
+};
 
   const handleCourseClick = (courseId: string) => {
     setTargetCourse(courseId);
@@ -285,27 +285,13 @@ export default function App() {
         <div style={{padding: '100px 20px', textAlign: 'center'}}>준비 중인 페이지입니다.</div>
       )}
 
-      {/* --- 🚩 하단 내비게이션 연결 --- */}
+{/* --- 🚩 하단 내비게이션 (오타 완전 수정) --- */}
       <nav className="bottom-nav">
-        <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-          <Home size={24} /><span>홈</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}>
-          <Map size={24} /><span>지도</span>
-        </div>
-        <div 
-          className={`nav-item ${activeTab === 'guide' ? 'active' : ''}`} 
-          // 🚩 수정: 탭 클릭 시 기본 human으로 설정
-          onClick={() => navigateToGuide('human')}
-        >
-          <Mic size={24} /><span>가이드</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'course' ? 'active' : ''}`} onClick={() => setActiveTab('course')}>
-          <Compass size={24} /><span>코스</span>
-        </div>
-        <div className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} onClick={() => setActiveTab('gift')}>
-          <Gift size={24} /><span>기프트</span>
-        </div>
+        <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}><Home size={24} /><span>홈</span></div>
+        <div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}><Map size={24} /><span>지도</span></div>
+        <div className={`nav-item ${activeTab === 'guide' ? 'active' : ''}`} onClick={() => navigateToGuide('human')}><Mic size={24} /><span>가이드</span></div>
+        <div className={`nav-item ${activeTab === 'course' ? 'active' : ''}`} onClick={() => setActiveTab('course')}><Compass size={24} /><span>코스</span></div>
+        <div className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} onClick={() => setActiveTab('gift')}><Gift size={24} /><span>기프트</span></div>
       </nav>
 
       {/* --- 알림 모달 --- */}
