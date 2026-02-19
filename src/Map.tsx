@@ -1,73 +1,86 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
+
+// TypeScript 환경을 위한 선언
+declare global {
+  interface Window {
+    kakao: any;
+  }
+}
 
 const MapPage = () => {
   const [activeFilter, setActiveFilter] = useState<string>('전체');
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false); // 지도 로딩 상태 관리
-
   const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
 
   useEffect(() => {
-    const kakao = (window as any).kakao;
+    const { kakao } = window;
 
-    // 만약 카카오 객체가 없다면 스크립트가 아직 안 불려온 것
+    // 1. 카카오 객체가 있는지 확인
     if (kakao && kakao.maps) {
-      kakao.maps.load(() => setIsLoaded(true));
+      // 2. autoload=false로 설정했을 경우 load 콜백 내에서 실행해야 함
+      kakao.maps.load(() => {
+        initMap();
+      });
     } else {
-      // 스크립트가 로드될 때까지 잠시 대기하는 로직
-      const timer = setInterval(() => {
-        if ((window as any).kakao && (window as any).kakao.maps) {
-          (window as any).kakao.maps.load(() => setIsLoaded(true));
-          clearInterval(timer);
-        }
-      }, 100);
-      return () => clearInterval(timer);
+      console.error("카카오맵 스크립트가 index.html에 없거나 로드되지 않았습니다.");
     }
   }, []);
 
-  useEffect(() => {
-    if (!isLoaded || !mapContainerRef.current) return;
+  const initMap = () => {
+    if (!mapContainerRef.current) return;
 
-    const { kakao } = window as any;
-    
-    // 지도 생성
+    const { kakao } = window;
     const options = {
-      center: new kakao.maps.LatLng(37.5665, 126.9780),
+      center: new kakao.maps.LatLng(37.5665, 126.9780), // 기본 위치: 서울 시청
       level: 3
     };
+
+    // 지도 생성
     const map = new kakao.maps.Map(mapContainerRef.current, options);
 
-    // 내 위치 표시
+    // 내 위치 가져오기 (성공 시 마커 표시 및 이동)
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const currentPos = new kakao.maps.LatLng(position.coords.latitude, position.coords.longitude);
-        map.setCenter(currentPos);
-        new kakao.maps.Marker({ position: currentPos, map: map });
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          const currentPos = new kakao.maps.LatLng(lat, lng);
+
+          // 내 위치 마커
+          new kakao.maps.Marker({
+            position: currentPos,
+            map: map
+          });
+
+          // 내 위치로 지도 중심 이동
+          map.setCenter(currentPos);
+        },
+        (error) => {
+          console.warn("위치 정보 권한을 거부하셨거나 가져올 수 없습니다.", error);
+        }
+      );
     }
-  }, [isLoaded]);
+  };
 
   return (
-    // 지도가 확실히 보이도록 보수적인 스타일 적용
-    <div style={{ position: 'relative', width: '100vw', height: '100vh', backgroundColor: '#f0f0f0' }}>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', backgroundColor: '#eee' }}>
       
-      {/* 🚩 지도 영역: 배경처럼 깔리게 설정 */}
+      {/* 🚩 지도 영역: height가 0이 되지 않도록 100% 설정 확인 */}
       <div 
         ref={mapContainerRef} 
         style={{ 
           width: '100%', 
           height: '100%', 
           position: 'absolute', 
-          top: 0, 
-          left: 0, 
+          top: 0,
+          left: 0,
           zIndex: 0 
         }} 
       />
 
-      {/* 상단 UI */}
+      {/* 상단 필터 UI */}
       <div style={{ position: 'relative', zIndex: 10, padding: '15px' }}>
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px' }}>
           {filters.map((f) => (
             <button 
               key={f}
@@ -79,7 +92,9 @@ const MapPage = () => {
                 backgroundColor: activeFilter === f ? 'black' : 'white',
                 color: activeFilter === f ? 'white' : 'black',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                cursor: 'pointer',
+                fontWeight: 'bold'
               }}
             >
               {f}
@@ -94,15 +109,15 @@ const MapPage = () => {
         bottom: 0,
         width: '100%',
         backgroundColor: 'white',
-        borderTopLeftRadius: '20px',
-        borderTopRightRadius: '20px',
+        borderTopLeftRadius: '24px',
+        borderTopRightRadius: '24px',
         padding: '20px',
         zIndex: 10,
-        boxShadow: '0 -2px 10px rgba(0,0,0,0.1)'
+        boxShadow: '0 -4px 12px rgba(0,0,0,0.08)'
       }}>
-        <div style={{ width: '40px', height: '4px', background: '#eee', margin: '0 auto 15px' }} />
-        <h3 style={{ margin: '0 0 15px 0' }}>내 주변 전시 3</h3>
-        {/* 리스트 아이템 생략 (기존 것과 동일) */}
+        <div style={{ width: '40px', height: '4px', background: '#e5e5e5', borderRadius: '2px', margin: '0 auto 16px' }} />
+        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 'bold' }}>내 주변 전시</h3>
+        <p style={{ color: '#888', fontSize: '14px', margin: 0 }}>지도를 움직여 다양한 예술 공간을 찾아보세요.</p>
       </div>
     </div>
   );
