@@ -6,10 +6,10 @@ const Wishlist = ({ likedProducts, onBack, onRemove }: any) => {
         <div className="gift-shop-wrapper wishlist-page">
             <div className="shop-header">
                 <div className="header-title-row">
-                    <button className="back-button" onClick={onBack}>
+                    <button onClick={onBack} style={{ background: 'none', border: 'none', padding: '0', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <ArrowLeft size={24} />
                     </button>
-                    <h2 className="page-title">좋아요</h2>
+                    <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 0 12px' }}>좋아요</h2>
                 </div>
             </div>
 

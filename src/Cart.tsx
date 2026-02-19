@@ -2,11 +2,12 @@ import React from 'react';
 import { ArrowLeft, ShoppingBag, Trash2 } from 'lucide-react';
 
 const Cart = ({ cartItems, onBack, onRemove }: any) => {
-    // 가격 계산 (예: "15,000원" -> 15000)
+    // 가격 계산 (숫자 추출 로직 개선)
     const calculateTotal = () => {
-        const total = cartItems.reduce((acc, item) => {
-            const price = parseInt(item.price.replace(/[^0-9]/g, ''));
-            return acc + price;
+        const total = cartItems.reduce((acc: number, item: any) => {
+            const price = parseInt(item.price.replace(/[^0-9]/g, '')) || 0;
+            const qty = item.quantity || 1; // 수량 반영
+            return acc + (price * qty);
         }, 0);
         return total.toLocaleString() + "원";
     };
@@ -14,11 +15,13 @@ const Cart = ({ cartItems, onBack, onRemove }: any) => {
     return (
         <div className="gift-shop-wrapper cart-page">
             <div className="shop-header">
-                <div className="header-title-row">
-                    <button className="back-button" onClick={onBack}>
+                {/* 🚩 수평 정렬 수정: flex-start로 왼쪽 정렬 고정 */}
+                <div className="header-title-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                    <button onClick={onBack} style={{ background: 'none', border: 'none', padding: '0', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <ArrowLeft size={24} />
                     </button>
-                    <h2 className="page-title">장바구니</h2>
+                    {/* 🚩 flex: 1 제거하여 제목 쏠림 방지 */}
+                    <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: '0 0 0 12px' }}>장바구니</h2>
                 </div>
             </div>
 
@@ -29,12 +32,16 @@ const Cart = ({ cartItems, onBack, onRemove }: any) => {
                         <p>장바구니가 비어있습니다.</p>
                     </div>
                 ) : (
-                    cartItems.map((item: any) => (
-                        <div key={item.id} className="horizontal-card">
+                    cartItems.map((item: any, idx: number) => (
+                        /* 🚩 key값 오류 방지: id가 중복될 수 있으므로 idx를 조합 */
+                        <div key={`${item.id}-${idx}`} className="horizontal-card">
                             <img src={item.image} alt={item.title} className="card-img" />
                             <div className="card-info">
                                 <h3>{item.title}</h3>
-                                <p className="price">{item.price}</p>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <p className="price">{item.price}</p>
+                                    {item.quantity && <span style={{ fontSize: '13px', color: '#888' }}>{item.quantity}개</span>}
+                                </div>
                             </div>
                             <button className="remove-btn" onClick={() => onRemove(item.id)}>
                                 <Trash2 size={20} />

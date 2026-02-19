@@ -1,9 +1,21 @@
 /* 서브 페이지 공통 스타일 */
 .page-title {
-    flex: 1;
+    /* flex: 1;  <-- 이 부분을 삭제하거나 주석 처리하세요 */
     margin-left: 10px;
     font-size: 20px;
     font-weight: bold;
+    display: inline-block; /* 글자 크기만큼만 공간 차지 */
+    line-height: 24px;    /* 아이콘 높이(24px)와 맞춰서 수평 조절 */
+    vertical-align: middle;
+}
+
+/* 추가: 헤더 정렬을 더 확실하게 하려면 */
+.header-title-row {
+    display: flex;
+    align-items: center; /* 세로축 수평 맞춤 */
+    justify-content: flex-start; /* 왼쪽부터 차곡차곡 */
+    width: 100%;
+    padding: 5px 0;
 }
 
 .sub-page-list {
