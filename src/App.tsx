@@ -20,13 +20,13 @@ const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
   const [selected, setSelected] = useState<string[]>([]);
   const [toast, setToast] = useState(false);
 
-  const tags = [
-    "#미디어아트", "#추상화", "#사진전", "#미니멀리즘", 
-    "#현대미술", "#팝아트", "#서양화", "#동양화", 
-    "#설치미술", "#인터랙티브", "#뮤지컬", "#연극", 
-    "#클래식", "#재즈", "#몰입형전시", "#건축전", 
-    "#아트페어", "#오브제"
-  ];
+const tags = [
+  "#화려한", "#몽환적인", "#생생한", "#정갈한", 
+  "#트렌디한", "#톡톡튀는", "#우아한", "#은은한", 
+  "#과감한", "#능동적인", "#웅장한", "#깊이있는", 
+  "#고전적인", "#자유로운", "#압도적인", "#입체적인", 
+  "#다채로운", "#섬세한"
+];
 
   useEffect(() => {
     setToast(true);
