@@ -1,0 +1,104 @@
+/* 서브 페이지 공통 스타일 */
+.page-title {
+    flex: 1;
+    margin-left: 10px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.sub-page-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-top: 20px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 100px 0;
+    color: #bbb;
+}
+
+.empty-icon {
+    margin-bottom: 15px;
+    opacity: 0.3;
+}
+
+/* 가로형 카드 (좋아요/장바구니용) */
+.horizontal-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 15px;
+}
+
+.card-img {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.card-info {
+    flex: 1;
+}
+
+.card-info h3 {
+    font-size: 15px;
+    margin: 0 0 5px 0;
+    font-weight: 600;
+}
+
+.card-info .price {
+    font-weight: bold;
+    color: #000;
+    margin: 0;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: #ff4b4b;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* 장바구니 하단 푸터 */
+.fixed-cart-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    padding: 20px;
+    border-top: 1px solid #eee;
+    z-index: 100;
+    box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+}
+
+.price-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.total-price {
+    color: #ff4b4b;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.checkout-btn {
+    width: 100%;
+    padding: 18px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 16px;
+}

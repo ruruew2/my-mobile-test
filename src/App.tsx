@@ -291,7 +291,21 @@ const navigateToGuide = (subType: 'human' | 'ai') => {
         <div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}><Map size={24} /><span>지도</span></div>
         <div className={`nav-item ${activeTab === 'guide' ? 'active' : ''}`} onClick={() => navigateToGuide('human')}><Mic size={24} /><span>가이드</span></div>
         <div className={`nav-item ${activeTab === 'course' ? 'active' : ''}`} onClick={() => setActiveTab('course')}><Compass size={24} /><span>코스</span></div>
-        <div className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} onClick={() => setActiveTab('gift')}><Gift size={24} /><span>기프트</span></div>
+<div 
+  className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} 
+  onClick={() => {
+    // 이미 기프트 탭일 때 또 누르면 강제로 새로고침 효과 주기
+    if (activeTab === 'gift') {
+      setActiveTab(''); // 잠시 비웠다가
+      setTimeout(() => setActiveTab('gift'), 10); // 다시 기프트로 설정
+    } else {
+      setActiveTab('gift');
+    }
+  }}
+>
+  <Gift size={24} />
+  <span>기프트</span>
+</div>
       </nav>
 
       {/* --- 알림 모달 --- */}
