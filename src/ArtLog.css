@@ -342,16 +342,33 @@
     color: #aaa;
     line-height: 1.4;
 }
+
+
 .course-icon {
     background: #000;
     color: #fff;
-    width: 40px;
-    height: 40px;
+    width: 44px;  /* 🚩 조금 더 키워서 시원하게! */
+    height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    
+    /* 🚩 핵심: 부모 요소가 좁아도 절대 찌그러지지 않게 고정 */
+    flex-shrink: 0; 
+    
+    /* 아이콘 자체 크기가 너무 작아 보인다면 아래 추가 */
+    font-size: 20px; 
+    
+    transition: all 0.3s ease;
 }
+
+/* 마우스 올렸을 때 살짝 커지는 효과는 덤! */
+.course-icon:hover {
+    transform: scale(1.1);
+    background-color: #333;
+}
+
 
 /* 하단 내비게이션: 바닥에 딱 붙이기 */
 .bottom-nav {
