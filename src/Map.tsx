@@ -71,7 +71,7 @@ const MapPage = () => {
       </div>
 
       {/* 가상 핀들 (실제 마커를 찍기 전까지 UI 확인용) */}
-      <div style={{ position: 'relative', zIndex: 5, pointerEvents: 'none' }}>
+      <div style={{ position: 'relative', zIndex: 5, pointerEvents: 'auto' }}>
         <div className="floating-pin pin1"><MapPin size={14} /> 현대 추상: 내면의 울림</div>
         <div className="floating-pin pin2"><MapPin size={14} /> 네온 드림: 디지털 아트</div>
         <div className="floating-pin pin3"><MapPin size={14} /> 공백의 조각</div>
