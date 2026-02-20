@@ -403,3 +403,77 @@
 .player-controls { display: flex; gap: 15px; align-items: center; }
 .p-btn { background: none; border: none; color: white; cursor: pointer; font-size: 16px; }
 .p-btn.play { font-size: 20px; }
+
+
+/* ============================================================
+   🌟 여기서부터 예약 모달 업그레이드 스타일 (덧붙이기)
+   ============================================================ */
+
+/* 1. 모달 전체 배경 및 애니메이션 */
+.booking-modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;
+}
+
+.booking-modal {
+  background: white; width: 100%; max-width: 360px; border-radius: 28px;
+  overflow: hidden; animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* 2. 모달 내부 헤더 및 콘텐츠 */
+.modal-header { padding: 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { font-size: 18px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
+
+.modal-content { padding: 20px; }
+
+/* 3. 가이드 정보 박스 */
+.guide-summary {
+  display: flex; align-items: center; gap: 12px;
+  background: #f8f9fa; padding: 15px; border-radius: 18px; margin-bottom: 20px;
+}
+.summary-emoji { font-size: 24px; }
+.summary-name { font-weight: 700; margin: 0; font-size: 15px; }
+.summary-info { font-size: 13px; color: #888; margin-top: 2px; }
+
+/* 4. 입력창 및 인원 선택 칩 */
+.input-group { margin-bottom: 20px; }
+.input-group label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #444; margin-bottom: 10px; }
+
+/* 날짜 입력 세련되게 */
+.input-group input[type="date"] {
+  width: 100%; padding: 14px; border-radius: 14px; border: none;
+  background: #f4f4f4; font-size: 15px; font-weight: 600; box-sizing: border-box; outline: none;
+}
+
+/* 인원 선택 칩 스타일 */
+.person-selector { display: flex; gap: 8px; }
+.person-chip {
+  flex: 1; padding: 14px; border-radius: 14px; border: 1px solid #eee;
+  background: white; font-size: 14px; font-weight: 700; color: #777;
+  text-align: center; cursor: pointer; transition: 0.2s;
+}
+.person-chip.active {
+  background: #111; color: #fff; border-color: #111;
+}
+
+/* 5. 최종 결제 버튼 */
+.booking-submit-btn {
+  width: calc(100% - 40px); margin: 0 20px 20px; padding: 18px;
+  background: #111; color: white; border: none; border-radius: 18px;
+  font-weight: 700; font-size: 16px; cursor: pointer; transition: 0.2s;
+}
+.booking-submit-btn:active { transform: scale(0.96); }
+
+/* 6. 성공 화면 */
+.booking-success { padding: 40px 20px; text-align: center; }
+.success-icon {
+  width: 60px; height: 60px; background: #4caf50; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 15px; color: white; font-size: 24px;
+}
