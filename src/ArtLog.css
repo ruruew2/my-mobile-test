@@ -499,18 +499,24 @@
 }
 
 /* 기본 알림 아이템 스타일 */
+/* 1. 개별 알림 아이템의 여백과 간격 조절 */
 .noti-item {
-    width: 100%;       /* 부모 너비에 맞춤 */
-    display: flex;
-    gap: 12px;
-    padding: 16px;
-    border-radius: 16px;
-    box-sizing: border-box; /* ★중요: 내부 패딩 계산 방지 */
+  width: 100%;
+  padding: 18px 20px; /* 위아래 여백을 조금 더 키워서 넉넉하게 */
+  display: flex;
+  align-items: flex-start; /* 아이콘과 텍스트가 윗줄 맞춤되게 */
+  gap: 15px;
+  border-radius: 16px; /* 모달 안에서 너무 각지지 않게 */
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+  margin-bottom: 20px; /* 아이템끼리 서로 안 물리게 간격 추가 */
 }
-
 /* 🚩 안 읽은 알림: 연한 보라색 배경 */
 .noti-item.unread {
-    background-color: #f3efff; /* 아주 연한 보라색 */
+  background-color: #F3EFFF; /* 아주 연한 보라색 배경 */
+  border: 1px solid #7C4DFF22; /* 미세한 보라색 테두리로 범위 구분 */
+  position: relative;
 }
 
 /* 🚩 읽은 알림: 흰색 배경 */
