@@ -429,28 +429,42 @@
     font-weight: bold;
 }
 
-/* 모달 배경 (어둡게 처리) */
+
+/* 모달 배경 */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+    
+    /* 🔥 여기가 핵심: Flexbox로 자식을 가로/세로 정중앙으로 강제 배치 */
+    display: flex !important;
+    justify-content: center !important; 
+    align-items: center !important;     
+    
+    z-index: 9999; /* 하단바(1000)보다 훨씬 높게 설정 */
+    padding: 20px; /* 모바일 양옆 최소 여백 보장 */
+    box-sizing: border-box;
 }
 
-/* 알림창 본체 */
+/* 2. 알림창 본체: 스스로 중앙에 있으려고 애쓰지 말고 크기만 지정 */
 .notification-modal {
-    width: 90%;
-    max-width: 360px;
+    width: 100%;       /* 부모(overlay)의 패딩을 제외한 100% */
+    max-width: 360px;  /* 최대 너비는 유지 */
     background: white;
     border-radius: 24px;
     padding: 24px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    
+    /* 🔥 핵심: 마진 0으로 초기화하고 박스 모델 고정 */
+    margin: 0 !important; 
+    box-sizing: border-box; 
+    
+    position: relative; 
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;   /* 알림이 많아지면 모달 안에서 스크롤 */
+    max-height: 80vh;   /* 화면 높이의 80%까지만 커지게 */
 }
 
 .modal-header {
@@ -471,20 +485,27 @@
     color: #666;
 }
 
-/* 알림 리스트 */
+
+/* 3. 내부 요소 짤림 방지 */
 .notification-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.read-all-btn { /* 버튼 클래스명에 맞춰 수정 */
+    width: 100%;
+    display: block;
+    margin: 0 auto;
 }
 
 /* 기본 알림 아이템 스타일 */
 .noti-item {
+    width: 100%;       /* 부모 너비에 맞춤 */
     display: flex;
     gap: 12px;
-    padding: 16px; /* 패딩을 줘서 배경색이 잘 보이게 합니다 */
+    padding: 16px;
     border-radius: 16px;
-    transition: background-color 0.3s ease; /* 색 변화를 부드럽게 */
+    box-sizing: border-box; /* ★중요: 내부 패딩 계산 방지 */
 }
 
 /* 🚩 안 읽은 알림: 연한 보라색 배경 */

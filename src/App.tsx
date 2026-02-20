@@ -312,20 +312,55 @@ const navigateToGuide = (subType: 'human' | 'ai') => {
 </div>
       </nav>
 
-      {/* --- 알림 모달 --- */}
+{/* --- 알림 모달 --- */}
       {isNotifyOpen && (
-        <div className="modal-overlay" onClick={() => setIsNotifyOpen(false)}>
-          <div className="notification-modal" onClick={(e) => e.stopPropagation()}>
+        <div 
+          className="modal-overlay" 
+          onClick={() => setIsNotifyOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            display: 'flex',
+            justifyContent: 'center', // 가로 중앙
+            alignItems: 'center',     // 세로 중앙
+            zIndex: 9999,
+            padding: '20px',
+            boxSizing: 'border-box'
+          }}
+        >
+          <div 
+            className="notification-modal" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: '360px',
+              margin: '0 auto',        // 다시 한번 중앙 확인
+              boxSizing: 'border-box', // 패딩 때문에 삐져나가는 것 방지
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
             <div className="modal-header">
               <h3>알림</h3>
               <button className="close-btn" onClick={() => setIsNotifyOpen(false)}><X size={20} /></button>
             </div>
-            <div className="notification-list">
+            <div className="notification-list" style={{ width: '100%', boxSizing: 'border-box' }}>
               {notifications.map(noti => (
-                <div key={noti.id} className={`noti-item ${noti.isRead ? 'read' : 'unread'}`} onClick={() => markAsRead(noti.id)}>
+                <div 
+                  key={noti.id} 
+                  className={`noti-item ${noti.isRead ? 'read' : 'unread'}`} 
+                  onClick={() => markAsRead(noti.id)}
+                  style={{ width: '100%', boxSizing: 'border-box' }} // 아이템도 너비 고정
+                >
                   <div className="noti-icon-bg">{noti.icon}</div>
                   <div className="noti-text">
-                    <div className="noti-top"><span className="noti-title">{noti.title}</span><span className="noti-time">{noti.time}</span></div>
+                    <div className="noti-top">
+                      <span className="noti-title">{noti.title}</span>
+                      <span className="noti-time">{noti.time}</span>
+                    </div>
                     <p className="noti-desc">{noti.desc}</p>
                   </div>
                 </div>
