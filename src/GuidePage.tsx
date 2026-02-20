@@ -127,7 +127,7 @@ const GuidePage = ({ initialTab }: any) => {
         </>
       )}
 
-      {/* 3. 분석 결과 화면 */}
+{/* 3. 분석 결과 화면 */}
       {showResult && (
         <div className="art-result-container">
           <header className="result-header">
@@ -145,16 +145,24 @@ const GuidePage = ({ initialTab }: any) => {
           </div>
           <footer className="result-footer">
             <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
-            <button className="footer-btn primary" onClick={() => setShowPlayer(true)}>
+            
+            {/* 🚩 여기가 핵심! onClick에 setShowPlayer(true)가 확실히 들어가야 합니다 */}
+            <button 
+              className="footer-btn primary" 
+              onClick={() => {
+                console.log("플레이어 켜짐!"); // 디버깅용
+                setShowPlayer(true);
+              }}
+            >
               <Volume2 size={18} /> 오디오 가이드
             </button>
           </footer>
         </div>
       )}
 
-      {/* 🚩 4. 미니 오디오 플레이어 (심플 버전) */}
+{/* 4. 미니 오디오 플레이어 */}
       {showPlayer && (
-        <div className="mini-player">
+        <div className="mini-player" style={{ zIndex: 9999 }}> {/* Z-index를 높게 줘서 결과화면 위로 띄움 */}
           <div className="mini-player-info">
             <div className="mini-icon">🎵</div>
             <div>
