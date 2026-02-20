@@ -361,10 +361,12 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* 👈 모든 자식 요소를 가로축 중앙으로 */
-  text-align: center;  /* 👈 텍스트 중앙 정렬 */
-  overflow-y: auto;
-  flex: 1;
+  align-items: center; 
+  /* flex: 1과 overflow-y: auto가 있어야 내용이 길어져도 스크롤하며 다 볼 수 있어요! */
+  flex: 1; 
+  overflow-y: auto; 
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* 작품 정보 그룹 */
@@ -396,7 +398,9 @@
   background: #f8f7ff;
   padding: 20px;
   border-radius: 20px;
-  text-align: left; /* 설명문만 왼쪽 정렬 */
+  text-align: left;
+  margin-top: 10px; /* 이미지 박스와의 간격 */
+  box-sizing: border-box;
 }
 
 /* 플레이어가 올라올 공간 확보 */

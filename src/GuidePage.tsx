@@ -127,7 +127,7 @@ const GuidePage = ({ initialTab }: any) => {
         </>
       )}
 
-      {/* 3. 분석 결과 화면 */}
+{/* 3. 분석 결과 화면 */}
       {showResult && (
         <div className="art-result-container">
           <header className="result-header">
@@ -137,21 +137,26 @@ const GuidePage = ({ initialTab }: any) => {
           </header>
 
           <div className="result-body">
+            {/* 1. 작품 정보 */}
             <div className="result-info-group">
               <h1 className="result-title">{artData.title}</h1>
               <p className="result-artist">{artData.artist}, {artData.year}</p>
             </div>
 
+            {/* 2. 빈 이미지 박스 */}
             <div className="result-image-placeholder">
               <ImageIcon size={40} color="#ddd" />
               <span>작품 이미지를 분석 중입니다</span>
             </div>
 
+            {/* 3. 아티의 한마디 (여기가 다시 나타나야 할 부분!) */}
             <div className="ai-speech-bubble">
               <div className="ai-label">🤖 아티의 한마디</div>
-              <p>{artData.description}</p>
+              {/* 데이터가 없을 경우를 대비해 기본 문구를 넣었습니다 */}
+              <p>{artData.description || "작품에 대한 상세 해설을 준비 중입니다."}</p>
             </div>
 
+            {/* 4. 아래 플레이어 자리를 비워주기 위한 공백 */}
             <div className="spacer"></div>
           </div>
 
