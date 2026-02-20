@@ -2,12 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import './ArtLog.css';
 import './Login.css';
 import './GuidePage.css'; 
+import './Wishlist.css'; 
 import MyPage from './MyPage';
 import RootPage from './Root';
 import LoginPage from "./LoginPage";
 import Giftshop from './GiftShop';
 import MapPage from "./Map.tsx"; 
 import GuidePage from "./GuidePage"; 
+
 
 import { 
   Home, Map, Mic, Compass, Bell, User, Heart,

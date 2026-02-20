@@ -1,0 +1,135 @@
+/* 1. 위시리스트 전용 컨테이너 */
+.wishlist-page-container {
+    background-color: #ffffff;
+    min-height: 100vh;
+    padding-bottom: 80px; /* 하단 탭바 여백 */
+}
+
+/* 2. 위시리스트 전용 헤더 (기프트숍 shop-header와 분리) */
+.wishlist-header {
+    padding: 12px 16px;
+    background-color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.wishlist-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    height: 44px; /* 표준 헤더 높이 */
+}
+
+.wishlist-back-btn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%); /* 버튼 수직 중앙 정렬 */
+    background: none;
+    border: none;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: #1a1a1a;
+}
+
+.wishlist-page-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 44px; /* 높이와 맞춰서 수직 중앙 정렬 */
+    text-align: center;
+    color: #1a1a1a;
+}
+
+/* 3. 리스트 영역 */
+.wishlist-content-list {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 20px;
+    gap: 16px;
+}
+
+/* 4. 카드 스타일 (모든 클래스에 wishlist- 접두어 적용) */
+.wishlist-horizontal-card {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.wishlist-horizontal-card:active {
+    background-color: #fafafa;
+}
+
+.wishlist-card-img-wrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 15px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.wishlist-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wishlist-card-info {
+    flex: 1;
+    margin-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wishlist-item-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.wishlist-price {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+}
+
+.wishlist-remove-btn {
+    background: none;
+    border: none;
+    color: #cccccc;
+    padding: 10px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.wishlist-remove-btn:hover {
+    color: #ff4d4f;
+}
+
+/* 5. 빈 화면 중앙 정렬 */
+.wishlist-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 200px); /* 헤더/탭바 고려한 중앙 위치 */
+}
+
+.wishlist-empty-state p {
+    font-size: 16px;
+    color: #bbbbbb;
+    font-weight: 500;
+}

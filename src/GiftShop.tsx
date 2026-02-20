@@ -184,10 +184,21 @@ const GiftShop = () => {
             ? allProducts.filter((p) => p.isMain)
             : allProducts.filter((p) => p.category === activeTab);
 
-    if (viewMode === 'wishlist') {
-        const likedProducts = allProducts.filter(p => likedItems.includes(p.id));
-        return <Wishlist likedProducts={likedProducts} onBack={() => setViewMode('main')} onRemove={toggleLike} />;
-    }
+if (viewMode === 'wishlist') {
+    const likedProducts = allProducts.filter(p => likedItems.includes(p.id));
+    return (
+        <Wishlist 
+            likedProducts={likedProducts} 
+            onBack={() => setViewMode('main')} 
+            onRemove={toggleLike} 
+            /* ⭐️ 추가: 위시리스트에서 아이템 클릭 시 상세페이지로 이동하는 로직 */
+            onItemClick={(item: any) => {
+                setSelectedProduct(item); // 선택된 상품 저장
+                setViewMode('main');      // 메인 뷰로 돌아가되, selectedProduct가 있으므로 상세페이지가 뜸
+            }}
+        />
+    );
+}
 
     if (viewMode === 'cart') {
         return <Cart cartItems={cartItems} onBack={() => setViewMode('main')} onRemove={removeFromCart} />;
