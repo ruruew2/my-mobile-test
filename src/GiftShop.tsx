@@ -8,14 +8,33 @@ const GiftShop = () => {
     const [activeTab, setActiveTab] = useState('전체');
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
     const [currentImgIdx, setCurrentImgIdx] = useState(0);
-    const [likedItems, setLikedItems] = useState<number[]>([]);
-    const [cartItems, setCartItems] = useState<any[]>([]); 
-    const [quantity, setQuantity] = useState(1); 
+    const [quantity, setQuantity] = useState(1);
     const [viewMode, setViewMode] = useState<'main' | 'wishlist' | 'cart'>('main');
+
+    // 1. 찜 목록 (불러오기)
+    const [likedItems, setLikedItems] = useState<number[]>(() => {
+        const saved = localStorage.getItem('likedItems');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // 2. 장바구니 (불러오기)
+    const [cartItems, setCartItems] = useState<any[]>(() => {
+        const saved = localStorage.getItem('cartItems');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // 3. 자동 저장 기능 (useEffect)
+    useEffect(() => {
+        localStorage.setItem('likedItems', JSON.stringify(likedItems));
+    }, [likedItems]);
+
+    useEffect(() => {
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    }, [cartItems]);
 
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        if (selectedProduct) setQuantity(1); 
+        if (selectedProduct) setQuantity(1);
     }, [selectedProduct, viewMode]);
 
     const toggleLike = (id: number) => {
@@ -23,12 +42,22 @@ const GiftShop = () => {
     };
 
     const removeFromCart = (id: number) => {
-        setCartItems(prev => prev.filter(item => item.id !== id));
+        setCartItems((prev) => prev.filter((item) => item.id !== id));
+    };
+
+    // 🚩 추가된 수량 조절 로직
+    const updateCartQuantity = (id: number, newQty: number) => {
+        if (newQty < 1) return; // 1개 미만으로 내려가지 않게 보호
+        setCartItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item)));
+    };
+
+    const clearCart = () => {
+        setCartItems([]); // 장바구니 전체 비우기
     };
 
     const handleQty = (type: 'plus' | 'minus') => {
-        if (type === 'plus') setQuantity(prev => prev + 1);
-        else if (type === 'minus' && quantity > 1) setQuantity(prev => prev - 1);
+        if (type === 'plus') setQuantity((prev) => prev + 1);
+        else if (type === 'minus' && quantity > 1) setQuantity((prev) => prev - 1);
     };
 
     // --- 카테고리 태그 (형용사 버전) ---
@@ -46,7 +75,7 @@ const GiftShop = () => {
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479831/stationery_postcard_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479826/stationery_postcard_01.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479828/stationery_postcard_02.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479830/stationery_postcard_03.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479830/stationery_postcard_03.jpg',
             ],
             description: '한국의 아름다운 5대 궁궐을 담은 프리미엄 엽서 세트입니다.',
             isMain: true,
@@ -60,7 +89,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479837/stationery_sticker_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479834/stationery_sticker_01.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479835/stationery_sticker_02.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479835/stationery_sticker_02.jpg',
             ],
             description: '귀여운 반가사유상 캐릭터 스티커입니다.',
             isMain: false,
@@ -74,7 +103,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479823/stationery_magnet_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479820/stationery_magnet_01.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479822/stationery_magnet_02.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479822/stationery_magnet_02.jpg',
             ],
             description: '전통 패를 재해석한 고급스러운 자석입니다.',
             isMain: false,
@@ -88,7 +117,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479805/fashion_pouch_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479802/fashion_pouch_back.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479803/fashion_pouch_detail.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479803/fashion_pouch_detail.jpg',
             ],
             description: '달항아리의 곡선을 살린 입체 파우치입니다.',
             isMain: true,
@@ -102,7 +131,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479810/fashion_wallet_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479807/fashion_wallet_01.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479808/fashion_wallet_02.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479808/fashion_wallet_02.jpg',
             ],
             description: '민화 속 고양이를 자수로 표현한 지갑입니다.',
             isMain: false,
@@ -116,7 +145,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479800/fashion_keyring_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479796/fashion_keyring_01.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479798/fashion_keyring_02.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479798/fashion_keyring_02.jpg',
             ],
             description: '데니 태극기를 모티브로 제작된 키링입니다.',
             isMain: false,
@@ -130,7 +159,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479818/prop_mini_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479813/prop_mini_01.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479814/prop_mini_02.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479814/prop_mini_02.jpg',
             ],
             description: '국보 반가사유상을 정교하게 재현한 미니어처입니다.',
             isMain: true,
@@ -144,7 +173,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479795/decor_fishbell_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479792/decor_fishbell_01.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479793/decor_fishbell_02.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479793/decor_fishbell_02.jpg',
             ],
             description: '평안과 복을 기원하는 도어벨입니다.',
             isMain: true,
@@ -158,7 +187,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479843/tableware_cup_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479839/tableware_cup_01.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479841/tableware_cup_02.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479841/tableware_cup_02.jpg',
             ],
             description: '온도에 따라 색이 변하는 선비 잔입니다.',
             isMain: true,
@@ -172,7 +201,7 @@ const GiftShop = () => {
             detailImages: [
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479850/tableware_tumbler_main.jpg',
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479845/tableware_tumbler_01.jpg',
-                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479848/tableware_tumbler_02.jpg'
+                'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479848/tableware_tumbler_02.jpg',
             ],
             description: '자개 공예 기법으로 문양을 새긴 텀블러입니다.',
             isMain: false,
@@ -184,35 +213,49 @@ const GiftShop = () => {
             ? allProducts.filter((p) => p.isMain)
             : allProducts.filter((p) => p.category === activeTab);
 
-if (viewMode === 'wishlist') {
-    const likedProducts = allProducts.filter(p => likedItems.includes(p.id));
-    return (
-        <Wishlist 
-            likedProducts={likedProducts} 
-            onBack={() => setViewMode('main')} 
-            onRemove={toggleLike} 
-            /* ⭐️ 추가: 위시리스트에서 아이템 클릭 시 상세페이지로 이동하는 로직 */
-            onItemClick={(item: any) => {
-                setSelectedProduct(item); // 선택된 상품 저장
-                setViewMode('main');      // 메인 뷰로 돌아가되, selectedProduct가 있으므로 상세페이지가 뜸
-            }}
-        />
-    );
-}
-
-    if (viewMode === 'cart') {
-        return <Cart cartItems={cartItems} onBack={() => setViewMode('main')} onRemove={removeFromCart} />;
+    if (viewMode === 'wishlist') {
+        const likedProducts = allProducts.filter((p) => likedItems.includes(p.id));
+        return (
+            <Wishlist
+                likedProducts={likedProducts}
+                onBack={() => setViewMode('main')}
+                onRemove={toggleLike}
+                /* ⭐️ 추가: 위시리스트에서 아이템 클릭 시 상세페이지로 이동하는 로직 */
+                onItemClick={(item: any) => {
+                    setSelectedProduct(item); // 선택된 상품 저장
+                    setViewMode('main'); // 메인 뷰로 돌아가되, selectedProduct가 있으므로 상세페이지가 뜸
+                }}
+            />
+        );
     }
 
+    if (viewMode === 'cart') {
+        return (
+            <Cart
+                cartItems={cartItems}
+                onBack={() => setViewMode('main')}
+                onRemove={removeFromCart}
+                onUpdateQuantity={updateCartQuantity} // 🚩 드디어 함수 연결!
+                onClearCart={clearCart} // 🚩 장바구니 전체 비우는 함수 연결
+            />
+        );
+    }
     if (selectedProduct) {
         // 안전장치: detailImages가 없으면 기본 image를 배열로 사용
-        const displayImages = selectedProduct.detailImages && selectedProduct.detailImages.length > 0 
-            ? selectedProduct.detailImages 
-            : [selectedProduct.image];
+        const displayImages =
+            selectedProduct.detailImages && selectedProduct.detailImages.length > 0
+                ? selectedProduct.detailImages
+                : [selectedProduct.image];
 
         return (
             <div className="gift-shop-wrapper detail-view">
-                <button className="back-button" onClick={() => { setSelectedProduct(null); setCurrentImgIdx(0); }}>
+                <button
+                    className="back-button"
+                    onClick={() => {
+                        setSelectedProduct(null);
+                        setCurrentImgIdx(0);
+                    }}
+                >
                     <ArrowLeft size={24} /> <span>목록으로</span>
                 </button>
                 <div className="detail-content">
@@ -222,7 +265,11 @@ if (viewMode === 'wishlist') {
                         </div>
                         <div className="thumbnail-list">
                             {displayImages.map((img: string, idx: number) => (
-                                <div key={idx} className={`thumbnail-item ${currentImgIdx === idx ? 'active' : ''}`} onClick={() => setCurrentImgIdx(idx)}>
+                                <div
+                                    key={idx}
+                                    className={`thumbnail-item ${currentImgIdx === idx ? 'active' : ''}`}
+                                    onClick={() => setCurrentImgIdx(idx)}
+                                >
                                     <img src={img} alt={`thumb-${idx}`} />
                                 </div>
                             ))}
@@ -232,24 +279,76 @@ if (viewMode === 'wishlist') {
                         <div className="detail-header-row">
                             <h2>{selectedProduct.title}</h2>
                             <button className="detail-like-btn" onClick={() => toggleLike(selectedProduct.id)}>
-                                <Heart size={30} fill={likedItems.includes(selectedProduct.id) ? '#FF4B4B' : 'none'} stroke={likedItems.includes(selectedProduct.id) ? '#FF4B4B' : '#000'} />
+                                <Heart
+                                    size={30}
+                                    fill={likedItems.includes(selectedProduct.id) ? '#FF4B4B' : 'none'}
+                                    stroke={likedItems.includes(selectedProduct.id) ? '#FF4B4B' : '#000'}
+                                />
                             </button>
                         </div>
-                        <div className="price-quantity-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <p className="detail-price" style={{ margin: 0 }}>{selectedProduct.price}</p>
-                            <div className="quantity-counter" style={{ display: 'flex', alignItems: 'center', gap: '15px', background: '#f5f5f5', padding: '5px 15px', borderRadius: '20px' }}>
-                                <button onClick={() => handleQty('minus')} style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}>-</button>
+                        <div
+                            className="price-quantity-row"
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '20px',
+                            }}
+                        >
+                            <p className="detail-price" style={{ margin: 0 }}>
+                                {selectedProduct.price}
+                            </p>
+                            <div
+                                className="quantity-counter"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '15px',
+                                    background: '#f5f5f5',
+                                    padding: '5px 15px',
+                                    borderRadius: '20px',
+                                }}
+                            >
+                                <button
+                                    onClick={() => handleQty('minus')}
+                                    style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}
+                                >
+                                    -
+                                </button>
                                 <span style={{ fontWeight: 'bold' }}>{quantity}</span>
-                                <button onClick={() => handleQty('plus')} style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}>+</button>
+                                <button
+                                    onClick={() => handleQty('plus')}
+                                    style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}
+                                >
+                                    +
+                                </button>
                             </div>
                         </div>
                         <p className="detail-description">{selectedProduct.description}</p>
-                        <button className="buy-button" onClick={() => {
-                            const itemWithQty = { ...selectedProduct, quantity };
-                            setCartItems(prev => [...prev, itemWithQty]);
-                            setViewMode('cart');
-                            setSelectedProduct(null);
-                        }}>
+                        <button
+                            className="buy-button"
+                            onClick={() => {
+                                setCartItems((prev) => {
+                                    // 1. 장바구니에 이미 이 상품이 있는지 찾기
+                                    const isExist = prev.find((item) => item.id === selectedProduct.id);
+
+                                    if (isExist) {
+                                        // 2. 있다면: 해당 상품의 quantity(수량)만 합쳐서 업데이트
+                                        return prev.map((item) =>
+                                            item.id === selectedProduct.id
+                                                ? { ...item, quantity: item.quantity + quantity }
+                                                : item,
+                                        );
+                                    }
+                                    // 3. 없다면: 원래 하던 대로 목록에 새로 추가
+                                    return [...prev, { ...selectedProduct, quantity }];
+                                });
+
+                                // 장바구니 페이지로 이동하고 상세창 닫기
+                                setViewMode('cart');
+                                setSelectedProduct(null);
+                            }}
+                        >
                             {quantity}개 장바구니 담기
                         </button>
                     </div>
@@ -263,12 +362,12 @@ if (viewMode === 'wishlist') {
             <div className="shop-header">
                 <div className="header-title-row">
                     <div className="title-left">
-                        <ShoppingBag size={24} /> 
+                        <ShoppingBag size={24} />
                         <h2>아트 기프트 숍</h2>
                     </div>
                     <div className="header-icon-group">
                         <button className="icon-btn" onClick={() => setViewMode('wishlist')}>
-                            <Heart size={24} fill={likedItems.length > 0 ? "#000" : "none"} />
+                            <Heart size={24} fill={likedItems.length > 0 ? '#000' : 'none'} />
                             {likedItems.length > 0 && <span className="badge">{likedItems.length}</span>}
                         </button>
                         <button className="icon-btn" onClick={() => setViewMode('cart')}>
@@ -282,7 +381,11 @@ if (viewMode === 'wishlist') {
 
             <div className="category-container">
                 {categories.map((tab) => (
-                    <button key={tab} onClick={() => setActiveTab(tab)} className={`category-btn ${activeTab === tab ? 'active' : ''}`}>
+                    <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`category-btn ${activeTab === tab ? 'active' : ''}`}
+                    >
                         {tab}
                     </button>
                 ))}
@@ -294,8 +397,18 @@ if (viewMode === 'wishlist') {
                         <div className="product-image-container">
                             <div className="category-tag">{item.category}</div>
                             <img src={item.image} alt={item.title} className="product-image" />
-                            <button className="like-button" onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}>
-                                <Heart size={20} fill={likedItems.includes(item.id) ? '#FF4B4B' : 'none'} stroke={likedItems.includes(item.id) ? '#FF4B4B' : '#000'} />
+                            <button
+                                className="like-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleLike(item.id);
+                                }}
+                            >
+                                <Heart
+                                    size={20}
+                                    fill={likedItems.includes(item.id) ? '#FF4B4B' : 'none'}
+                                    stroke={likedItems.includes(item.id) ? '#FF4B4B' : '#000'}
+                                />
                             </button>
                         </div>
                         <div className="product-info">

@@ -21,7 +21,6 @@
     /* display: flex; 를 절대 넣지 마세요 (세로 배치 방해함) */
 }
 
-
 .header-title-row {
     display: flex;
     justify-content: space-between; /* 좌우 끝으로 밀기 */
@@ -30,13 +29,11 @@
     margin-bottom: 12px;
 }
 
-
 /* 서브페이지(장바구니 등) 제목이 쏠리지 않게 */
 .header-title-row h2 {
     margin-left: 10px;
     flex: 1; /* 제목이 남은 공간을 다 차지해서 아이콘을 밀어내지 않게 조절 */
 }
-
 
 /* 설명글 스타일 - 독립된 행 유지 */
 .shop-description {
@@ -80,9 +77,8 @@
     flex-direction: column;
     gap: 25px;
     /* 🚩 기존 120px -> 100px로 줄여서 탭 바와 적당한 거리 유지 */
-    padding-bottom: 100px; 
+    padding-bottom: 100px;
 }
-
 
 .product-card {
     border-radius: 20px;
@@ -287,11 +283,11 @@
     font-weight: bold;
     font-size: 16px; /* 폰트 사이즈 살짝 조절 */
     cursor: pointer;
-    
+
     /* 🚩 마진을 줄여 본문과 딱 붙게 만들고, 
        만약 fixed로 쓰실 거면 아래 주석을 해제하세요. */
-    margin-top: 10px; 
-    
+    margin-top: 10px;
+
     display: block;
     position: relative;
     z-index: 10;
@@ -301,18 +297,15 @@
     background: #333;
 }
 
-
 .fixed-buy-wrapper {
     position: fixed;
-    bottom: 80px; 
+    bottom: 80px;
     left: 0;
     right: 0;
     padding: 0 20px;
     background: transparent;
     z-index: 1000;
 }
-
-
 
 /* 헤더 타이틀 행 전체 설정 */
 .header-title-row {
@@ -335,8 +328,6 @@
     margin: 0;
     color: #000;
 }
-
-
 
 /* 오른쪽 아이콘 그룹 */
 .header-icon-group {
@@ -362,7 +353,7 @@
     position: absolute;
     top: -4px;
     right: -4px;
-    background-color: #FF4B4B;
+    background-color: #ff4b4b;
     color: white;
     font-size: 10px;
     font-weight: bold;

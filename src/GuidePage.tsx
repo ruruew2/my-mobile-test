@@ -136,29 +136,31 @@ const GuidePage = ({ initialTab }: any) => {
             <div style={{ width: 24 }}></div>
           </header>
 
-          <div className="result-body">
+
             {/* 1. 작품 정보 */}
-            <div className="result-info-group">
-              <h1 className="result-title">{artData.title}</h1>
-              <p className="result-artist">{artData.artist}, {artData.year}</p>
-            </div>
+<div className="result-body">
+  <div className="result-info-group">
+    <h1 className="result-title">{artData.title}</h1>
+    <p className="result-artist">{artData.artist}, {artData.year}</p>
+  </div>
 
             {/* 2. 빈 이미지 박스 */}
-            <div className="result-image-placeholder">
-              <ImageIcon size={40} color="#ddd" />
-              <span>작품 이미지를 분석 중입니다</span>
-            </div>
+<div className="result-image-placeholder">
+    <ImageIcon size={40} color="#ddd" />
+    <span>작품 이미지를 분석 중입니다</span>
+  </div>
 
             {/* 3. 아티의 한마디 (여기가 다시 나타나야 할 부분!) */}
-            <div className="ai-speech-bubble">
-              <div className="ai-label">🤖 아티의 한마디</div>
-              {/* 데이터가 없을 경우를 대비해 기본 문구를 넣었습니다 */}
-              <p>{artData.description || "작품에 대한 상세 해설을 준비 중입니다."}</p>
-            </div>
+<div className="ai-speech-bubble">
+    <div className="ai-label">🤖 아티의 한마디</div>
+    <p>{artData.description}</p>
+  </div>
+
 
             {/* 4. 아래 플레이어 자리를 비워주기 위한 공백 */}
-            <div className="spacer"></div>
-          </div>
+{/* 💡 spacer 높이를 줄이거나, 내용이 많으면 자동으로 늘어나게 둡니다 */}
+  <div className="spacer" style={{ height: '150px', flexShrink: 0 }}></div>
+</div>
 
           {/* 4. 미니 플레이어 */}
           {showPlayer && (
