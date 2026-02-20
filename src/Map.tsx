@@ -103,18 +103,21 @@ const MapPage = () => {
         </div>
       </div>
 
-      {/* 바텀 시트 */}
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        width: '100%',
-        backgroundColor: 'white',
-        borderTopLeftRadius: '24px',
-        borderTopRightRadius: '24px',
-        padding: '20px',
-        zIndex: 10,
-        boxShadow: '0 -4px 12px rgba(0,0,0,0.08)'
-      }}>
+{/* 바텀 시트 */}
+<div style={{
+  position: 'absolute',
+  bottom: 0,
+  width: '100%',
+  maxHeight: '50vh', // 🚩 바텀 시트가 너무 커지지 않게 높이 제한 (필요시 조절)
+  overflowY: 'auto', // 🚩 내용이 많아지면 시트 내부에서 스크롤 발생
+  backgroundColor: 'white',
+  borderTopLeftRadius: '24px',
+  borderTopRightRadius: '24px',
+  padding: '20px',
+  zIndex: 10,
+  boxShadow: '0 -4px 12px rgba(0,0,0,0.08)',
+  paddingBottom: '80px' // 🚩 하단 탭 바에 글자가 잘리지 않도록 충분한 여백 추가
+}}>
         <div style={{ width: '40px', height: '4px', background: '#e5e5e5', borderRadius: '2px', margin: '0 auto 16px' }} />
         <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: 'bold' }}>내 주변 전시</h3>
         <p style={{ color: '#888', fontSize: '14px', margin: 0 }}>지도를 움직여 다양한 예술 공간을 찾아보세요.</p>

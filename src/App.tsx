@@ -173,7 +173,7 @@ const navigateToGuide = (subType: 'human' | 'ai') => {
             <section className="ai-banner">
               <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
               <h2 className="ai-title">" 오늘은 종로의 감성에 빠져볼까요? "</h2>
-              <p className="ai-desc">평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로<br></br> 산책 코스를 준비했어요. user 님, 오늘 하루도 좋은 하루 되세요!</p>
+              <p className="ai-desc">당신이 평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로<br></br> 산책 코스를 준비했어요! 오늘 하루도 좋은 하루 되세요!</p>
               <button className="cta-button">추천 전시 보기 <ChevronRight size={20} className="cta-icon" /></button>
             </section>
               
