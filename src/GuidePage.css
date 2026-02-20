@@ -324,21 +324,25 @@
 .action-btn.outline { background: #f5f5f5; border: none; color: #555; }
 .action-btn.primary { background: #000; border: none; color: #fff; }
 
-/* 1. 결과 컨테이너 */
+/* 결과 화면 전체 (화면 고정) */
 .art-result-container {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;
   background: white;
+  z-index: 1000; /* 메인 리스트보다 위에 위치 */
 }
 
 .result-header {
-  padding: 50px 20px 15px; 
-  display: flex; 
-  justify-content: space-between; 
+  padding: 50px 20px 15px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  background: white;
+  flex-shrink: 0; /* 헤더 크기 고정 */
 }
 
 .header-tag { font-size: 14px; font-weight: 700; color: #7C4DFF; }
@@ -354,18 +358,20 @@
   color: white; padding: 6px 12px; border-radius: 30px; font-size: 11px; font-weight: 700;
 }
 
-/* 결과 본문 영역 */
+/* 🌟 본문 스크롤 영역 */
 .result-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 0 20px 120px; /* 푸터 공간 확보 */
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* 하단 버튼/플레이어와 겹치지 않게 본문 자체에 여백을 둠 */
-  padding-bottom: 180px; 
   -webkit-overflow-scrolling: touch;
 }
+
+.result-info-group { margin-bottom: 20px; text-align: center; }
+.result-title { font-size: 24px; font-weight: 800; margin: 0; }
+.result-artist { font-size: 15px; color: #777; margin-top: 5px; }
 
 /* 작품 정보 그룹 간격 축소 */
 .result-info-group {
@@ -373,33 +379,58 @@
   text-align: center;
 }
 
-/* 🖼️ 이미지 박스: 너무 크면 말풍선이 밀리므로 크기 재조정 */
+/* 이미지 박스: 세로 비율 최적화 */
 .result-image-placeholder {
   width: 100%;
-  max-width: 300px; /* 너무 커지지 않게 제한 */
-  aspect-ratio: 1.4 / 1; /* 가로로 좀 더 길게 만들어 높이를 줄임 */
+  aspect-ratio: 1.4 / 1;
   border: 2px dashed #eee;
   border-radius: 20px;
-  background: #fafafa;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
-  flex-shrink: 0; /* 이미지 박스 크기 보존 */
+  background: #fafafa;
+  flex-shrink: 0;
 }
 
 .result-title { font-size: 26px; font-weight: 800; margin: 0; }
 .result-artist { font-size: 16px; color: #777; margin: 5px 0 25px; }
 
-/* 말풍선 스타일 유지 */
+/* 말풍선 */
 .ai-speech-bubble {
   width: 100%;
   background: #f8f7ff;
   padding: 18px;
   border-radius: 20px;
   box-sizing: border-box;
-  margin-bottom: 0; /* 공백 제거 */
+  text-align: left;
+}
+
+/* 하단 고정 버튼 바 */
+.result-footer-simple {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 15px 20px 40px;
+  background: white;
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid #f0f0f0;
+  box-sizing: border-box;
+}
+
+/* 인라인 플레이어 스타일 (본문 안에 쏙) */
+.mini-player-inline {
+  width: 100%;
+  background: #f0edff;
+  padding: 12px 15px;
+  border-radius: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
 }
 
 /* 플레이어가 올라올 공간 확보 */
@@ -429,8 +460,8 @@
   box-shadow: 0 -10px 20px rgba(0,0,0,0.05); /* 경계선 가독성 */
 }
 
-.footer-btn { flex: 1; padding: 16px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; }
-.footer-btn.primary { background: #000; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.footer-btn { flex: 1; padding: 16px; border-radius: 14px; border: none; font-weight: 700; font-size: 15px; }
+.footer-btn.primary { background: #000; color: white; }
 .footer-btn.secondary { background: #f0f0f0; color: #666; }
 
 /* 3. 오디오 미니 플레이어 */

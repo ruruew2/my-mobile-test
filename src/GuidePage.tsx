@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check, Image as ImageIcon } from 'lucide-react'; // ImageIcon 확인
+import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check, Image as ImageIcon } from 'lucide-react'; 
 import './GuidePage.css';
 
 const GuidePage = ({ initialTab }: any) => {
@@ -78,7 +78,7 @@ const GuidePage = ({ initialTab }: any) => {
 
   return (
     <div className="art-guide-container">
-      {/* 1. 분석 애니메이션 */}
+      {/* 1. 분석 로딩 (애니메이션) */}
       {isAnalyzing && (
         <div className="analysis-loading-overlay">
           <div className="loading-content">
@@ -92,8 +92,8 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 2. 메인 리스트 */}
-      {!showResult && (
+      {/* 2. 메인 화면 전환 (showResult 여부에 따라 분리) */}
+      {!showResult ? (
         <>
           <header className="art-header">
             <h2 className="art-title">아트 가이드</h2>
@@ -125,76 +125,59 @@ const GuidePage = ({ initialTab }: any) => {
             ))}
           </div>
         </>
-      )}
-
-{/* 3. 분석 결과 화면 */}
-      {showResult && (
+      ) : (
+        /* 3. 분석 결과 화면 (showResult가 true일 때만 렌더링) */
         <div className="art-result-container">
           <header className="result-header">
-            <button className="back-btn" onClick={() => setShowResult(false)}><ChevronLeft size={24} /></button>
+            <button className="back-btn-inner" onClick={() => setShowResult(false)}><ChevronLeft size={24} /></button>
             <span className="header-tag">🤖 AI 도슨트 리포트</span>
             <div style={{ width: 24 }}></div>
           </header>
 
+          <div className="result-body">
+            <div className="result-info-group">
+              <h1 className="result-title">{artData.title}</h1>
+              <p className="result-artist">{artData.artist}, {artData.year}</p>
+            </div>
 
-<div className="result-body">
-  {/* 1. 작품 정보 */}
-  <div className="result-info-group">
-    <h1 className="result-title">{artData.title}</h1>
-    <p className="result-artist">{artData.artist}, {artData.year}</p>
-  </div>
+            <div className="result-image-placeholder">
+              <ImageIcon size={40} color="#ddd" />
+              <span>작품 이미지를 분석 중입니다</span>
+            </div>
 
-{/* 2. 빈 이미지 박스 (크기를 적절히 유지) */}
-  <div className="result-image-placeholder">
-    <ImageIcon size={40} color="#ddd" />
-    <span>작품 이미지를 분석 중입니다</span>
-  </div>
-            {/* 3. 아티의 한마디 (여기가 다시 나타나야 할 부분!) */}
-<div className="ai-speech-bubble">
-    <div className="ai-label">🤖 아티의 한마디</div>
-    <p>{artData.description}</p>
-  </div>
+            <div className="ai-speech-bubble">
+              <div className="ai-label">🤖 아티의 한마디</div>
+              <p>{artData.description}</p>
+            </div>
 
-</div>
-
-          {/* 4. 미니 플레이어 */}
-          {showPlayer && (
-            <div className="mini-player">
-              <div className="mini-player-info">
-                <div className="mini-icon">🎵</div>
-                <div>
-                  <div className="mini-title">{artData.title}</div>
-                  <div className="mini-status">AI 해설 재생 중</div>
+            {showPlayer && (
+              <div className="mini-player-inline">
+                <div className="mini-player-info">
+                  <div className="mini-icon">🎵</div>
+                  <div>
+                    <div className="mini-title">{artData.title}</div>
+                    <div className="mini-status">AI 해설 재생 중</div>
+                  </div>
+                </div>
+                <div className="mini-controls">
+                  <button onClick={() => setIsPlaying(!isPlaying)}>
+                    {isPlaying ? <Pause size={22} fill="black" /> : <Play size={22} fill="black" />}
+                  </button>
                 </div>
               </div>
-              <div className="mini-controls">
-                <button onClick={() => setIsPlaying(!isPlaying)} style={{ padding: '8px' }}>
-                  {isPlaying ? <Pause size={22} fill="black" /> : <Play size={22} fill="black" />}
-                </button>
-                <button onClick={() => setShowPlayer(false)} style={{ padding: '8px' }}>
-                  <X size={20} color="#999" />
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          <footer className="result-footer">
+          <footer className="result-footer-simple">
             <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
-            <button 
-              className="footer-btn primary" 
-              onClick={(e) => {
-                e.preventDefault();
-                setShowPlayer(!showPlayer);
-              }}
-            >
-              <Volume2 size={18} /> 
-              {showPlayer ? '가이드 재생 중' : '오디오 가이드'}
+            <button className="footer-btn primary" onClick={() => setShowPlayer(!showPlayer)}>
+              <Volume2 size={18} /> {showPlayer ? '가이드 중단' : '오디오 가이드'}
             </button>
           </footer>
         </div>
       )}
 
-      {/* 5. 스캐너 */}
+      {/* 5. 스캐너 (오버레이) */}
       {isScannerOpen && (
         <div className="art-scanner-overlay">
             <div className="scanner-top">
