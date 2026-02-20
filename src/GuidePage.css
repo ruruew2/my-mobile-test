@@ -535,16 +535,45 @@
 .p-btn { background: none; border: none; color: white; cursor: pointer; font-size: 16px; }
 .p-btn.play { font-size: 20px; }
 
-/* 🌟 예약 모달 스타일 */
+
+/* 🌟 예약 모달 오버레이 수정 */
 .booking-modal-overlay {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;   /* 전체 화면 너비 */
+  height: 100vh;  /* 전체 화면 높이 */
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  
+  /* 🔥 Flexbox를 사용하여 자식을 무조건 정중앙 배치 */
+  display: flex !important;
+  justify-content: center !important; 
+  align-items: center !important;     
+  
+  z-index: 20000; /* 스캐너보다는 낮지만 하단바보다는 높게 */
+  padding: 20px;
+  box-sizing: border-box;
 }
 
+/* 🌟 예약 모달 본체 수정 */
 .booking-modal {
-  background: white; width: 100%; max-width: 360px; border-radius: 28px;
-  overflow: hidden; animation: modalSlideUp 0.3s ease-out;
+  background: white;
+  width: 100%;
+  max-width: 360px; /* 최대 너비 제한 */
+  border-radius: 28px;
+  overflow: hidden;
+  animation: modalSlideUp 0.3s ease-out;
+  
+  /* 🔥 중요: 스스로의 마진을 없애고 박스 모델 고정 */
+  margin: 0 !important;
+  box-sizing: border-box;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  
+  /* 내용이 길어질 경우를 대비 */
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 @keyframes modalSlideUp {
@@ -590,11 +619,31 @@
 }
 .booking-submit-btn:active { transform: scale(0.96); }
 
-.booking-success { padding: 40px 20px; text-align: center; }
+/* 🌟 성공 화면 (예약 완료되었습니다) 중앙 정렬 보장 */
+.booking-success {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 아이콘, 텍스트 가로 중앙 */
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
 .success-icon {
-  width: 60px; height: 60px; background: #4caf50; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 15px; color: white; font-size: 24px;
+  width: 60px;
+  height: 60px;
+  background: #4caf50;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px; /* 아래쪽 여백 확보 */
+  color: white;
+  font-size: 24px;
+  flex-shrink: 0;
 }
 
 /* 2. 오디오 플레이어 상자 */
