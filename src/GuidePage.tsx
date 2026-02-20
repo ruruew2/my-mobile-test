@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X, Zap, Image as ImageIcon, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check } from 'lucide-react';
+import { Star, X, Zap, Image as ImageIcon, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check, SkipBack, SkipForward } from 'lucide-react';
 import './GuidePage.css';
 
 const GuidePage = ({ initialTab }: any) => {
@@ -10,12 +10,10 @@ const GuidePage = ({ initialTab }: any) => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
   
-  // --- 예약 관련 상태 ---
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingStep, setBookingStep] = useState(1); 
   const [personCount, setPersonCount] = useState(1);
 
-  // --- 카메라 관련 ---
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
@@ -52,13 +50,11 @@ const GuidePage = ({ initialTab }: any) => {
     return () => stopCamera();
   }, [isScannerOpen]);
 
-  // 🚩 [수정] 캡처 시 분석 애니메이션을 거치도록 설정
   const handleCapture = () => {
-    setIsAnalyzing(true); // 1. 애니메이션 시작
+    setIsAnalyzing(true);
     if (videoRef.current) videoRef.current.pause();
-    
     setTimeout(() => {
-      setIsAnalyzing(false); // 2. 3.5초 뒤 애니메이션 종료
+      setIsAnalyzing(false);
       setIsScannerOpen(false);
       setShowResult(true);
       stopCamera();
@@ -70,7 +66,6 @@ const GuidePage = ({ initialTab }: any) => {
     artist: "빈센트 반 고흐",
     year: "1889",
     description: "고흐의 가장 유명한 작품 중 하나로, 요양원에서 바라본 밤하늘을 소용돌이치는 역동적인 붓터치로 표현했습니다.",
-    points: ["꿈동이치는 하늘의 소용돌이 패턴", "강렬한 노란색 별과 보랏빛 밤하늘의 대비", "정적인 마을과 대조되는 역동적인 자연"]
   };
 
   const handleBooking = () => {
@@ -83,44 +78,35 @@ const GuidePage = ({ initialTab }: any) => {
 
   return (
     <div className="art-guide-container">
-      {/* 🚩 5. AI 분석 중 애니메이션 오버레이 (isAnalyzing이 true일 때만 표시) */}
+      {/* 1. 분석 로딩 (애니메이션) */}
       {isAnalyzing && (
-        <div className="analysis-loading-overlay">
+        <div className="analysis-loading-overlay" style={{ zIndex: 10000 }}>
           <div className="loading-content">
             <div className="ai-pulse-circle">
               <div className="pulse-ring"></div>
               <span className="ai-icon">🤖</span>
             </div>
             <h3 className="loading-title">아티가 작품을 분석 중입니다...</h3>
-            <div className="loading-bar-bg">
-              <div className="loading-bar-fill"></div>
-            </div>
-            <p className="loading-sub">잠시만 기다려주세요</p>
+            <div className="loading-bar-bg"><div className="loading-bar-fill"></div></div>
           </div>
         </div>
       )}
 
-      {/* 1. 메인 리스트 */}
+      {/* 2. 메인 리스트 */}
       {!showResult && (
         <>
           <header className="art-header">
             <h2 className="art-title">아트 가이드</h2>
             <p className="art-desc">전문 큐레이터부터 AI 가이드까지.</p>
           </header>
-
           <nav className="art-tab-nav">
-            <button className={`art-tab-item ${activeTab === 'human' ? 'is-active' : ''}`} onClick={() => setActiveTab('human')}>
-              인간 도슨트
-            </button>
-            <button className={`art-tab-item ${activeTab === 'ai' ? 'is-active' : ''}`} onClick={() => setActiveTab('ai')}>
-              AI 가이드
-            </button>
+            <button className={`art-tab-item ${activeTab === 'human' ? 'is-active' : ''}`} onClick={() => setActiveTab('human')}>인간 도슨트</button>
+            <button className={`art-tab-item ${activeTab === 'ai' ? 'is-active' : ''}`} onClick={() => setActiveTab('ai')}>AI 가이드</button>
           </nav>
-
           <div className="art-list">
             {(activeTab === 'human' ? 
               [{ id: 1, name: '김사랑 도슨트', job: '현대미술, 미술사학', price: '45,000원', rating: 4.9, emoji: '👩‍🎨' }] : 
-              [{ id: 1, name: '아티 (AI 가이드)', job: '추상화, 디지털 아트, 빠른 요약', price: '무료 (AI)', rating: 4.8, emoji: '🤖' }]
+              [{ id: 1, name: '아티 (AI 가이드)', job: '추상화, 디지털 아트', price: '무료 (AI)', rating: 4.8, emoji: '🤖' }]
             ).map((guide) => (
               <div key={guide.id} className={`art-card ${activeTab === 'ai' ? 'ai-special' : ''}`}>
                 <div className="art-avatar">{guide.emoji}</div>
@@ -141,7 +127,7 @@ const GuidePage = ({ initialTab }: any) => {
         </>
       )}
 
-      {/* 2. 분석 결과 */}
+      {/* 3. 분석 결과 화면 */}
       {showResult && (
         <div className="art-result-container">
           <header className="result-header">
@@ -150,6 +136,9 @@ const GuidePage = ({ initialTab }: any) => {
             <div style={{ width: 24 }}></div>
           </header>
           <div className="result-body">
+            <div className="result-img-placeholder">
+                <img src="https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?q=80&w=2070&auto=format&fit=crop" alt="starry-night" />
+            </div>
             <h1 className="result-title">{artData.title}</h1>
             <p className="result-artist">{artData.artist}, {artData.year}</p>
             <div className="ai-speech-bubble">
@@ -158,7 +147,7 @@ const GuidePage = ({ initialTab }: any) => {
             </div>
           </div>
           <footer className="result-footer">
-            <button className="footer-btn secondary" onClick={() => setShowResult(false)}>다시 스캔</button>
+            <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
             <button className="footer-btn primary" onClick={() => setShowPlayer(true)}>
               <Volume2 size={18} /> 오디오 가이드
             </button>
@@ -166,7 +155,32 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 3. 스캐너 */}
+      {/* 🚩 4. 오디오 플레이어 모달 (복구된 부분!) */}
+      {showPlayer && (
+        <div className="audio-player-overlay">
+          <div className="audio-player-card">
+            <button className="player-close" onClick={() => setShowPlayer(false)}><X size={24} /></button>
+            <div className="player-info">
+              <div className="player-img">🎨</div>
+              <h4 className="player-title">{artData.title} 해설</h4>
+              <p className="player-subtitle">AI 도슨트 아티</p>
+            </div>
+            <div className="player-progress-area">
+              <div className="progress-bar-bg"><div className="progress-bar-fill" style={{ width: '35%' }}></div></div>
+              <div className="player-time"><span>01:12</span><span>03:45</span></div>
+            </div>
+            <div className="player-controls">
+              <button className="p-btn"><SkipBack size={24} fill="currentColor" /></button>
+              <button className="p-btn play-main" onClick={() => setIsPlaying(!isPlaying)}>
+                {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" />}
+              </button>
+              <button className="p-btn"><SkipForward size={24} fill="currentColor" /></button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. 스캐너 */}
       {isScannerOpen && (
         <div className="art-scanner-overlay">
             <div className="scanner-top">
@@ -184,7 +198,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 4. 예약 모달 */}
+      {/* 6. 예약 모달 */}
       {isBookingOpen && (
         <div className="booking-modal-overlay">
           <div className="booking-modal">
@@ -197,26 +211,17 @@ const GuidePage = ({ initialTab }: any) => {
                 <div className="modal-content">
                   <div className="guide-summary">
                     <span className="summary-emoji">👩‍🎨</span>
-                    <div>
-                      <p className="summary-name">김사랑 도슨트</p>
-                      <p className="summary-info">45,000원 / 회</p>
-                    </div>
+                    <div><p className="summary-name">김사랑 도슨트</p><p className="summary-info">45,000원 / 회</p></div>
                   </div>
-                  
                   <div className="input-group">
                     <label><Calendar size={16} /> 예약 날짜</label>
                     <input type="date" className="custom-date-input" defaultValue="2026-05-20" />
                   </div>
-
                   <div className="input-group">
                     <label><Users size={16} /> 인원 선택</label>
                     <div className="person-selector">
                       {[1, 2, 3].map((num) => (
-                        <div 
-                          key={num}
-                          className={`person-chip ${personCount === num ? 'active' : ''}`}
-                          onClick={() => setPersonCount(num)}
-                        >
+                        <div key={num} className={`person-chip ${personCount === num ? 'active' : ''}`} onClick={() => setPersonCount(num)}>
                           {num === 3 ? '3명+' : `${num}명`}
                         </div>
                       ))}
