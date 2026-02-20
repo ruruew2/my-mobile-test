@@ -1,19 +1,24 @@
 /* 1. 컨테이너 및 배경 */
 .wishlist-page-container {
     background-color: #fafafa;
-    min-height: 100vh;
-    padding-bottom: 40px;
+    width: 100%;
+    /* 고정 높이를 주지 말고, 부모로부터 독립적인 스크롤을 가지게 함 */
+    height: 100%; 
+    overflow-y: auto; /* 🔥 내용이 많아지면 세로 스크롤 허용 */
+    -webkit-overflow-scrolling: touch; /* 모바일 부드러운 스크롤 */
+    box-sizing: border-box;
 }
 
 /* 2. 상단 헤더 (기존 스타일 유지) */
 .wishlist-header {
     padding: 0 16px;
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    position: sticky;
+    position: sticky; /* 상단 고정 */
     top: 0;
     z-index: 100;
     border-bottom: 1px solid #eee;
+    flex-shrink: 0; /* 헤더 크기 유지 */
 }
 
 .wishlist-header-row {
@@ -46,22 +51,22 @@
 /* 3. 그리드 레이아웃 (핵심 변경) */
 .wishlist-content-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2열 배치 */
+    grid-template-columns: repeat(2, 1fr);
     padding: 16px;
-    gap: 16px; /* 카드 사이 간격 */
+    gap: 16px;
+    /* 🔥 하단 내비게이션 바에 가려지지 않도록 여유 공간 확보 */
+    padding-bottom: 120px; 
 }
 
-/* 4. 카드 개별 스타일 */
+/* 4. 카드 크기 고정 (이미지 비율 유지) */
 .wishlist-grid-card {
     display: flex;
     flex-direction: column;
+    height: fit-content; /* 내부 내용만큼만 높이 차지 */
     background: #ffffff;
-    border-radius: 24px; /* 기존의 부드러운 곡률 유지 */
+    border-radius: 24px;
     padding: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
+    box-sizing: border-box;
 }
 
 .wishlist-grid-card:active {
