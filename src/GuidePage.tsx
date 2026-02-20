@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X, Zap, Image as ImageIcon, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check } from 'lucide-react';
+import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check } from 'lucide-react';
 import './GuidePage.css';
 
 const GuidePage = ({ initialTab }: any) => {
@@ -127,7 +127,7 @@ const GuidePage = ({ initialTab }: any) => {
         </>
       )}
 
-{/* 3. 분석 결과 화면 */}
+      {/* 3. 분석 결과 화면 */}
       {showResult && (
         <div className="art-result-container">
           <header className="result-header">
@@ -145,7 +145,7 @@ const GuidePage = ({ initialTab }: any) => {
             </div>
           </div>
 
-          {/* 🚩 4번 미니 플레이어를 여기로 이사 왔습니다! (푸터 바로 위) */}
+          {/* 4. 미니 플레이어 (결과 화면 내부로 이동) */}
           {showPlayer && (
             <div className="mini-player">
               <div className="mini-player-info">
@@ -166,23 +166,21 @@ const GuidePage = ({ initialTab }: any) => {
             </div>
           )}
 
-            <footer className="result-footer">
+          <footer className="result-footer">
             <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
-            
-            {/* 이 버튼을 아래처럼 수정하세요! */}
             <button 
               className="footer-btn primary" 
               onClick={(e) => {
                 e.preventDefault();
-                setShowPlayer(true);
+                setShowPlayer(!showPlayer);
               }}
             >
               <Volume2 size={18} /> 
               {showPlayer ? '가이드 재생 중' : '오디오 가이드'}
             </button>
           </footer>
-
-      {/* 🚩 기존에 여기 있던 {showPlayer && ...} 부분은 지워주세요! */}
+        </div>
+      )}
 
       {/* 5. 스캐너 */}
       {isScannerOpen && (
