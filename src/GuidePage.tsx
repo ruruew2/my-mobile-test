@@ -92,7 +92,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 2. 메인 화면 전환 (showResult 여부에 따라 분리) */}
+      {/* 2. 메인 화면 전환 */}
       {!showResult ? (
         <>
           <header className="art-header">
@@ -126,7 +126,7 @@ const GuidePage = ({ initialTab }: any) => {
           </div>
         </>
       ) : (
-        /* 3. 분석 결과 화면 (showResult가 true일 때만 렌더링) */
+        /* 3. 분석 결과 화면 (하단 잘림 방지 처리) */
         <div className="art-result-container">
           <header className="result-header">
             <button className="back-btn-inner" onClick={() => setShowResult(false)}><ChevronLeft size={24} /></button>
@@ -150,6 +150,7 @@ const GuidePage = ({ initialTab }: any) => {
               <p>{artData.description}</p>
             </div>
 
+            {/* 오디오 플레이어가 본문 스크롤 끝에 확실히 위치하도록 함 */}
             {showPlayer && (
               <div className="mini-player-inline">
                 <div className="mini-player-info">
@@ -163,11 +164,16 @@ const GuidePage = ({ initialTab }: any) => {
                   <button onClick={() => setIsPlaying(!isPlaying)}>
                     {isPlaying ? <Pause size={22} fill="black" /> : <Play size={22} fill="black" />}
                   </button>
+                  <button onClick={() => setShowPlayer(false)} style={{marginLeft: '10px'}}><X size={20} color="#999" /></button>
                 </div>
               </div>
             )}
+            
+            {/* 하단 푸터 버튼 높이만큼 빈 공간을 주어 스크롤이 끝까지 올라오게 함 */}
+            <div style={{ minHeight: '100px' }}></div>
           </div>
 
+          {/* 푸터를 absolute가 아닌 고정 위치로, 탭 바 위로 올림 */}
           <footer className="result-footer-simple">
             <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
             <button className="footer-btn primary" onClick={() => setShowPlayer(!showPlayer)}>
@@ -177,7 +183,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 5. 스캐너 (오버레이) */}
+      {/* 5. 스캐너 */}
       {isScannerOpen && (
         <div className="art-scanner-overlay">
             <div className="scanner-top">

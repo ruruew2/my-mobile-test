@@ -330,11 +330,12 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 100vh;
+  /* 탭 바 높이만큼 빼주거나, z-index를 탭 바보다 높게 설정 */
+  height: calc(100% - 60px); 
+  background: white;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
-  background: white;
-  z-index: 1000; /* 메인 리스트보다 위에 위치 */
 }
 
 .result-header {
@@ -362,11 +363,8 @@
 .result-body {
   flex: 1;
   overflow-y: auto;
-  padding: 0 20px 120px; /* 푸터 공간 확보 */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  -webkit-overflow-scrolling: touch;
+  /* 푸터와 오디오 가이드가 가리지 않도록 넉넉한 하단 여백 */
+  padding: 20px 20px 180px; 
 }
 
 .result-info-group { margin-bottom: 20px; text-align: center; }
@@ -409,15 +407,16 @@
 
 /* 하단 고정 버튼 바 */
 .result-footer-simple {
-  position: absolute;
-  bottom: 0;
+  position: fixed;
+  /* 하단 내비게이션 바(약 60~80px) 위로 버튼을 올립니다 */
+  bottom: 70px; 
   left: 0;
   width: 100%;
-  padding: 15px 20px 40px;
+  padding: 15px 20px;
   background: white;
   display: flex;
   gap: 10px;
-  border-top: 1px solid #f0f0f0;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
   box-sizing: border-box;
 }
 
