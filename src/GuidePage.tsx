@@ -166,8 +166,10 @@ const GuidePage = ({ initialTab }: any) => {
             </div>
           )}
 
-          <footer className="result-footer">
+            <footer className="result-footer">
             <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
+            
+            {/* 이 버튼을 아래처럼 수정하세요! */}
             <button 
               className="footer-btn primary" 
               onClick={(e) => {
@@ -175,11 +177,10 @@ const GuidePage = ({ initialTab }: any) => {
                 setShowPlayer(true);
               }}
             >
-              <Volume2 size={18} /> 오디오 가이드
+              <Volume2 size={18} /> 
+              {showPlayer ? '가이드 재생 중' : '오디오 가이드'}
             </button>
           </footer>
-        </div>
-      )}
 
       {/* 🚩 기존에 여기 있던 {showPlayer && ...} 부분은 지워주세요! */}
 

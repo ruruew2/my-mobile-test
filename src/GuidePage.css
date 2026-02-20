@@ -369,20 +369,19 @@
 .point-list { padding-left: 20px; margin: 0; }
 .point-list li { margin-bottom: 12px; color: #555; line-height: 1.4; }
 
-/* 2. 결과 페이지 푸터 */
+/* 1. 하단 버튼 바 (푸터) */
 .result-footer {
-  position: fixed;
-  bottom: 70px; 
+  position: absolute; /* fixed보다 absolute가 레이아웃 잡기 편해요 */
+  bottom: 0;
   left: 0;
   width: 100%;
-  padding: 15px 20px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  z-index: 6000; 
+  height: 90px; /* 푸터 높이 고정 */
+  padding: 15px 20px 30px; /* 하단 여백 충분히 */
+  background: white;
   display: flex;
   gap: 10px;
+  z-index: 100;
   box-sizing: border-box;
-  border-top: 1px solid #eee;
 }
 
 .footer-btn { flex: 1; padding: 16px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; }
@@ -406,10 +405,12 @@
   animation: playerSlideUp 0.4s ease-out;
 }
 
+/* 등장 애니메이션 */
 @keyframes playerSlideUp {
-  from { transform: translateY(50px); opacity: 0; }
+  from { transform: translateY(10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+
 
 .bottom-nav {
   z-index: 8000; 
@@ -516,24 +517,24 @@
   margin: 0 auto 15px; color: white; font-size: 24px;
 }
 
-/* 미니 플레이어 - 사파리 대응 및 강제 소환 */
+/* 2. 오디오 플레이어 상자 */
 .mini-player {
-  position: absolute; /* fixed가 아니라 absolute로 해야 부모인 결과창 안에서 움직여요 */
-  bottom: 100px;      /* 푸터 버튼들(보통 70~80px) 바로 위에 띄우기 */
+  position: absolute;
+  /* 푸터 높이(90px) + 여백(10px) = 100px 지점에 딱 붙임 */
+  bottom: 100px; 
   left: 20px;
   right: 20px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px); /* 사파리용 블러 효과 */
-  border-radius: 18px;
+  height: 70px;
+  background: #f8f7ff; /* 색상을 살짝 다르게 하면 더 예뻐요 */
+  border: 1px solid #7C4DFF33; /* 연한 보라색 테두리 */
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  z-index: 100;       /* 푸터보다 살짝 높게 */
-  height: 70px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(124, 77, 255, 0.1);
+  z-index: 110;
+  animation: playerSlideUp 0.3s ease-out; /* 슥 올라오는 효과 */
 }
 
 .mini-player-info { display: flex; align-items: center; gap: 12px; }
