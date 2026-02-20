@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check } from 'lucide-react';
+import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check, Image as ImageIcon } from 'lucide-react'; // ImageIcon 확인
 import './GuidePage.css';
 
 const GuidePage = ({ initialTab }: any) => {
@@ -137,15 +137,25 @@ const GuidePage = ({ initialTab }: any) => {
           </header>
 
           <div className="result-body">
-            <h1 className="result-title">{artData.title}</h1>
-            <p className="result-artist">{artData.artist}, {artData.year}</p>
+            <div className="result-info-group">
+              <h1 className="result-title">{artData.title}</h1>
+              <p className="result-artist">{artData.artist}, {artData.year}</p>
+            </div>
+
+            <div className="result-image-placeholder">
+              <ImageIcon size={40} color="#ddd" />
+              <span>작품 이미지를 분석 중입니다</span>
+            </div>
+
             <div className="ai-speech-bubble">
               <div className="ai-label">🤖 아티의 한마디</div>
               <p>{artData.description}</p>
             </div>
+
+            <div className="spacer"></div>
           </div>
 
-          {/* 4. 미니 플레이어 (결과 화면 내부로 이동) */}
+          {/* 4. 미니 플레이어 */}
           {showPlayer && (
             <div className="mini-player">
               <div className="mini-player-info">
