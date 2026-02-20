@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X, Zap, Image as ImageIcon, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check, SkipBack, SkipForward } from 'lucide-react';
+import { Star, X, Zap, Image as ImageIcon, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check } from 'lucide-react';
 import './GuidePage.css';
 
 const GuidePage = ({ initialTab }: any) => {
@@ -78,9 +78,9 @@ const GuidePage = ({ initialTab }: any) => {
 
   return (
     <div className="art-guide-container">
-      {/* 1. 분석 로딩 (애니메이션) */}
+      {/* 1. 분석 애니메이션 */}
       {isAnalyzing && (
-        <div className="analysis-loading-overlay" style={{ zIndex: 10000 }}>
+        <div className="analysis-loading-overlay">
           <div className="loading-content">
             <div className="ai-pulse-circle">
               <div className="pulse-ring"></div>
@@ -136,9 +136,6 @@ const GuidePage = ({ initialTab }: any) => {
             <div style={{ width: 24 }}></div>
           </header>
           <div className="result-body">
-            <div className="result-img-placeholder">
-                <img src="https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?q=80&w=2070&auto=format&fit=crop" alt="starry-night" />
-            </div>
             <h1 className="result-title">{artData.title}</h1>
             <p className="result-artist">{artData.artist}, {artData.year}</p>
             <div className="ai-speech-bubble">
@@ -155,27 +152,21 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 🚩 4. 오디오 플레이어 모달 (복구된 부분!) */}
+      {/* 🚩 4. 미니 오디오 플레이어 (심플 버전) */}
       {showPlayer && (
-        <div className="audio-player-overlay">
-          <div className="audio-player-card">
-            <button className="player-close" onClick={() => setShowPlayer(false)}><X size={24} /></button>
-            <div className="player-info">
-              <div className="player-img">🎨</div>
-              <h4 className="player-title">{artData.title} 해설</h4>
-              <p className="player-subtitle">AI 도슨트 아티</p>
+        <div className="mini-player">
+          <div className="mini-player-info">
+            <div className="mini-icon">🎵</div>
+            <div>
+              <div className="mini-title">{artData.title} 해설</div>
+              <div className="mini-status">AI 아티가 읽어주는 중...</div>
             </div>
-            <div className="player-progress-area">
-              <div className="progress-bar-bg"><div className="progress-bar-fill" style={{ width: '35%' }}></div></div>
-              <div className="player-time"><span>01:12</span><span>03:45</span></div>
-            </div>
-            <div className="player-controls">
-              <button className="p-btn"><SkipBack size={24} fill="currentColor" /></button>
-              <button className="p-btn play-main" onClick={() => setIsPlaying(!isPlaying)}>
-                {isPlaying ? <Pause size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" />}
-              </button>
-              <button className="p-btn"><SkipForward size={24} fill="currentColor" /></button>
-            </div>
+          </div>
+          <div className="mini-controls">
+            <button onClick={() => setIsPlaying(!isPlaying)}>
+              {isPlaying ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" />}
+            </button>
+            <button onClick={() => setShowPlayer(false)}><X size={20} /></button>
           </div>
         </div>
       )}
