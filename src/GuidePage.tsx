@@ -10,12 +10,12 @@ const GuidePage = ({ initialTab }: any) => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [showPlayer, setShowPlayer] = useState(false);
   
-  // --- 예약 관련 상태 (기존 코드 유지) ---
+  // --- 예약 관련 상태 ---
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingStep, setBookingStep] = useState(1); 
-  const [personCount, setPersonCount] = useState(1); // 🌟 누락되었던 상태 추가
+  const [personCount, setPersonCount] = useState(1);
 
-  // --- 카메라 관련 (기존 코드 유지) ---
+  // --- 카메라 관련 ---
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
@@ -52,11 +52,13 @@ const GuidePage = ({ initialTab }: any) => {
     return () => stopCamera();
   }, [isScannerOpen]);
 
+  // 🚩 [수정] 캡처 시 분석 애니메이션을 거치도록 설정
   const handleCapture = () => {
-    setIsAnalyzing(true);
+    setIsAnalyzing(true); // 1. 애니메이션 시작
     if (videoRef.current) videoRef.current.pause();
+    
     setTimeout(() => {
-      setIsAnalyzing(false);
+      setIsAnalyzing(false); // 2. 3.5초 뒤 애니메이션 종료
       setIsScannerOpen(false);
       setShowResult(true);
       stopCamera();
@@ -81,7 +83,24 @@ const GuidePage = ({ initialTab }: any) => {
 
   return (
     <div className="art-guide-container">
-      {/* 1. 메인 리스트 (기존 유지) */}
+      {/* 🚩 5. AI 분석 중 애니메이션 오버레이 (isAnalyzing이 true일 때만 표시) */}
+      {isAnalyzing && (
+        <div className="analysis-loading-overlay">
+          <div className="loading-content">
+            <div className="ai-pulse-circle">
+              <div className="pulse-ring"></div>
+              <span className="ai-icon">🤖</span>
+            </div>
+            <h3 className="loading-title">아티가 작품을 분석 중입니다...</h3>
+            <div className="loading-bar-bg">
+              <div className="loading-bar-fill"></div>
+            </div>
+            <p className="loading-sub">잠시만 기다려주세요</p>
+          </div>
+        </div>
+      )}
+
+      {/* 1. 메인 리스트 */}
       {!showResult && (
         <>
           <header className="art-header">
@@ -122,7 +141,7 @@ const GuidePage = ({ initialTab }: any) => {
         </>
       )}
 
-      {/* 2. 분석 결과 (기존 유지) */}
+      {/* 2. 분석 결과 */}
       {showResult && (
         <div className="art-result-container">
           <header className="result-header">
@@ -147,7 +166,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 3. 스캐너 (기존 유지) */}
+      {/* 3. 스캐너 */}
       {isScannerOpen && (
         <div className="art-scanner-overlay">
             <div className="scanner-top">
@@ -165,7 +184,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 🌟 4. 예약 모달 (수정 및 정리) */}
+      {/* 4. 예약 모달 */}
       {isBookingOpen && (
         <div className="booking-modal-overlay">
           <div className="booking-modal">
