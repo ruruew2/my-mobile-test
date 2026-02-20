@@ -134,40 +134,44 @@ const GuidePage = ({ initialTab }: any) => {
             <div style={{ width: 24 }}></div>
           </header>
 
-          <div className="result-body">
-            <div className="result-info-group">
-              <h1 className="result-title">{artData.title}</h1>
-              <p className="result-artist">{artData.artist}, {artData.year}</p>
-            </div>
+<div className="result-body">
+  <div className="result-info-group">
+    <h1 className="result-title">{artData.title}</h1>
+    <p className="result-artist">{artData.artist}, {artData.year}</p>
+  </div>
 
-            <div className="result-image-placeholder">
-              <ImageIcon size={40} color="#ddd" />
-              <span>작품 이미지를 분석 중입니다</span>
-            </div>
+<div className="result-image-placeholder">
+    <ImageIcon size={40} color="#ddd" />
+    <span>작품 이미지를 분석 중입니다</span>
+  </div>
 
-            <div className="ai-speech-bubble">
-              <div className="ai-label">🤖 아티의 한마디</div>
-              <p>{artData.description}</p>
-            </div>
+<div className="ai-speech-bubble">
+    <div className="ai-label">🤖 아티의 한마디</div>
+    <p>{artData.description}</p>
+  </div>
 
-            {/* 오디오 플레이어가 본문 스크롤 끝에 확실히 위치하도록 함 */}
-            {showPlayer && (
-              <div className="mini-player-inline">
-                <div className="mini-player-info">
-                  <div className="mini-icon">🎵</div>
-                  <div>
-                    <div className="mini-title">{artData.title}</div>
-                    <div className="mini-status">AI 해설 재생 중</div>
-                  </div>
-                </div>
-                <div className="mini-controls">
-                  <button onClick={() => setIsPlaying(!isPlaying)}>
-                    {isPlaying ? <Pause size={22} fill="black" /> : <Play size={22} fill="black" />}
-                  </button>
-                  <button onClick={() => setShowPlayer(false)} style={{marginLeft: '10px'}}><X size={20} color="#999" /></button>
-                </div>
-              </div>
-            )}
+
+
+{/* 오디오 플레이어를 컨텐츠 폭에 맞게 배치 */}
+  {showPlayer && (
+    <div className="audio-mini-player">
+      <div className="mini-player-info">
+        <div className="mini-icon">🎵</div>
+        <div>
+          <div className="mini-title">{artData.title}</div>
+          <div className="mini-status">AI 해설 재생 중</div>
+        </div>
+      </div>
+      <div className="mini-controls">
+        <button onClick={() => setIsPlaying(!isPlaying)}>
+          {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
+        </button>
+        <button onClick={() => setShowPlayer(false)} style={{marginLeft: '12px', opacity: 0.6}}>
+          <X size={18} color="white" />
+        </button>
+      </div>
+    </div>
+  )}
             
             {/* 하단 푸터 버튼 높이만큼 빈 공간을 주어 스크롤이 끝까지 올라오게 함 */}
             <div style={{ minHeight: '100px' }}></div>

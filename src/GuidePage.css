@@ -397,12 +397,13 @@
 
 /* 말풍선 */
 .ai-speech-bubble {
+  background: #f8f6ff; 
+  padding: 20px; 
+  border-radius: 15px;
+  margin-top: 25px; 
+  line-height: 1.6;
   width: 100%;
-  background: #f8f7ff;
-  padding: 18px;
-  border-radius: 20px;
   box-sizing: border-box;
-  text-align: left;
 }
 
 /* 하단 고정 버튼 바 */
@@ -465,25 +466,29 @@
 
 /* 3. 오디오 미니 플레이어 */
 .audio-mini-player {
-  position: fixed;
-  bottom: 160px; 
-  left: 15px;
-  right: 15px;
-  z-index: 7000; 
+  /* fixed 대신 컨텐츠 흐름을 따르게 변경 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  
+  margin-top: 20px; /* 아티의 한마디와의 간격 */
+  width: 100%; /* 부모(result-body)의 패딩 안에서 꽉 차게 */
+  box-sizing: border-box;
+
   background: rgba(18, 18, 18, 0.95);
   backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  padding: 14px;
+  padding: 16px 20px;
   color: white;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
   animation: playerSlideUp 0.4s ease-out;
 }
 
 /* 등장 애니메이션 */
 @keyframes playerSlideUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 
@@ -612,11 +617,31 @@
   animation: playerSlideUp 0.3s ease-out; /* 슥 올라오는 효과 */
 }
 
-.mini-player-info { display: flex; align-items: center; gap: 12px; }
-.mini-icon { font-size: 24px; }
-.mini-title { font-weight: 700; font-size: 14px; color: #1a1a1a; }
-.mini-status { font-size: 11px; color: #ff3b30; font-weight: 500; }
-.mini-controls { display: flex; align-items: center; gap: 15px; }
+.mini-player-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mini-icon {
+  font-size: 20px;
+}
+
+.mini-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.mini-status {
+  font-size: 12px;
+  color: #a0a0a0;
+}
+
+.mini-controls {
+  display: flex;
+  align-items: center;
+}
+
 .mini-controls button { background: none; border: none; cursor: pointer; }
 
 
