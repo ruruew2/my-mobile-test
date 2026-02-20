@@ -219,18 +219,20 @@ const navigateToGuide = (subType: 'human' | 'ai') => {
                 </div>
               </div>
                 {/* 🚩 수정: navigateToGuide('human') 연결 */}
-                <div className="docent-card" onClick={() => navigateToGuide('human')}>
-                  <div className="docent-profile">👩‍🎨</div>
-                  <div className="docent-info">
-                    <div className="docent-name">김사랑 도슨트</div>
-                    <p className="docent-desc">현대미술, 미술사학</p>
-                    <div className="docent-price">45,000원</div>
-                  </div>
-                  <div className="docent-action">
-                    <div className="rating">⭐ 4.9 <span className="count">(320)</span></div>
-                    <button className="action-btn gray">예약하기</button>
-                  </div>
-                </div>
+{/* 🚩 김사랑 도슨트 카드 부분 */}
+<div className="docent-card active-guide" onClick={() => navigateToGuide('human')}>
+  <div className="docent-profile">👩‍🎨</div>
+  <div className="docent-info">
+    <div className="docent-name">김사랑 도슨트</div>
+    <p className="docent-desc">현대미술, 미술사학</p>
+    <div className="docent-price">45,000원</div>
+  </div>
+  <div className="docent-action">
+    <div className="rating">⭐ 4.9 <span className="count">(320)</span></div>
+    {/* 버튼 색상도 아티처럼 강조하고 싶다면 'gray' 대신 'black'을 쓸 수 있습니다 */}
+    <button className="action-btn gray">예약하기</button>
+  </div>
+</div>
               </div>
             </section>
 
