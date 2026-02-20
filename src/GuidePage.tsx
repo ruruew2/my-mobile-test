@@ -135,6 +135,7 @@ const GuidePage = ({ initialTab }: any) => {
             <span className="header-tag">🤖 AI 도슨트 리포트</span>
             <div style={{ width: 24 }}></div>
           </header>
+
           <div className="result-body">
             <h1 className="result-title">{artData.title}</h1>
             <p className="result-artist">{artData.artist}, {artData.year}</p>
@@ -143,14 +144,34 @@ const GuidePage = ({ initialTab }: any) => {
               <p>{artData.description}</p>
             </div>
           </div>
+
+          {/* 🚩 4번 미니 플레이어를 여기로 이사 왔습니다! (푸터 바로 위) */}
+          {showPlayer && (
+            <div className="mini-player">
+              <div className="mini-player-info">
+                <div className="mini-icon">🎵</div>
+                <div>
+                  <div className="mini-title">{artData.title}</div>
+                  <div className="mini-status">AI 해설 재생 중</div>
+                </div>
+              </div>
+              <div className="mini-controls">
+                <button onClick={() => setIsPlaying(!isPlaying)} style={{ padding: '8px' }}>
+                  {isPlaying ? <Pause size={22} fill="black" /> : <Play size={22} fill="black" />}
+                </button>
+                <button onClick={() => setShowPlayer(false)} style={{ padding: '8px' }}>
+                  <X size={20} color="#999" />
+                </button>
+              </div>
+            </div>
+          )}
+
           <footer className="result-footer">
             <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
-            
-            {/* 🚩 여기가 핵심! onClick에 setShowPlayer(true)가 확실히 들어가야 합니다 */}
             <button 
               className="footer-btn primary" 
-              onClick={() => {
-                console.log("플레이어 켜짐!"); // 디버깅용
+              onClick={(e) => {
+                e.preventDefault();
                 setShowPlayer(true);
               }}
             >
@@ -160,24 +181,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-{/* 4. 미니 오디오 플레이어 */}
-      {showPlayer && (
-        <div className="mini-player" style={{ zIndex: 9999 }}> {/* Z-index를 높게 줘서 결과화면 위로 띄움 */}
-          <div className="mini-player-info">
-            <div className="mini-icon">🎵</div>
-            <div>
-              <div className="mini-title">{artData.title} 해설</div>
-              <div className="mini-status">AI 아티가 읽어주는 중...</div>
-            </div>
-          </div>
-          <div className="mini-controls">
-            <button onClick={() => setIsPlaying(!isPlaying)}>
-              {isPlaying ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" />}
-            </button>
-            <button onClick={() => setShowPlayer(false)}><X size={20} /></button>
-          </div>
-        </div>
-      )}
+      {/* 🚩 기존에 여기 있던 {showPlayer && ...} 부분은 지워주세요! */}
 
       {/* 5. 스캐너 */}
       {isScannerOpen && (

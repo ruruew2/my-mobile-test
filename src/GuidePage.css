@@ -516,24 +516,31 @@
   margin: 0 auto 15px; color: white; font-size: 24px;
 }
 
+/* 미니 플레이어 - 사파리 대응 및 강제 소환 */
 .mini-player {
-  position: fixed;
-  bottom: 20px;
+  position: absolute; /* fixed가 아니라 absolute로 해야 부모인 결과창 안에서 움직여요 */
+  bottom: 100px;      /* 푸터 버튼들(보통 70~80px) 바로 위에 띄우기 */
   left: 20px;
   right: 20px;
-  height: 70px;
-  background: white;
-  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* 사파리용 블러 효과 */
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  z-index: 2000;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  z-index: 100;       /* 푸터보다 살짝 높게 */
+  height: 70px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
+
 .mini-player-info { display: flex; align-items: center; gap: 12px; }
 .mini-icon { font-size: 24px; }
-.mini-title { font-weight: bold; font-size: 14px; }
-.mini-status { font-size: 12px; color: #666; }
+.mini-title { font-weight: 700; font-size: 14px; color: #1a1a1a; }
+.mini-status { font-size: 11px; color: #ff3b30; font-weight: 500; }
 .mini-controls { display: flex; align-items: center; gap: 15px; }
 .mini-controls button { background: none; border: none; cursor: pointer; }
+
+
