@@ -1,0 +1,163 @@
+/* 1. 컨테이너 및 배경 */
+.wishlist-page-container {
+    background-color: #fafafa;
+    width: 100%;
+    /* 고정 높이를 주지 말고, 부모로부터 독립적인 스크롤을 가지게 함 */
+    height: 100%; 
+    overflow-y: auto; /* 🔥 내용이 많아지면 세로 스크롤 허용 */
+    -webkit-overflow-scrolling: touch; /* 모바일 부드러운 스크롤 */
+    box-sizing: border-box;
+}
+
+/* 2. 상단 헤더 (기존 스타일 유지) */
+.wishlist-header {
+    padding: 0 16px;
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    position: sticky; /* 상단 고정 */
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0; /* 헤더 크기 유지 */
+}
+
+.wishlist-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    height: 56px;
+}
+
+.wishlist-back-btn {
+    position: absolute;
+    left: -8px;
+    background: none;
+    border: none;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    color: #1a1a1a;
+}
+
+.wishlist-page-title {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #111;
+}
+
+/* 3. 그리드 레이아웃 (핵심 변경) */
+.wishlist-content-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 16px;
+    gap: 16px;
+    /* 🔥 하단 내비게이션 바에 가려지지 않도록 여유 공간 확보 */
+    padding-bottom: 120px; 
+}
+
+/* 4. 카드 크기 고정 (이미지 비율 유지) */
+.wishlist-grid-card {
+    display: flex;
+    flex-direction: column;
+    height: fit-content; /* 내부 내용만큼만 높이 차지 */
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.wishlist-grid-card:active {
+    transform: scale(0.96);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+/* 이미지 영역 */
+.wishlist-card-img-wrapper {
+    width: 100%;
+    aspect-ratio: 1 / 1; /* 정사각형 유지 */
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    background-color: #f0f0f0;
+}
+
+.wishlist-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.wishlist-grid-card:hover .wishlist-card-img {
+    transform: scale(1.05);
+}
+
+/* 이미지 위 삭제 버튼 */
+.wishlist-remove-btn-overlay {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    border: none;
+    color: #ffb8b8;
+    padding: 7px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wishlist-remove-btn-overlay:active {
+    background: #ff4b4b;
+    color: #fff;
+}
+
+/* 텍스트 정보 영역 */
+.wishlist-card-info {
+    padding: 10px 4px 4px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wishlist-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #222;
+    margin: 0;
+    line-height: 1.4;
+    /* 제목 길어질 경우 2줄 제한 */
+    display: -webkit-box;
+
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.wishlist-price {
+    font-size: 15px;
+    font-weight: 800;
+    color: #ff2c2c;
+}
+
+/* 5. 빈 화면 상태 (그리드 전체 차지) */
+.wishlist-empty-state {
+    grid-column: span 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    text-align: center;
+}
+
+.wishlist-empty-state p {
+    font-size: 15px;
+    color: #999;
+    font-weight: 500;
+}

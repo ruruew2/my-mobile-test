@@ -1,0 +1,166 @@
+/* Root 페이지 전체 배경 */
+.course-container {
+  background-color: #f8f9fa;
+  /* 수정: padding을 하나로 합치고, overflow 추가 */
+  padding: 40px 20px 150px 20px; 
+  min-height: 100vh;
+  font-family: 'Pretendard', sans-serif;
+  
+  /* 핵심: 내용이 길어지면 스크롤이 생기게 합니다 */
+  overflow-y: auto; 
+  display: block; 
+
+  /* 🚩 핵심: 스크롤바 숨기기 (모든 브라우저 대응) */
+  -ms-overflow-style: none; /* 인터넷 익스플로러, 엣지 */
+  scrollbar-width: none;  /* 파이어폭스 */
+}
+
+/* 크롬, 사파리, 오페라, 안드로이드 웹뷰용 */
+.course-container::-webkit-scrollbar {
+  display: none;
+}
+
+.course-header h2 {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.course-header p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+/* 메인 흰색 카드 */
+.course-card-main {
+  background: white;
+  border-radius: 28px;
+  padding: 30px 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  position: relative;
+  /* 카드 사이의 간격 확실히 주기 */
+  margin-bottom: 40px; 
+}
+
+/* 배지, 아이콘, 타이틀 등 나머지 코드는 동일하게 유지... */
+.course-badge {
+  background: #000;
+  color: #fff;
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.floating-compass {
+  position: absolute;
+  right: 24px;
+  top: 30px;
+  background: #f1f3f5;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.course-main-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.course-main-desc {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
+  margin-bottom: 30px;
+}
+
+.course-timeline {
+  position: relative;
+  padding-left: 40px;
+  margin-bottom: 30px;
+}
+
+.course-timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 10px;
+  bottom: 10px;
+  width: 1px;
+  background: #eee;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.step-circle {
+  position: absolute;
+  left: -40px;
+  top: 0;
+  width: 30px;
+  height: 30px;
+  background: white;
+  border: 1.5px solid #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 2;
+}
+
+.step-tag-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.step-type-label {
+  background: #f1f3f5;
+  color: #868e96;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.step-name-text {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.step-sub-desc {
+  font-size: 13px;
+  color: #999;
+}
+
+.course-start-btn {
+  width: 100%;
+  background: #f8f9fa;
+  border: none;
+  padding: 16px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.course-start-btn:hover {
+  background: #e9ecef;
+}
