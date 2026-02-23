@@ -180,7 +180,16 @@
 }
 .social-icon-item:active {
     transform: scale(0.95);
+    transform: translateY(-2px);
 }
+
+/* 마우스를 올렸을 때 (Hover) */
+.social-icon-item:hover {
+    transform: translateY(-5px); /* 위로 5px 이동 */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); /* 살짝 그림자를 주면 더 입체적이에요 */
+}
+
+
 .kakao-bg {
     background-color: #fee500;
     border: none;
@@ -206,8 +215,20 @@
     color: #888;
     display: flex;
     justify-content: center;
+    align-items: center; /* 세로 정렬 맞춤 */
     gap: 10px;
 }
+
+/* 푸터 내의 클릭 가능한 글자들 */
+.login-footer span:not(.footer-bar) {
+    cursor: pointer; /* 마우스 대면 손모양 */
+    transition: color 0.2s;
+}
+
+.login-footer span:not(.footer-bar):hover {
+    color: #333; /* 마우스 올리면 글자색 진하게 */
+}
+
 .footer-bar {
     color: #eee;
 }

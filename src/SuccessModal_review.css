@@ -1,0 +1,71 @@
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6); /* 뒷배경을 어둡게 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* 무조건 맨 위 */
+    padding: 20px;
+}
+
+.success-modal {
+    background: white;
+    width: 90%;
+    max-width: 320px;
+    padding: 40px 24px 30px; /* 위쪽 여백 좀 더 줌 */
+    border-radius: 24px; 
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.success-icon {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center; /* 아이콘 가운데 정렬 */
+}
+
+.success-modal h3 {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin-bottom: 12px;
+}
+
+.success-modal p {
+    font-size: 0.95rem;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+
+.close-modal-btn {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.close-modal-btn:active {
+    transform: scale(0.97);
+}

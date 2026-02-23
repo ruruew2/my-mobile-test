@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, Check, Image as ImageIcon } from 'lucide-react'; 
+import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, CheckCircle, Image as ImageIcon } from 'lucide-react'; 
 import './GuidePage.css';
 
 const GuidePage = ({ initialTab }: any) => {
@@ -237,11 +237,25 @@ const GuidePage = ({ initialTab }: any) => {
                 </div>
                 <button className="booking-submit-btn" onClick={handleBooking}>결제 및 예약 확정</button>
               </>
-            ) : (
+           ) : (
+              /* ✅ 예약 완료 화면: 괄호와 구조를 정확히 맞췄습니다 */
               <div className="booking-success">
-                <div className="success-icon"><Check size={40} color="white" /></div>
-                <h3>예약이 완료되었습니다!</h3>
-                <p>도슨트가 곧 연락드릴 예정입니다.</p>
+                <div className="success-icon-container">
+                  <CheckCircle 
+                    size={65} 
+                    color="#000" 
+                    fill="#22c55e" 
+                    strokeWidth={3} 
+                  />
+                </div>
+                
+                <h3 className="success-title">예약이 완료되었습니다!</h3><br></br>
+                <p className="success-desc">
+                  도슨트가 곧 확인 연락을 드릴 예정입니다.
+                  <br></br> 감사합니다.
+                </p>
+
+                
               </div>
             )}
           </div>

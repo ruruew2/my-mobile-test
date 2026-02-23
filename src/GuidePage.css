@@ -619,18 +619,44 @@
 }
 .booking-submit-btn:active { transform: scale(0.96); }
 
-/* 🌟 성공 화면 (예약 완료되었습니다) 중앙 정렬 보장 */
+
+/* 1. 컨테이너: 전체적인 상하 여백을 왼쪽 사진 비율에 맞춤 */
 .booking-success {
-  padding: 40px 20px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* 아이콘, 텍스트 가로 중앙 */
-  justify-content: center;
-  width: 100%;
-  box-sizing: border-box;
+    padding: 40px 24px 25px !important; 
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
+/* 2. 아이콘: 타이틀과의 간격을 15px 정도로 좁힘 */
+.success-icon-container {
+    margin-bottom: 18px !important; /* 25px에서 줄임 */
+    display: flex;
+    justify-content: center;
+}
+
+/* 3. 타이틀: 기본 마진을 없애고 설명글과의 간격을 딱 붙임 */
+.success-title {
+    margin: 0 0 8px 0 !important; /* 아래쪽 여백 8px로 최소화 */
+    font-size: 22px !important;
+    font-weight: 850 !important; /* 800보다 더 굵게 850 추천 */
+    color: #000 !important;
+    letter-spacing: -1px !important; /* 자간 더 밀착 */
+    line-height: 1.2 !important;
+}
+
+/* 4. 설명 문구: 기본 마진을 없애고 버튼과의 거리만 확보 */
+.success-desc {
+    margin: 0 0 30px 0 !important; /* 위쪽 마진 0, 아래 버튼과만 간격 유지 */
+    font-size: 15px !important;
+    font-weight: 500 !important;
+    color: #888 !important;
+    line-height: 1.4 !important; /* 줄간격도 살짝 좁힘 */
+    letter-spacing: -0.5px !important;
+}
 
 .success-icon {
   width: 60px;
