@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { Compass, Send } from 'lucide-react';
 import './Root.css';
 
-// 🚩 props로 targetCourse와 초기화 함수를 받습니다.
-const RootPage = ({ targetCourse, setTargetCourse }: any) => {
+// 🚩 props로 onStart(코스 시작 함수)를 추가로 받습니다.
+const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
   const courses = [
     {
       id: 1,
@@ -12,9 +12,9 @@ const RootPage = ({ targetCourse, setTargetCourse }: any) => {
       title: "성수동 힙한 갤러리 투어",
       desc: "영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.",
       steps: [
-        { type: 'EXHIBITION', name: '성수 크리에이티브 스페이스', sub: '네온 드림 전시' },
-        { type: 'CAFE', name: '어니언 성수', sub: '인더스트리얼 감성 베이커리' },
-        { type: 'RESTAURANT', name: '제스트 성수', sub: '모던 퓨전 다이닝' }
+        { type: 'EXHIBITION', name: '성수 크리에이티브 스페이스', sub: '네온 드림 전시', tip: '네온 조명 아래서 실루엣 샷을 찍어보세요!' },
+        { type: 'CAFE', name: '어니언 성수', sub: '인더스트리얼 감성 베이커리', tip: '팡도르 빵은 꼭 드셔보세요.' },
+        { type: 'RESTAURANT', name: '제스트 성수', sub: '모던 퓨전 다이닝', tip: '예약 없이 가면 웨이팅이 있을 수 있어요.' }
       ]
     },
     {
@@ -24,14 +24,13 @@ const RootPage = ({ targetCourse, setTargetCourse }: any) => {
       title: "종로의 과거와 현재",
       desc: "전통의 정취와 현대적 감각이 공존하는 깊이 있는 산책 코스입니다.",
       steps: [
-        { type: 'EXHIBITION', name: '종로 갤러리', sub: '전통의 메아리 전시' },
-        { type: 'CAFE', name: '수사동 커피하우스', sub: '조용한 한옥 감성 카페' },
-        { type: 'EXHIBITION', name: '국립현대미술관', sub: '현대 추상 전시' }
+        { type: 'EXHIBITION', name: '종로 갤러리', sub: '전통의 메아리 전시', tip: '입구의 빨간 포스터 앞에서 인증샷을 찍어보세요!' },
+        { type: 'CAFE', name: '수사동 커피하우스', sub: '조용한 한옥 감성 카페', tip: '시그니처인 흑임자 라떼를 추천해요.' },
+        { type: 'EXHIBITION', name: '국립현대미술관', sub: '현대 추상 전시', tip: '3층 테라스에서 경복궁이 한눈에 보여요.' }
       ]
     }
   ];
 
-  // 🚩 페이지 로드 시 스크롤 실행 로직
   useEffect(() => {
     if (targetCourse) {
       const timer = setTimeout(() => {
@@ -39,9 +38,8 @@ const RootPage = ({ targetCourse, setTargetCourse }: any) => {
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-        // 스크롤 후 목적지 초기화 (다시 홈에서 눌렀을 때 작동하기 위함)
         setTargetCourse(null);
-      }, 150); // 렌더링 시간을 벌기 위한 약간의 지연
+      }, 150);
       return () => clearTimeout(timer);
     }
   }, [targetCourse, setTargetCourse]);
@@ -83,9 +81,10 @@ const RootPage = ({ targetCourse, setTargetCourse }: any) => {
             ))}
           </div>
 
-          <button className="course-start-btn">
-            <Send size={16} /> 코스 시작하기
-          </button>
+{/* 🚩 클릭 시 현재 보고 있는 course 정보를 통째로 넘겨줍니다. */}
+<button className="course-start-btn" onClick={() => onStart(course)}> 
+  <Send size={16} /> 코스 시작하기
+</button>
         </div>
       ))}
     </div>

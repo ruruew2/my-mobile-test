@@ -10,6 +10,7 @@ import LoginPage from './LoginPage';
 import Giftshop from './GiftShop';
 import MapPage from './Map.tsx';
 import GuidePage from './GuidePage';
+import CourseNavigation from './CourseNavigation';
 
 import {
     Home,
@@ -30,6 +31,7 @@ import {
 // --- [컴포넌트 1] 취향 선택 화면 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
     const [selected, setSelected] = useState<string[]>([]);
+    const [selectedCourseData, setSelectedCourseData] = useState<any>(null);
     const [toast, setToast] = useState(false);
 
     const tags = [
@@ -105,9 +107,14 @@ const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
     );
 };
 
+
 // --- [컴포넌트 3] 화제 전시 카드 ---
 const ExhibitCard = ({ title, location, tag, imgUrl }: any) => {
     const [liked, setLiked] = useState(false);
+
+    // 🚩 [핵심] tag가 배열이면 그대로 쓰고, 아니면 배열로 만들어주는 안전장치
+    const displayTags = Array.isArray(tag) ? tag : [tag];
+
     return (
         <div className="exhibit-card">
             <div
@@ -123,8 +130,12 @@ const ExhibitCard = ({ title, location, tag, imgUrl }: any) => {
                 >
                     <Heart size={20} fill={liked ? '#FF3B30' : 'none'} stroke={liked ? '#FF3B30' : 'white'} />
                 </button>
-                <div className="tags">
-                    <span className="tag">{tag}</span>
+                
+                {/* 🚩 tags.map 대신 안전하게 정의한 displayTags.map 사용 */}
+                <div className="tags" style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                    {displayTags.map((t, i) => (
+                        <span key={i} className="tag">{t}</span>
+                    ))}
                 </div>
             </div>
             <div className="exhibit-info">
@@ -168,7 +179,10 @@ export default function App() {
     const [isNotifyOpen, setIsNotifyOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [targetCourse, setTargetCourse] = useState<string | null>(null);
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [selectedCourseData, setSelectedCourseData] = useState<any>(null);
 
+    
     // 🚩 [추가] 가이드 페이지 진입 시 서브 탭 상태 (기본 'human')
     const [guideSubTab, setGuideSubTab] = useState<'human' | 'ai'>('human');
 
@@ -190,6 +204,8 @@ export default function App() {
             isRead: false,
         },
     ]);
+
+    
 
     // 🚩 [추가] 가이드 탭으로 이동하면서 서브 탭을 설정하는 함수
     const navigateToGuide = (subType: 'human' | 'ai') => {
@@ -255,9 +271,12 @@ export default function App() {
                                 당신이 평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로<br></br> 산책 코스를 준비했어요!
                                 오늘 하루도 좋은 하루 되세요!
                             </p>
-                            <button className="cta-button">
-                                추천 전시 보기 <ChevronRight size={20} className="cta-icon" />
-                            </button>
+                                <button 
+                                className="cta-button" 
+                                onClick={() => setActiveTab('exhibits')} // 클릭 시 전시 리스트 탭으로 변경
+                                >
+                            추천 전시 보기 <ChevronRight size={20} className="cta-icon" />
+                                </button>
                         </section>
 
                         <section className="section">
@@ -268,18 +287,27 @@ export default function App() {
                                     전체보기
                                 </button>
                             </div>
-                            <ExhibitCarousel>
-                                {/* ExhibitList.tsx에 있는 것과 동일한 데이터를 여기서도 뿌려줍니다. 
-           상단에 변수로 빼두면 더 좋지만, 우선은 그대로 넣어드릴게요.
-        */}
-                                {[
-                                    { tag: '추상화', title: '현대 추상의 영혼', location: '국립현대미술관' },
-                                    { tag: '사진전', title: '어제의 기록들', location: '세종문화회관' },
-                                    { tag: '설치미술', title: '공간의 재해석', location: 'DDP' },
-                                ].map((item, idx) => (
-                                    <ExhibitCard key={idx} tag={item.tag} title={item.title} location={item.location} />
-                                ))}
-                            </ExhibitCarousel>
+<ExhibitCarousel>
+    {[
+        { 
+          tag: ['추상화', '국립현대미술관'], // 콤마로 구분하고 대괄호로 감싸기!
+          title: '현대 추상의 영혼', 
+          location: '국립현대미술관' 
+        },
+        { 
+          tag: ['사진전', '세종문화회관'], 
+          title: '어제의 기록들', 
+          location: '세종문화회관' 
+        },
+        { 
+          tag: '설치미술', // 하나만 넣어도 이제 안 깨져요!
+          title: '공간의 재해석', 
+          location: 'DDP' 
+        },
+    ].map((item, idx) => (
+        <ExhibitCard key={idx} tag={item.tag} title={item.title} location={item.location} />
+    ))}
+</ExhibitCarousel>
                         </section>
 
                         {/* --- 🚩 프리미엄 도슨트 섹션 연결 --- */}
@@ -341,6 +369,8 @@ export default function App() {
                             </div>
                         </section>
 
+                        
+
                         <section className="section">
                             <div className="section-header">
                                 <div className="title-group">
@@ -385,8 +415,25 @@ export default function App() {
                 <MapPage />
             ) : activeTab === 'guide' ? (
                 <GuidePage initialTab={guideSubTab} />
-            ) : activeTab === 'course' ? (
-                <RootPage targetCourse={targetCourse} setTargetCourse={setTargetCourse} />
+) : activeTab === 'course' ? (
+    // 🚩 여기를 주목하세요! 
+    // isNavigating 상태에 따라 '리스트'를 보여줄지 '안내화면'을 보여줄지 결정합니다.
+    isNavigating ? (
+        <CourseNavigation 
+            courseData={selectedCourseData} 
+            onClose={() => setIsNavigating(false)} 
+        />
+    ) : (
+<RootPage 
+            targetCourse={targetCourse} 
+            setTargetCourse={setTargetCourse} 
+            // 🚩 아래 onStart 부분을 제가 드린 코드로 정확히 교체하세요
+            onStart={(data: any) => {
+                setSelectedCourseData(data); // RootPage에서 받은 데이터를 저장하고
+                setIsNavigating(true);      // 네비게이션 화면으로 전환합니다
+            }} 
+        />
+    )
             ) : activeTab === 'gift' ? (
                 <Giftshop />
             ) : activeTab === 'mypage' ? (
