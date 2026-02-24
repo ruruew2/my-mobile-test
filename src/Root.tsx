@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Compass, Send } from 'lucide-react';
 import './Root.css';
 
-// 🚩 props로 onStart(코스 시작 함수)를 추가로 받습니다.
+
 const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
 const courses = [
   {

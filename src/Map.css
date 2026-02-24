@@ -54,20 +54,42 @@
     color: white;
 }
 
-/* 바텀 시트 본체 */
+/* 바텀 시트 본체 수정 */
 .map-bottom-sheet {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    max-height: 45vh;
+    /* 높이를 고정하거나 vh를 사용하되, js에서 조절하기 편하게 설정 */
+    height: 70vh; 
     background-color: white;
     border-radius: 24px 24px 0 0;
-    padding: 20px;
+    padding: 0 20px 20px 20px; /* 상단 패딩 제거 (핸들 영역에서 잡기 위해) */
     z-index: 10;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
+    
+    /* 부드러운 이동을 위한 트랜지션 (드래그 중에는 JS에서 제거할 예정) */
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+}
+
+/* 터치/드래그 시 반응속도를 위해 트랜지션 제거용 클래스 */
+.map-bottom-sheet.dragging {
+    transition: none;
+}
+
+/* 핸들바 영역 확장 (사용자가 잡기 편하게 터치 영역을 넓힘) */
+.sheet-handle-wrapper {
+    width: 100%;
+    height: 36px; /* 실제 터치되는 영역 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: grab;
+    touch-action: none; /* 브라우저 기본 스크롤 방지 */
 }
 
 .sheet-handle {
@@ -75,8 +97,7 @@
     height: 4px;
     background: #e5e5e5;
     border-radius: 2px;
-    margin: 0 auto 16px;
-    flex-shrink: 0;
+    margin: 0; /* 기존 마진 제거 */
 }
 
 .sheet-header {
@@ -101,13 +122,17 @@
     margin: 0;
 }
 
-/* 리스트 영역 (스크롤 가능) */
+/* 리스트 영역 수정 */
 .sheet-list-container {
     flex: 1;
     overflow-y: auto;
-    padding-bottom: 80px; /* 하단 탭바 여백 */
+    /* 드래그와 리스트 스크롤이 겹치지 않게 주의 */
+    padding-bottom: 100px;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
+
+
 .sheet-list-container::-webkit-scrollbar {
     display: none;
 }
