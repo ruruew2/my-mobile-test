@@ -89,7 +89,10 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
   const [selectedExhibition, setSelectedExhibition] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
 
-  // 🚩 알림 상태 관리 (로컬스토리지 연동)
+  // 🚩 후기 목록 상태 (테스트를 위해 빈 배열로 두거나 데이터를 넣어보세요)
+  const [reviewItems, setReviewItems] = useState<string[]>([]); 
+
+  // 알림 상태 관리
   const [notifSettings, setNotifSettings] = useState(() => {
     const saved = localStorage.getItem('user_notif_settings');
     return saved ? JSON.parse(saved) : { recommend: true, payment: true, notice: true };
@@ -167,21 +170,60 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
         return (
           <div className="sub-view">
             <SubViewHeader title="후기 작성" />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {['전시 제목 1', '전시 제목 2'].map((title, i) => (
-                <ListCard 
-                  key={i} 
-                  icon={<PenLine size={20} color="#10b981" />} 
-                  title={title} 
-                  sub="관람 완료 • 후기를 남겨주세요" 
-                  btnLabel="후기 작성" 
-                  onBtnClick={() => {
-                    setSelectedExhibition(title);
+            {reviewItems.length > 0 ? (
+              /* 후기가 있을 때 목록 표시 */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {reviewItems.map((title, i) => (
+                  <ListCard 
+                    key={i} 
+                    icon={<PenLine size={20} color="#10b981" />} 
+                    title={title} 
+                    sub="관람 완료 • 후기를 남겨주세요" 
+                    btnLabel="후기 작성" 
+                    onBtnClick={() => {
+                      setSelectedExhibition(title);
+                      setViewState('writeReview');
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              /* 🚩 후기가 없을 때 보여줄 화면 (수정됨) */
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                padding: '60px 20px', 
+                textAlign: 'center' 
+              }}>
+                <div style={{ marginBottom: '25px', color: '#666', lineHeight: '1.6' }}>
+                  <p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>작성 된 후기가 없습니다.</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '15px' }}>후기를 쓰러 가볼까요? ✨</p>
+                </div>
+                
+                <button 
+                  onClick={() => {
+                    // 실제로는 전시 목록을 가져오겠지만, 여기선 테스트용으로 '전시 제목 1'을 선택
+                    setSelectedExhibition('새로운 전시 후기');
                     setViewState('writeReview');
                   }}
-                />
-              ))}
-            </div>
+                  style={{ 
+                    width: '100%', 
+                    padding: '16px', 
+                    borderRadius: '12px', 
+                    border: 'none', 
+                    backgroundColor: '#000', 
+                    color: '#fff', 
+                    fontWeight: 'bold', 
+                    fontSize: '15px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  후기 작성하기
+                </button>
+              </div>
+            )}
           </div>
         );
 
