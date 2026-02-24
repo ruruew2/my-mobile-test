@@ -80,6 +80,7 @@ const CourseNavigation = ({ courseData, onClose, onShowMap }: any) => {
                         </div>
                     </div>
                     
+                    {/* EDITOR'S NOTE 섹션 */}
                     {(current.comment || current.tip || current.duration) && (
                         <section style={{ borderLeft: '2px solid #000', paddingLeft: '20px', marginBottom: '50px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
@@ -100,7 +101,7 @@ const CourseNavigation = ({ courseData, onClose, onShowMap }: any) => {
                                 </div>
                             )}
 
-                            {/* 🚩 이동 시간 정보: 불필요한 라벨 없이 텍스트로만 노출 */}
+                            {/* 🚩 이동 시간 정보: 팁 바로 아래에 위치 */}
                             {!isLastStep && current.duration && (
                                 <div style={{ 
                                     fontSize: '0.85rem', 

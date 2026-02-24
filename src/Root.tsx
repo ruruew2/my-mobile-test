@@ -25,7 +25,7 @@ const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
       desc: "그라운드시소 이스트에서 시작해 브런치 & 에스프레소바에 들러 마무리 할 수 있는 코스입니다.",
       steps: [
         { type: 'EXHIBITION', name: '그라운드시소 이스트', 
-          duration: '도보 11분', // 🚩 다음 장소까지 걸리는 시간 추가
+          duration: '다음 코스 까지 도보 11분', // 🚩 다음 장소까지 걸리는 시간 추가
           sub: '룸포 원더 : 상상의 문을 열다', 
           comment: `
 🚶💨 도보 시
@@ -38,6 +38,7 @@ NC 이스트폴 건물 지하 주차장 이용(주차 가능) `, // 🚩 새로 
         { type: 'RESTRANT',
           name: '도치피자 강변',
           sub: '쫄깃한 도우와 신선한 재료의 만남',
+          duration: '다음 코스까지 도보 11분', // 🚩 다음 장소까지 걸리는 시간 추가
           comment:`
 ‼️ 파스타와 샐러드, 피자 세트로 먹는 걸 추천해요! 
 ‼️ 인테리어가 예쁘고 가게가 넓습니다. `,
