@@ -58,7 +58,8 @@ const courses = [
           sub: '룸포 원더 : 상상의 문을 열다', 
           comment: `
 🚶💨 도보 시
-지하철 : 구의역 3번 출구 구름다리와 연결된 'NC 이스트폴' 2F　 (전시장 입구 근처 매장 : 폴햄/가배도/네모네[소품샵])
+지하철 : 구의역 3번 출구 구름다리와 연결된 'NC 이스트폴' 2F
+(전시장 입구 근처 매장 : 폴햄/가배도/네모네[소품샵])
 
 
 🚗💨 자가용 이용 시
@@ -101,7 +102,8 @@ NC 이스트폴 건물 지하 주차장 이용(주차 가능) `, // 🚩 새로 
     <div className="course-container">
       <header className="course-header">
         <h1>CURATED</h1>
-        <p>당신의 감성을 채워줄 최적의 경로를 제안합니다.</p>
+        <p>A journey designed around your taste.<br></br>
+당신의 취향을 중심으로 설계된 여정을 제안합니다.</p>
       </header>
 
       {courses.map((course) => (
