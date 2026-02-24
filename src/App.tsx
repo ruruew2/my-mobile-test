@@ -393,8 +393,8 @@ export default function App() {
                                 <div className="course-card" onClick={() => handleCourseClick('course-jongno')}>
                                     <div className="course-content">
                                         <span className="course-tag">2025.12.19~2026.6.7</span>
-                                        <h4>룸포 원더 : 상상의 문을 열다</h4>
-                                        <p>그라운드시소 이스트에서 시작해 브런치 & 에스프레소 바 까지!</p>
+                                        <h4>구의, 영감의 조각을 줍는 산책</h4>
+                                        <p>그라운드시소 이스트에서 시작해 브런치 & 에스프레소바에 들러 마무리 할 수 있는 코스입니다.</p>
                                     </div>
                                     <div className="course-icon">
                                         <Compass size={20} />

@@ -49,7 +49,7 @@ const courses = [
       id: 2,
       anchorId: "course-jongno",
       badge: "2025.12.19~2026.6.7",
-      title: "룸포 원더 : 상상의 문을 열다",
+      title: "구의, 영감의 조각을 줍는 산책",
       desc: "그라운드시소 이스트에서 시작해 브런치 & 에스프레소바에 들러 마무리 할 수 있는 코스입니다.",
       steps: [
         { type: 'EXHIBITION', name: '그라운드시소 이스트', 
