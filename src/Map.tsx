@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import './Map.css';
 
 declare global {
-    interface Window {
+    interface window {
         kakao: any;
     }
 }
@@ -12,27 +12,26 @@ const MapPage = () => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
 
-    // --- 📌 바텀 시트 드래그 로직 시작 ---
-    const SHEET_HEIGHT = window.innerHeight * 0.7; // CSS에서 설정한 70vh와 맞춤
-    const MIN_Y = 0; // 완전히 펼쳐졌을 때
-    const MAX_Y = SHEET_HEIGHT - 100; // 접혔을 때 (헤더 약 100px만 남김)
+    // --- 📌 바텀 시트 드래그 로직 ---
+    const SHEET_HEIGHT = window.innerHeight * 0.7; 
+    const MIN_Y = 0; 
+    const MAX_Y = SHEET_HEIGHT - 100; 
     
-    const [translateY, setTranslateY] = useState(MAX_Y); // 처음엔 접힌 상태로 시작
+    const [translateY, setTranslateY] = useState(MAX_Y);
     const [isDragging, setIsDragging] = useState(false);
     const startY = useRef(0);
 
     const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
         setIsDragging(true);
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        const clientY = 'touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY;
         startY.current = clientY - translateY;
     };
 
     const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
         if (!isDragging) return;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        const clientY = 'touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY;
         let nextY = clientY - startY.current;
 
-        // 범위 제한
         if (nextY < MIN_Y) nextY = MIN_Y;
         if (nextY > MAX_Y) nextY = MAX_Y;
 
@@ -41,17 +40,16 @@ const MapPage = () => {
 
     const handleTouchEnd = () => {
         setIsDragging(false);
-        // 절반 기준으로 스냅 (자석 효과)
         if (translateY < MAX_Y / 2) {
-            setTranslateY(MIN_Y); // 완전히 펴기
+            setTranslateY(MIN_Y);
         } else {
-            setTranslateY(MAX_Y); // 완전히 접기
+            setTranslateY(MAX_Y);
         }
     };
-    // --- 📌 바텀 시트 드래그 로직 끝 ---
 
+    // --- 📌 지도 및 현위치 로직 ---
     useEffect(() => {
-        const { kakao } = window;
+        const { kakao } = window as any;
         if (kakao && kakao.maps) {
             kakao.maps.load(() => initMap());
         }
@@ -59,12 +57,40 @@ const MapPage = () => {
 
     const initMap = () => {
         if (!mapContainerRef.current) return;
-        const { kakao } = window;
+        const { kakao } = window as any;
+
+        // 1. 기본 중심 설정 (서울시청)
+        const defaultCenter = new kakao.maps.LatLng(37.5665, 126.978);
         const options = {
-            center: new kakao.maps.LatLng(37.5665, 126.978),
+            center: defaultCenter,
             level: 3,
         };
         const map = new kakao.maps.Map(mapContainerRef.current, options);
+
+        // 2. 내 위치 가져오기 및 마커 표시
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const locPosition = new kakao.maps.LatLng(lat, lon);
+
+                    // 내 위치에 마커 생성
+                    const marker = new kakao.maps.Marker({
+                        map: map,
+                        position: locPosition,
+                    });
+
+                    // 지도 중심을 내 위치로 이동
+                    map.setCenter(locPosition);
+                },
+                (error) => {
+                    console.error("위치 정보를 가져오는데 실패했습니다.", error);
+                }
+            );
+        } else {
+            alert("이 브라우저에서는 현위치 기능을 사용할 수 없습니다.");
+        }
     };
 
     return (
@@ -72,7 +98,7 @@ const MapPage = () => {
             className="map-page-wrapper"
             onMouseMove={handleTouchMove}
             onMouseUp={handleTouchEnd}
-            onMouseLeave={handleTouchEnd} // 마우스가 화면 나갈 때 대비
+            onMouseLeave={handleTouchEnd}
         >
             <div ref={mapContainerRef} className="map-canvas" />
 
@@ -96,7 +122,6 @@ const MapPage = () => {
                 className={`map-bottom-sheet ${isDragging ? 'dragging' : ''}`}
                 style={{ transform: `translateY(${translateY}px)` }}
             >
-                {/* 핸들 바 영역 (터치/마우스 이벤트 연결) */}
                 <div 
                     className="sheet-handle-wrapper"
                     onTouchStart={handleTouchStart}
