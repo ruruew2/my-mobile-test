@@ -279,7 +279,7 @@
 /* 3. 체크 아이콘 */
 .success-icon {
     margin-bottom: 20px;
-    display: inline-block;
+    animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 아이콘이 톡 튀어나오는 효과 */
 }
 
 /* 4. 텍스트 스타일 */
