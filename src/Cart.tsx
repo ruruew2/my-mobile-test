@@ -57,6 +57,8 @@ const handleOrder = () => { // 또는 handlePayment
         buyer_name: '테스터',
     };
 
+    
+
     IMP.request_pay(paymentData, (response: any) => {
         if (response.success) {
             // 성공 시 모달 띄우기

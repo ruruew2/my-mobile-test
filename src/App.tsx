@@ -107,7 +107,6 @@ const PreferenceSelection = ({ onComplete }: { onComplete: () => void }) => {
     );
 };
 
-
 // --- [컴포넌트 3] 화제 전시 카드 ---
 const ExhibitCard = ({ title, location, tag, imgUrl }: any) => {
     const [liked, setLiked] = useState(false);
@@ -130,11 +129,13 @@ const ExhibitCard = ({ title, location, tag, imgUrl }: any) => {
                 >
                     <Heart size={20} fill={liked ? '#FF3B30' : 'none'} stroke={liked ? '#FF3B30' : 'white'} />
                 </button>
-                
+
                 {/* 🚩 tags.map 대신 안전하게 정의한 displayTags.map 사용 */}
                 <div className="tags" style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                     {displayTags.map((t, i) => (
-                        <span key={i} className="tag">{t}</span>
+                        <span key={i} className="tag">
+                            {t}
+                        </span>
                     ))}
                 </div>
             </div>
@@ -182,7 +183,6 @@ export default function App() {
     const [isNavigating, setIsNavigating] = useState(false);
     const [selectedCourseData, setSelectedCourseData] = useState<any>(null);
 
-    
     // 🚩 [추가] 가이드 페이지 진입 시 서브 탭 상태 (기본 'human')
     const [guideSubTab, setGuideSubTab] = useState<'human' | 'ai'>('human');
 
@@ -204,8 +204,6 @@ export default function App() {
             isRead: false,
         },
     ]);
-
-    
 
     // 🚩 [추가] 가이드 탭으로 이동하면서 서브 탭을 설정하는 함수
     const navigateToGuide = (subType: 'human' | 'ai') => {
@@ -271,12 +269,12 @@ export default function App() {
                                 당신이 평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로<br></br> 산책 코스를 준비했어요!
                                 오늘 하루도 좋은 하루 되세요!
                             </p>
-                                <button 
-                                className="cta-button" 
+                            <button
+                                className="cta-button"
                                 onClick={() => setActiveTab('exhibits')} // 클릭 시 전시 리스트 탭으로 변경
-                                >
-                            추천 전시 보기 <ChevronRight size={20} className="cta-icon" />
-                                </button>
+                            >
+                                추천 전시 보기 <ChevronRight size={20} className="cta-icon" />
+                            </button>
                         </section>
 
                         <section className="section">
@@ -287,27 +285,27 @@ export default function App() {
                                     전체보기
                                 </button>
                             </div>
-<ExhibitCarousel>
-    {[
-        { 
-          tag: ['추상화', '국립현대미술관'], // 콤마로 구분하고 대괄호로 감싸기!
-          title: '현대 추상의 영혼', 
-          location: '국립현대미술관' 
-        },
-        { 
-          tag: ['사진전', '세종문화회관'], 
-          title: '어제의 기록들', 
-          location: '세종문화회관' 
-        },
-        { 
-          tag: '설치미술', // 하나만 넣어도 이제 안 깨져요!
-          title: '공간의 재해석', 
-          location: 'DDP' 
-        },
-    ].map((item, idx) => (
-        <ExhibitCard key={idx} tag={item.tag} title={item.title} location={item.location} />
-    ))}
-</ExhibitCarousel>
+                            <ExhibitCarousel>
+                                {[
+                                    {
+                                        tag: ['추상화', '국립현대미술관'], // 콤마로 구분하고 대괄호로 감싸기!
+                                        title: '현대 추상의 영혼',
+                                        location: '국립현대미술관',
+                                    },
+                                    {
+                                        tag: ['사진전', '세종문화회관'],
+                                        title: '어제의 기록들',
+                                        location: '세종문화회관',
+                                    },
+                                    {
+                                        tag: '설치미술', // 하나만 넣어도 이제 안 깨져요!
+                                        title: '공간의 재해석',
+                                        location: 'DDP',
+                                    },
+                                ].map((item, idx) => (
+                                    <ExhibitCard key={idx} tag={item.tag} title={item.title} location={item.location} />
+                                ))}
+                            </ExhibitCarousel>
                         </section>
 
                         {/* --- 🚩 프리미엄 도슨트 섹션 연결 --- */}
@@ -369,8 +367,6 @@ export default function App() {
                             </div>
                         </section>
 
-                        
-
                         <section className="section">
                             <div className="section-header">
                                 <div className="title-group">
@@ -385,9 +381,9 @@ export default function App() {
                             <div className="course-list">
                                 <div className="course-card" onClick={() => handleCourseClick('course-seongsu')}>
                                     <div className="course-content">
-                                        <span className="course-tag">힙 & 트렌디</span>
-                                        <h4>성수동 힙한 갤러리 투어</h4>
-                                        <p>영감과 인생샷을 동시에 잡는 MZ세대 맞춤형 코스입니다.</p>
+                                        <span className="course-tag">2025.06.28~2026.09.20</span>
+                                        <h4>취향가옥 2: Art in Life, Life in Art 2</h4>
+                                        <p>코스 설명 </p>
                                     </div>
                                     <div className="course-icon">
                                         <Compass size={20} />
@@ -396,9 +392,9 @@ export default function App() {
 
                                 <div className="course-card" onClick={() => handleCourseClick('course-jongno')}>
                                     <div className="course-content">
-                                        <span className="course-tag">차분함 & 클래식</span>
-                                        <h4>종로의 과거와 현재</h4>
-                                        <p>전통의 정취와 현대적 감각이 공존하는 깊이 있는 산책 코스입니다.</p>
+                                        <span className="course-tag">2025.12.19~2026.6.7</span>
+                                        <h4>룸포 원더 : 상상의 문을 열다</h4>
+                                        <p>그라운드시소 이스트에서 시작해 브런치 & 에스프레소 바 까지!</p>
                                     </div>
                                     <div className="course-icon">
                                         <Compass size={20} />
@@ -415,25 +411,22 @@ export default function App() {
                 <MapPage />
             ) : activeTab === 'guide' ? (
                 <GuidePage initialTab={guideSubTab} />
-) : activeTab === 'course' ? (
-    // 🚩 여기를 주목하세요! 
-    // isNavigating 상태에 따라 '리스트'를 보여줄지 '안내화면'을 보여줄지 결정합니다.
-    isNavigating ? (
-        <CourseNavigation 
-            courseData={selectedCourseData} 
-            onClose={() => setIsNavigating(false)} 
-        />
-    ) : (
-<RootPage 
-            targetCourse={targetCourse} 
-            setTargetCourse={setTargetCourse} 
-            // 🚩 아래 onStart 부분을 제가 드린 코드로 정확히 교체하세요
-            onStart={(data: any) => {
-                setSelectedCourseData(data); // RootPage에서 받은 데이터를 저장하고
-                setIsNavigating(true);      // 네비게이션 화면으로 전환합니다
-            }} 
-        />
-    )
+            ) : activeTab === 'course' ? (
+                // 🚩 여기를 주목하세요!
+                // isNavigating 상태에 따라 '리스트'를 보여줄지 '안내화면'을 보여줄지 결정합니다.
+                isNavigating ? (
+                    <CourseNavigation courseData={selectedCourseData} onClose={() => setIsNavigating(false)} />
+                ) : (
+                    <RootPage
+                        targetCourse={targetCourse}
+                        setTargetCourse={setTargetCourse}
+                        // 🚩 아래 onStart 부분을 제가 드린 코드로 정확히 교체하세요
+                        onStart={(data: any) => {
+                            setSelectedCourseData(data); // RootPage에서 받은 데이터를 저장하고
+                            setIsNavigating(true); // 네비게이션 화면으로 전환합니다
+                        }}
+                    />
+                )
             ) : activeTab === 'gift' ? (
                 <Giftshop />
             ) : activeTab === 'mypage' ? (
@@ -471,7 +464,10 @@ export default function App() {
                 </div>
                 <div
                     className={`nav-item ${activeTab === 'course' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('course')}
+                    onClick={() => {
+                        setActiveTab('course'); // 코스 탭으로 이동하고
+                        setIsNavigating(false); // 🚩 [추가] 상세 화면을 끄고 목록으로 돌아가게 만듭니다!
+                    }}
                 >
                     <Compass size={24} />
                     <span>코스</span>
@@ -479,10 +475,10 @@ export default function App() {
                 <div
                     className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`}
                     onClick={() => {
-                        // 이미 기프트 탭일 때 또 누르면 강제로 새로고침 효과 주기
+                        // 기프트 버튼 로직 (기존 코드 유지)
                         if (activeTab === 'gift') {
-                            setActiveTab(''); // 잠시 비웠다가
-                            setTimeout(() => setActiveTab('gift'), 10); // 다시 기프트로 설정
+                            setActiveTab('');
+                            setTimeout(() => setActiveTab('gift'), 10);
                         } else {
                             setActiveTab('gift');
                         }

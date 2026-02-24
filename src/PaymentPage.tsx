@@ -27,6 +27,7 @@ const PaymentPage = () => {
       buyer_name: '홍길동',
     };
 
+    
     IMP.request_pay(data, (response: any) => {
       if (response.success) {
         // 여기는 성공 모달 대신 알림창으로 되어 있어요. 
