@@ -120,10 +120,16 @@
 
 .ai-desc {
     font-size: 14px;
-    color: #666; /* 🚩 회색 글씨 */
+    color: #666;
     line-height: 1.6;
-    margin-bottom: 20px;
     word-break: keep-all;
+
+    /* 1. 글자를 가운데로 */
+    text-align: center;
+
+    /* 2. 요소 성격을 확실히 하고, 위아래 여백을 줘서 버튼과 떼어놓기 */
+    display: block;
+    margin: 0 auto 24px auto; /* 상(0) 좌우(auto) 하(24px) */
 }
 
 .cta-button {
@@ -343,23 +349,22 @@
     line-height: 1.4;
 }
 
-
 .course-icon {
     background: #000;
     color: #fff;
-    width: 44px;  /* 🚩 조금 더 키워서 시원하게! */
+    width: 44px; /* 🚩 조금 더 키워서 시원하게! */
     height: 44px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     /* 🚩 핵심: 부모 요소가 좁아도 절대 찌그러지지 않게 고정 */
-    flex-shrink: 0; 
-    
+    flex-shrink: 0;
+
     /* 아이콘 자체 크기가 너무 작아 보인다면 아래 추가 */
-    font-size: 20px; 
-    
+    font-size: 20px;
+
     transition: all 0.3s ease;
 }
 
@@ -368,7 +373,6 @@
     transform: scale(1.1);
     background-color: #333;
 }
-
 
 /* 하단 내비게이션: 바닥에 딱 붙이기 */
 .bottom-nav {
@@ -429,7 +433,6 @@
     font-weight: bold;
 }
 
-
 /* 모달 배경 */
 .modal-overlay {
     position: fixed;
@@ -438,12 +441,12 @@
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.5);
-    
+
     /* 🔥 여기가 핵심: Flexbox로 자식을 가로/세로 정중앙으로 강제 배치 */
     display: flex !important;
-    justify-content: center !important; 
-    align-items: center !important;     
-    
+    justify-content: center !important;
+    align-items: center !important;
+
     z-index: 9999; /* 하단바(1000)보다 훨씬 높게 설정 */
     padding: 20px; /* 모바일 양옆 최소 여백 보장 */
     box-sizing: border-box;
@@ -451,20 +454,20 @@
 
 /* 2. 알림창 본체: 스스로 중앙에 있으려고 애쓰지 말고 크기만 지정 */
 .notification-modal {
-    width: 100%;       /* 부모(overlay)의 패딩을 제외한 100% */
-    max-width: 360px;  /* 최대 너비는 유지 */
+    width: 100%; /* 부모(overlay)의 패딩을 제외한 100% */
+    max-width: 360px; /* 최대 너비는 유지 */
     background: white;
     border-radius: 24px;
     padding: 24px;
-    
+
     /* 🔥 핵심: 마진 0으로 초기화하고 박스 모델 고정 */
-    margin: 0 !important; 
-    box-sizing: border-box; 
-    
-    position: relative; 
+    margin: 0 !important;
+    box-sizing: border-box;
+
+    position: relative;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    overflow-y: auto;   /* 알림이 많아지면 모달 안에서 스크롤 */
-    max-height: 80vh;   /* 화면 높이의 80%까지만 커지게 */
+    overflow-y: auto; /* 알림이 많아지면 모달 안에서 스크롤 */
+    max-height: 80vh; /* 화면 높이의 80%까지만 커지게 */
 }
 
 .modal-header {
@@ -485,14 +488,14 @@
     color: #666;
 }
 
-
 /* 3. 내부 요소 짤림 방지 */
 .notification-list {
     width: 100%;
     box-sizing: border-box;
 }
 
-.read-all-btn { /* 버튼 클래스명에 맞춰 수정 */
+.read-all-btn {
+    /* 버튼 클래스명에 맞춰 수정 */
     width: 100%;
     display: block;
     margin: 0 auto;
@@ -501,22 +504,22 @@
 /* 기본 알림 아이템 스타일 */
 /* 1. 개별 알림 아이템의 여백과 간격 조절 */
 .noti-item {
-  width: 100%;
-  padding: 18px 20px; /* 위아래 여백을 조금 더 키워서 넉넉하게 */
-  display: flex;
-  align-items: flex-start; /* 아이콘과 텍스트가 윗줄 맞춤되게 */
-  gap: 15px;
-  border-radius: 16px; /* 모달 안에서 너무 각지지 않게 */
-  transition: all 0.2s ease;
-  cursor: pointer;
-  box-sizing: border-box;
-  margin-bottom: 20px; /* 아이템끼리 서로 안 물리게 간격 추가 */
+    width: 100%;
+    padding: 18px 20px; /* 위아래 여백을 조금 더 키워서 넉넉하게 */
+    display: flex;
+    align-items: flex-start; /* 아이콘과 텍스트가 윗줄 맞춤되게 */
+    gap: 15px;
+    border-radius: 16px; /* 모달 안에서 너무 각지지 않게 */
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-sizing: border-box;
+    margin-bottom: 20px; /* 아이템끼리 서로 안 물리게 간격 추가 */
 }
 /* 🚩 안 읽은 알림: 연한 보라색 배경 */
 .noti-item.unread {
-  background-color: #F3EFFF; /* 아주 연한 보라색 배경 */
-  border: 1px solid #7C4DFF22; /* 미세한 보라색 테두리로 범위 구분 */
-  position: relative;
+    background-color: #f3efff; /* 아주 연한 보라색 배경 */
+    border: 1px solid #7c4dff22; /* 미세한 보라색 테두리로 범위 구분 */
+    position: relative;
 }
 
 /* 🚩 읽은 알림: 흰색 배경 */
@@ -798,10 +801,9 @@
     position: relative !important;
     width: 100%;
     /* 하단바(70px)를 제외한 나머지 전체 높이 */
-    height: calc(100vh - 70px) !important; 
+    height: calc(100vh - 70px) !important;
     overflow: hidden !important;
 }
-
 
 /* 🚩 지도가 그려지는 배경 영역 */
 .map-bg {

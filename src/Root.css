@@ -11,7 +11,7 @@
   display: block; 
 
   /* 🚩 핵심: 스크롤바 숨기기 (모든 브라우저 대응) */
-  -ms-overflow-style: none; /* 인터넷 익스플로러, 엣지 */
+  -ms-overflow-style: none; /* 인터넷 익스플로러, 엣지 */`
   scrollbar-width: none;  /* 파이어폭스 */
 }
 

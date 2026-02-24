@@ -71,7 +71,16 @@ const CourseNavigation = ({ courseData, onClose, onShowMap }: any) => {
                             <span style={{ display: 'inline-block', fontSize: '0.7rem', fontWeight: '800', letterSpacing: '2px', borderBottom: '2px solid #000', paddingBottom: '4px', marginBottom: '24px' }}>
                                 {current.type}
                             </span>
-                            <h1 style={{ fontSize: '2.2rem', fontWeight: '800', marginBottom: '12px', wordBreak: 'keep-all', lineHeight: '1.2' }}>
+                            {/* 🚩 h1 스타일에 명조체(Serif)를 적용했습니다. */}
+                            <h1 style={{ 
+                                fontSize: '2.4rem', 
+                                fontWeight: '700', 
+                                marginBottom: '12px', 
+                                wordBreak: 'keep-all', 
+                                lineHeight: '1.2',
+                                fontFamily: "'Nanum Myeongjo', serif", // 세리프 폰트 적용
+                                letterSpacing: '-0.03rem' // 명조체는 자간을 살짝 줄여야 예쁩니다
+                            }}>
                                 {current.name}
                             </h1>
                             <p style={{ fontSize: '1rem', color: '#888', marginBottom: '36px' }}>
@@ -80,7 +89,6 @@ const CourseNavigation = ({ courseData, onClose, onShowMap }: any) => {
                         </div>
                     </div>
                     
-                    {/* EDITOR'S NOTE 섹션 */}
                     {(current.comment || current.tip || current.duration) && (
                         <section style={{ borderLeft: '2px solid #000', paddingLeft: '20px', marginBottom: '50px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
@@ -101,7 +109,6 @@ const CourseNavigation = ({ courseData, onClose, onShowMap }: any) => {
                                 </div>
                             )}
 
-                            {/* 🚩 이동 시간 정보: 팁 바로 아래에 위치 */}
                             {!isLastStep && current.duration && (
                                 <div style={{ 
                                     fontSize: '0.85rem', 
