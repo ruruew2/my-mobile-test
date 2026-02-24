@@ -15,11 +15,10 @@ const PaymentPage = () => {
     }
 
     // 1. ✅ 포트원 공용 테스트 식별코드
-    IMP.init('imp14330633'); 
+    IMP.init('imp03310872'); 
 
     const data = {
-      // 2. ✅ 토스페이 테스트 설정
-      pg: 'tosspay.tosstest', 
+      pg: 'kakaopay.TC0ONETIME', 
       pay_method: 'card',
       merchant_uid: `mid_${new Date().getTime()}`,
       name: '서울 시립 미술관 도슨트 투어',

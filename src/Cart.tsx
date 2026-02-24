@@ -43,11 +43,11 @@ const handleOrder = () => { // 또는 handlePayment
     if (!IMP) return;
 
     // 1. 가맹점 식별코드는 그대로 유지 (포트원 공용 테스트용)
-    IMP.init('imp14330633'); 
+    IMP.init('imp03310872'); 
 
     const paymentData = {
         // 2. 🚩 PG 설정을 'uplus' (토스페이먼츠 구 모듈) 또는 'tosspay'로 변경
-        pg: 'tosspay.tosstest', // 토스페이 테스트 전용 코드
+        pg: 'kakaopay.TC0ONETIME',
         pay_method: 'card',
         merchant_uid: `mid_${new Date().getTime()}`,
         name: cartItems.length > 1 
