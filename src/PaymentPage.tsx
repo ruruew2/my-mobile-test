@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // 🚩 이동을 위해 추가
 
 declare global {
   interface Window {
@@ -7,14 +8,12 @@ declare global {
 }
 
 const PaymentPage = () => {
-  const handlePayment = () => {
-    const { IMP } = window;
-    if (!IMP) {
-      alert("결제 모듈을 불러오고 있어요. 잠시만 기다려 주세요!");
-      return;
-    }
+  const navigate = useNavigate(); // 🚩 네비게이트 함수 생성
 
-    // 1. ✅ 포트원 공용 테스트 식별코드
+  const handlePayment = () => {
+    const { IMP } = window as any;
+    if (!IMP) return;
+
     IMP.init('imp03310872'); 
 
     const data = {
@@ -27,12 +26,24 @@ const PaymentPage = () => {
       buyer_name: '홍길동',
     };
 
-    
-    IMP.request_pay(data, (response: any) => {
+    IMP.request_pay(data, async (response: any) => {
       if (response.success) {
-        // 여기는 성공 모달 대신 알림창으로 되어 있어요. 
-        // 장바구니처럼 모달을 띄우고 싶다면 setShowSuccess(true)를 쓰면 됩니다!
+        // 🚩 1. DB에 저장할 데이터 준비
+        const paymentInfo = {
+          orderId: response.merchant_uid,
+          amount: response.paid_amount,
+          buyer: response.buyer_name,
+          status: 'success',
+          date: new Date().toLocaleString()
+        };
+        
+        console.log("DB에 저장될 데이터:", paymentInfo);
+        // 여기서 axios.post('/api/save-payment', paymentInfo) 처럼 서버로 보내면 됩니다!
+
         alert('결제가 완료되었습니다! 즐거운 관람 되세요. ✨');
+        
+        // 🚩 2. 메인 페이지로 이동
+        navigate('/'); 
       } else {
         alert(`결제 실패: ${response.error_msg}`);
       }
@@ -41,6 +52,7 @@ const PaymentPage = () => {
 
   return (
     <div className="art-log-container payment-view">
+      {/* ... 기존 UI 동일 ... */}
       <header className="header">
         <div className="logo">ArtLog</div>
       </header>
@@ -63,10 +75,6 @@ const PaymentPage = () => {
           <div className="menu-item">
             <span className="menu-left">주문 금액</span>
             <span className="docent-price">15,000원</span>
-          </div>
-          <div className="menu-item">
-            <span className="menu-left">포인트 할인</span>
-            <span className="menu-icon" style={{color: '#ccc'}}>- 0원</span>
           </div>
         </div>
       </div>

@@ -4,10 +4,11 @@ import {
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine 
 } from 'lucide-react';
 
-// 🚩 외부 파일로 분리한 컴포넌트 임포트
+// 외부 임포트 컴포넌트
 import ReviewForm from './ReviewForm';
 import SuccessModal from './SuccessModal_review';
 
+// --- 1. 타입 정의 ---
 interface MyPageProps {
   isLoggedIn: boolean;       
   setIsLoggedIn: (val: boolean) => void; 
@@ -16,18 +17,90 @@ interface MyPageProps {
 
 type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview';
 
+// --- 2. 하위 공통 UI 컴포넌트 ---
+
+const MenuRow = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
+  <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderRadius: '12px', border: '1px solid #f5f5f5', backgroundColor: '#fff', marginBottom: '10px', cursor: 'pointer' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+      <span style={{ color: '#555', display: 'flex', flexShrink: 0 }}>{icon}</span>
+      <span style={{ fontSize: '15px', fontWeight: '500' }}>{label}</span>
+    </div>
+    <ChevronRight size={16} color="#ccc" style={{ flexShrink: 0 }} />
+  </div>
+);
+
+const ListCard = ({ icon, title, sub, extra, btnLabel, onBtnClick }: any) => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderRadius: '15px', border: '1px solid #f0f0f0', backgroundColor: '#fff', marginBottom: '8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+      <div style={{ width: '40px', height: '40px', backgroundColor: '#f9f9f9', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
+      <div style={{ overflow: 'hidden' }}>
+        <div style={{ fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
+        <div style={{ fontSize: '12px', color: '#aaa' }}>{sub}</div>
+      </div>
+    </div>
+    {extra && <span style={{ fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>{extra}</span>}
+    {btnLabel && (
+      <button 
+        onClick={onBtnClick}
+        style={{ padding: '8px 14px', borderRadius: '10px', border: 'none', backgroundColor: '#f5f5f5', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', marginLeft: '8px', flexShrink: 0 }}
+      >
+        {btnLabel}
+      </button>
+    )}
+  </div>
+);
+
+const StatCard = ({ val, label, onClick }: { val: string, label: string, onClick: () => void }) => (
+  <div onClick={onClick} style={{ padding: '20px 10px', textAlign: 'center', borderRadius: '15px', border: '1px solid #f2f2f2', cursor: 'pointer', backgroundColor: '#fff' }}>
+    <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{val}</div>
+    <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{label}</div>
+  </div>
+);
+
+const ToggleRow = ({ title, desc, checked, onChange }: { title: string, desc: string, checked: boolean, onChange: () => void }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', borderRadius: '12px', backgroundColor: '#f9f9f9', marginBottom: '8px' }}>
+    <div style={{ flex: 1 }}>
+      <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{title}</div>
+      <div style={{ fontSize: '11px', color: '#999' }}>{desc}</div>
+    </div>
+    <input 
+      type="checkbox" 
+      checked={checked} 
+      onChange={onChange}
+      style={{ width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }} 
+    />
+  </div>
+);
+
+const InputGroup = ({ label, placeholder, type = "text" }: { label: string, placeholder: string, type?: string }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>{label}</label>
+    <input type={type} placeholder={placeholder} style={{ padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} />
+  </div>
+);
+
+// --- 3. 메인 MyPage 컴포넌트 ---
+
 const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
   const [viewState, setViewState] = useState<ViewState>('main');
   const [giftTab, setGiftTab] = useState<'received' | 'sent'>('received');
   const [selectedExhibition, setSelectedExhibition] = useState<string>('');
-  
-  // 🚩 모달 제어를 위한 상태
   const [showModal, setShowModal] = useState(false);
 
-  // 프로필 사진 변경
+  // 🚩 알림 상태 관리 (로컬스토리지 연동)
+  const [notifSettings, setNotifSettings] = useState(() => {
+    const saved = localStorage.getItem('user_notif_settings');
+    return saved ? JSON.parse(saved) : { recommend: true, payment: true, notice: true };
+  });
+
+  const handleToggle = (key: string) => {
+    const newSettings = { ...notifSettings, [key]: !notifSettings[key] };
+    setNotifSettings(newSettings);
+    localStorage.setItem('user_notif_settings', JSON.stringify(newSettings));
+  };
+
   const handleImageClick = () => {
     if (isLoggedIn) fileInputRef.current?.click();
   };
@@ -112,28 +185,40 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
           </div>
         );
 
-case 'writeReview':
-  return (
-    <div className="sub-view">
-      <SubViewHeader title="후기 남기기" backTo="reviews" />
-      {/* 🚩 ReviewForm에 등록 성공 시 실행할 함수를 연결합니다. */}
-      <ReviewForm 
-        exhibitionTitle={selectedExhibition} 
-        onComplete={() => {
-          setShowModal(true); // 1. 모달 띄우기
-        }} 
-      />
-    </div>
-  );
+      case 'writeReview':
+        return (
+          <div className="sub-view">
+            <SubViewHeader title="후기 남기기" backTo="reviews" />
+            <ReviewForm 
+              exhibitionTitle={selectedExhibition} 
+              onComplete={() => { setShowModal(true); }} 
+            />
+          </div>
+        );
 
       case 'notifSetting':
         return (
           <div className="sub-view">
             <SubViewHeader title="알림 설정" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <ToggleRow title="전시 추천 알림" desc="내 취향에 맞는 전시 소식을 알려드려요." defaultChecked />
-              <ToggleRow title="결제/예매 알림" desc="티켓 예매 및 결제 내역을 보내드립니다." defaultChecked />
-              <ToggleRow title="공지사항 알림" desc="중요한 서비스 소식을 알려드려요." defaultChecked />
+              <ToggleRow 
+                title="전시 추천 알림" 
+                desc="내 취향에 맞는 전시 소식을 알려드려요." 
+                checked={notifSettings.recommend} 
+                onChange={() => handleToggle('recommend')} 
+              />
+              <ToggleRow 
+                title="결제/예매 알림" 
+                desc="티켓 예매 및 결제 내역을 보내드립니다." 
+                checked={notifSettings.payment} 
+                onChange={() => handleToggle('payment')} 
+              />
+              <ToggleRow 
+                title="공지사항 알림" 
+                desc="중요한 서비스 소식을 알려드려요." 
+                checked={notifSettings.notice} 
+                onChange={() => handleToggle('notice')} 
+              />
             </div>
           </div>
         );
@@ -145,6 +230,7 @@ case 'writeReview':
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <InputGroup label="닉네임" placeholder="예술가 김아트" />
               <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
+              <InputGroup label="비밀번호 변경" placeholder="변경할 비밀번호를 입력하세요" />
               <button 
                 onClick={() => { alert('수정되었습니다.'); setViewState('main'); }}
                 style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: '#000', color: '#fff' }}
@@ -206,7 +292,6 @@ case 'writeReview':
             </div>
 
             <button 
-              className={isLoggedIn ? "logout-btn" : "login-move-btn"} 
               onClick={() => isLoggedIn ? setIsLoggedIn(false) : onLogout?.()}
               style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
             >
@@ -218,9 +303,7 @@ case 'writeReview':
   };
 
   return (
-    <div className="main-content-scroll mypage-container" style={{ 
-      padding: '20px', maxWidth: '500px', margin: '0 auto', backgroundColor: '#fff', boxSizing: 'border-box', minHeight: '100%'
-    }}>
+    <div className="main-content-scroll mypage-container" style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', backgroundColor: '#fff', minHeight: '100%' }}>
       {/* 프로필 헤더 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
         <div onClick={handleImageClick} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
@@ -244,19 +327,16 @@ case 'writeReview':
         </div>
       </div>
 
-      {/* 스탯 카드 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
-        <StatCard val={isLoggedIn ? "0" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
-        <StatCard val={isLoggedIn ? "0" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
+        <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
+        <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
         <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
       </div>
 
       <hr style={{ border: 'none', height: '1px', backgroundColor: '#f5f5f5', marginBottom: '30px' }} />
 
-      {/* 메인 콘텐츠 렌더링 */}
       {renderContent()}
       
-      {/* 🚩 분리된 SuccessModal 사용 */}
       {showModal && (
         <SuccessModal onClose={() => { setShowModal(false); setViewState('main'); }} />
       )}
@@ -265,61 +345,5 @@ case 'writeReview':
     </div>
   );
 };
-
-// 하위 컴포넌트들 (공통 UI)
-const MenuRow = ({ icon, label, onClick }: any) => (
-  <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderRadius: '12px', border: '1px solid #f5f5f5', backgroundColor: '#fff', marginBottom: '10px', cursor: 'pointer' }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-      <span style={{ color: '#555', display: 'flex', flexShrink: 0 }}>{icon}</span>
-      <span style={{ fontSize: '15px', fontWeight: '500' }}>{label}</span>
-    </div>
-    <ChevronRight size={16} color="#ccc" style={{ flexShrink: 0 }} />
-  </div>
-);
-
-const ListCard = ({ icon, title, sub, extra, btnLabel, onBtnClick }: any) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', borderRadius: '15px', border: '1px solid #f0f0f0', backgroundColor: '#fff', marginBottom: '8px' }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-      <div style={{ width: '40px', height: '40px', backgroundColor: '#f9f9f9', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</div>
-      <div style={{ overflow: 'hidden' }}>
-        <div style={{ fontWeight: 'bold', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-        <div style={{ fontSize: '12px', color: '#aaa' }}>{sub}</div>
-      </div>
-    </div>
-    {extra && <span style={{ fontWeight: 'bold', fontSize: '13px', marginLeft: '8px', flexShrink: 0 }}>{extra}</span>}
-    {btnLabel && (
-      <button 
-        onClick={onBtnClick}
-        style={{ padding: '8px 14px', borderRadius: '10px', border: 'none', backgroundColor: '#f5f5f5', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', marginLeft: '8px', flexShrink: 0 }}
-      >
-        {btnLabel}
-      </button>
-    )}
-  </div>
-);
-
-const StatCard = ({ val, label, onClick }: any) => (
-  <div onClick={onClick} style={{ padding: '20px 10px', textAlign: 'center', borderRadius: '15px', border: '1px solid #f2f2f2', cursor: 'pointer', backgroundColor: '#fff' }}>
-    <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{val}</div>
-    <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{label}</div>
-  </div>
-);
-
-const ToggleRow = ({ title, desc, defaultChecked }: any) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', borderRadius: '12px', backgroundColor: '#f9f9f9', marginBottom: '8px' }}>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{title}</div>
-      <div style={{ fontSize: '11px', color: '#999' }}>{desc}</div>
-    </div>
-    <input type="checkbox" defaultChecked={defaultChecked} style={{ width: '18px', height: '18px', cursor: 'pointer', flexShrink: 0 }} />
-  </div>
-);
-
-const InputGroup = ({ label, placeholder, type = "text" }: any) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-    <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>{label}</label>
-    <input type={type} placeholder={placeholder} style={{ padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} />
-  </div>
-);
 
 export default MyPage;

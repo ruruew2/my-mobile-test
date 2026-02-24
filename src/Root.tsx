@@ -99,7 +99,7 @@ NC 이스트폴 건물 지하 주차장 이용(주차 가능) `, // 🚩 새로 
   return (
     <div className="course-container">
       <header className="course-header">
-        <h2>예술 코스</h2>
+        <h1>CURATED</h1>
         <p>당신의 감성을 채워줄 최적의 경로를 제안합니다.</p>
       </header>
 
