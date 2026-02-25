@@ -59,7 +59,7 @@ const CourseNavigation = ({ courseData, onClose, onShowMap }: any) => {
                     {formatNum(currentStep)} / {formatNum(steps.length)}
                 </span>
             </header>
-@
+
             <main className="mag-main-viewport" style={{ flex: 1, overflowY: 'auto', padding: '0 24px', WebkitOverflowScrolling: 'touch' }}>
                 <div className="mag-top-section" style={{ paddingTop: '10px' }}>
                     <div style={{ position: 'relative', marginBottom: '40px' }}>

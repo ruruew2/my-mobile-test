@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { 
   Settings, Heart, BookOpen, CreditCard, Bell, 
-  ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users 
+  ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users,
+  Eye, EyeOff // 👈 눈 모양 아이콘 추가
 } from 'lucide-react';
 
-// 외부 임포트 컴포넌트 (기존 경로 유지)
+// 외부 임포트 컴포넌트
 import ReviewForm from './ReviewForm';
 import SuccessModal from './SuccessModal_review';
 import GiftShop from './GiftShop'; 
@@ -81,10 +82,22 @@ const ToggleRow = ({ title, desc, checked, onChange }: { title: string, desc: st
   </div>
 );
 
-const InputGroup = ({ label, placeholder, type = "text" }: { label: string, placeholder: string, type?: string }) => (
+// ✅ InputGroup 수정: 오른쪽 아이콘(rightElement)을 받을 수 있게 함
+const InputGroup = ({ label, placeholder, type = "text", rightElement }: { label: string, placeholder: string, type?: string, rightElement?: React.ReactNode }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>{label}</label>
-    <input type={type} placeholder={placeholder} style={{ padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} />
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+      <input 
+        type={type} 
+        placeholder={placeholder} 
+        style={{ width: '100%', padding: '14px', paddingRight: rightElement ? '45px' : '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} 
+      />
+      {rightElement && (
+        <div style={{ position: 'absolute', right: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          {rightElement}
+        </div>
+      )}
+    </div>
   </div>
 );
 
@@ -97,6 +110,9 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
   const [giftTab, setGiftTab] = useState<'received' | 'sent'>('received');
   const [selectedExhibition, setSelectedExhibition] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
+  
+  // ✅ 비밀번호 보기/숨기기 상태 추가
+  const [showPassword, setShowPassword] = useState(false);
 
   // 친구 관련 상태
   const [friendEmail, setFriendEmail] = useState('');
@@ -281,8 +297,19 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <InputGroup label="닉네임" placeholder="예술가 김아트" />
               <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
-              {/* ✅ 이 부분을 type="password"로 수정했습니다. */}
-              <InputGroup label="비밀번호 변경" placeholder="변경할 비밀번호를 입력하세요" type="password" /> 
+              
+              {/* ✅ 비밀번호 보기/숨기기 토글 적용 */}
+              <InputGroup 
+                label="비밀번호 변경" 
+                placeholder="변경할 비밀번호를 입력하세요" 
+                type={showPassword ? "text" : "password"} 
+                rightElement={
+                  <div onClick={() => setShowPassword(!showPassword)} style={{ display: 'flex', color: '#999' }}>
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </div>
+                }
+              /> 
+
               <button 
                 onClick={() => { alert('수정되었습니다.'); setViewState('main'); }}
                 style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: '#000', color: '#fff' }}

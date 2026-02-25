@@ -223,7 +223,7 @@ export default function App() {
                                     <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
                                     <h2 className="ai-title">" 오늘은 종로의 감성에 빠져볼까요? "</h2>
                                     <p className="ai-desc">
-                                        당신이 평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로 산책 코스를 준비했어요!
+                                        당신이 평소 좋아하시는 미니멀리즘 조각 전시를 바탕으로 산책 코스를 준비했어요!<br></br>
                                         오늘 하루도 좋은 하루 되세요!
                                     </p>
                                     <button className="cta-button" onClick={() => setActiveTab('exhibits')}>
