@@ -96,7 +96,8 @@ const GuidePage = ({ initialTab }: any) => {
       {!showResult ? (
         <>
           <header className="art-header">
-            <h1 className="art-title">전문 도슨트 예약</h1>
+            <h1 className="art-title"><p></p><p></p><br></br>
+            전문 도슨트 예약</h1>
             <p className="art-desc">전문 큐레이터부터 AI 가이드까지.</p>
           </header>
           <nav className="art-tab-nav">
