@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { 
   Settings, Heart, BookOpen, CreditCard, Bell, 
-  ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine 
+  ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users 
 } from 'lucide-react';
 
-// 외부 임포트 컴포넌트
+// 외부 임포트 컴포넌트 (해당 파일들이 같은 경로에 있어야 합니다)
 import ReviewForm from './ReviewForm';
 import SuccessModal from './SuccessModal_review';
 
@@ -15,7 +15,14 @@ interface MyPageProps {
   onLogout?: () => void;     
 }
 
-type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview';
+type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend';
+
+interface FriendItem {
+  id: number;
+  email: string;
+  name: string;
+  memo: string;
+}
 
 // --- 2. 하위 공통 UI 컴포넌트 ---
 
@@ -89,7 +96,15 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
   const [selectedExhibition, setSelectedExhibition] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
 
-  // 🚩 후기 목록 상태 (테스트를 위해 빈 배열로 두거나 데이터를 넣어보세요)
+  // 친구 관련 상태
+  const [friendEmail, setFriendEmail] = useState('');
+  const [managingFriend, setManagingFriend] = useState<FriendItem | null>(null);
+  const [friends, setFriends] = useState<FriendItem[]>([
+    { id: 1, email: 'friend1@test.com', name: '친구1', memo: '전시 메이트' },
+    { id: 2, email: 'friend2@test.com', name: '친구2', memo: '대학 동기' },
+  ]);
+
+  // 후기 목록 상태
   const [reviewItems, setReviewItems] = useState<string[]>([]); 
 
   // 알림 상태 관리
@@ -115,6 +130,38 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
       reader.onloadend = () => setProfileImage(reader.result as string);
       reader.readAsDataURL(file);
     }
+  };
+
+  // 친구 추가 로직
+  const handleAddFriend = () => {
+    if (!friendEmail.trim()) {
+      alert('이메일을 입력해주세요.');
+      return;
+    }
+    const newFriend: FriendItem = {
+      id: Date.now(),
+      email: friendEmail,
+      name: friendEmail.split('@')[0],
+      memo: ''
+    };
+    setFriends([newFriend, ...friends]);
+    setFriendEmail('');
+    alert(`${friendEmail} 님이 친구로 추가되었습니다.`);
+  };
+
+  // 친구 삭제 로직
+  const handleDeleteFriend = (id: number) => {
+    if (window.confirm("정말 친구를 삭제하시겠습니까?")) {
+      setFriends(friends.filter(f => f.id !== id));
+      setManagingFriend(null);
+    }
+  };
+
+  // 초대권 보내기 로직
+  const handleSendTicket = (friend: FriendItem) => {
+    alert(`${friend.name}님에게 전시 초대권을 선물하러 이동합니다. ✨`);
+    setManagingFriend(null);
+    // setViewState('gift'); // 선물함 페이지로 이동시키고 싶을 때 활성화
   };
 
   const SubViewHeader = ({ title, backTo = 'main' as ViewState }: { title: string, backTo?: ViewState }) => (
@@ -171,7 +218,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
           <div className="sub-view">
             <SubViewHeader title="후기 작성" />
             {reviewItems.length > 0 ? (
-              /* 후기가 있을 때 목록 표시 */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {reviewItems.map((title, i) => (
                   <ListCard 
@@ -188,37 +234,17 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
                 ))}
               </div>
             ) : (
-              /* 🚩 후기가 없을 때 보여줄 화면 (수정됨) */
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                padding: '60px 20px', 
-                textAlign: 'center' 
-              }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
                 <div style={{ marginBottom: '25px', color: '#666', lineHeight: '1.6' }}>
                   <p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>작성 된 후기가 없습니다.</p>
                   <p style={{ margin: '4px 0 0', fontSize: '15px' }}>후기를 쓰러 가볼까요? ✨</p>
                 </div>
-                
                 <button 
                   onClick={() => {
-                    // 실제로는 전시 목록을 가져오겠지만, 여기선 테스트용으로 '전시 제목 1'을 선택
                     setSelectedExhibition('새로운 전시 후기');
                     setViewState('writeReview');
                   }}
-                  style={{ 
-                    width: '100%', 
-                    padding: '16px', 
-                    borderRadius: '12px', 
-                    border: 'none', 
-                    backgroundColor: '#000', 
-                    color: '#fff', 
-                    fontWeight: 'bold', 
-                    fontSize: '15px',
-                    cursor: 'pointer'
-                  }}
+                  style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
                 >
                   후기 작성하기
                 </button>
@@ -243,24 +269,9 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
           <div className="sub-view">
             <SubViewHeader title="알림 설정" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <ToggleRow 
-                title="전시 추천 알림" 
-                desc="내 취향에 맞는 전시 소식을 알려드려요." 
-                checked={notifSettings.recommend} 
-                onChange={() => handleToggle('recommend')} 
-              />
-              <ToggleRow 
-                title="결제/예매 알림" 
-                desc="티켓 예매 및 결제 내역을 보내드립니다." 
-                checked={notifSettings.payment} 
-                onChange={() => handleToggle('payment')} 
-              />
-              <ToggleRow 
-                title="공지사항 알림" 
-                desc="중요한 서비스 소식을 알려드려요." 
-                checked={notifSettings.notice} 
-                onChange={() => handleToggle('notice')} 
-              />
+              <ToggleRow title="전시 추천 알림" desc="내 취향에 맞는 전시 소식을 알려드려요." checked={notifSettings.recommend} onChange={() => handleToggle('recommend')} />
+              <ToggleRow title="결제/예매 알림" desc="티켓 예매 및 결제 내역을 보내드립니다." checked={notifSettings.payment} onChange={() => handleToggle('payment')} />
+              <ToggleRow title="공지사항 알림" desc="중요한 서비스 소식을 알려드려요." checked={notifSettings.notice} onChange={() => handleToggle('notice')} />
             </div>
           </div>
         );
@@ -295,6 +306,110 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
           </div>
         );
 
+case 'friend':
+  return (
+    <div className="sub-view" style={{ position: 'relative', minHeight: '600px', overflow: 'hidden' }}>
+      <SubViewHeader title="친구" />
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>친구 추가</label>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input 
+            type="email" 
+            value={friendEmail}
+            onChange={(e) => setFriendEmail(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleAddFriend()}
+            placeholder="친구의 이메일을 입력하세요" 
+            style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} 
+          />
+          <button 
+            onClick={handleAddFriend}
+            style={{ padding: '0 20px', borderRadius: '10px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            추가
+          </button>
+        </div>
+        
+        <div style={{ marginTop: '20px' }}>
+          <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>내 친구 {friends.length}명</p>
+          {friends.map(friend => (
+            <ListCard 
+              key={friend.id} 
+              icon={<span>👤</span>} 
+              title={friend.name} 
+              sub={friend.email} 
+              btnLabel="관리" 
+              onBtnClick={() => setManagingFriend(friend)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* --- 모바일 프레임에 맞춘 바텀 시트 --- */}
+      {managingFriend && (
+        <div style={{ 
+          position: 'absolute', // fixed가 아닌 absolute로 프레임 안에 가둠
+          top: 0, left: 0, right: 0, bottom: 0, 
+          backgroundColor: 'rgba(0,0,0,0.4)', 
+          zIndex: 100, 
+          display: 'flex', 
+          alignItems: 'flex-end'
+        }}>
+          <div style={{ 
+            width: '100%', 
+            backgroundColor: '#fff', 
+            borderRadius: '20px 20px 0 0', 
+            padding: '20px', 
+            boxSizing: 'border-box',
+            animation: 'slideUp 0.3s ease-out' // 아래에서 위로 올라오는 느낌
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ width: '40px', height: '4px', backgroundColor: '#eee', borderRadius: '2px', margin: '0 auto 15px' }} />
+              <h3 style={{ margin: 0, fontSize: '16px' }}><b>{managingFriend.name}</b>님 관리</h3>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* 이름 수정 버튼 추가 */}
+              <button 
+                onClick={() => {
+                  const newName = prompt('수정할 이름을 입력하세요', managingFriend.name);
+                  if (newName && newName.trim()) {
+                    setFriends(friends.map(f => f.id === managingFriend.id ? { ...f, name: newName } : f));
+                    setManagingFriend(null);
+                  }
+                }}
+                style={{ padding: '16px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+              >
+                ✏️ 이름 수정하기
+              </button>
+
+              <button 
+                onClick={() => handleSendTicket(managingFriend)}
+                style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+              >
+                🎁 전시 초대권 보내기
+              </button>
+              
+              <button 
+                onClick={() => handleDeleteFriend(managingFriend.id)}
+                style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+              >
+                삭제하기
+              </button>
+              
+              <button 
+                onClick={() => setManagingFriend(null)}
+                style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
       case 'gift':
         const currentGifts = giftTab === 'received' 
           ? [{ id: 1, title: "한정판 전시 굿즈 패키지", sub: "배송 중 • 2024.03.10", btnLabel: "배송조회" }]
@@ -324,6 +439,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
               <MenuRow icon={<Heart size={18} />} label="찜한 전시" onClick={() => setViewState('likes')} />
               <MenuRow icon={<PenLine size={18} />} label="후기 작성" onClick={() => setViewState('reviews')} />
               <MenuRow icon={<CreditCard size={18} />} label="결제 내역" onClick={() => setViewState('payments')} />
+              <MenuRow icon={<Users size={18} />} label="친구" onClick={() => setViewState('friend')} />
               <MenuRow icon={<Gift size={18} />} label="선물함" onClick={() => setViewState('gift')} />
             </div>
 
