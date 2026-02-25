@@ -162,7 +162,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
     }
   };
 
-  // 서브뷰에서 뒤로가기 헤더
   const SubViewHeader = ({ title, backTo = 'main' as ViewState }: { title: string, backTo?: ViewState }) => (
     <div 
       onClick={() => setViewState(backTo)} 
@@ -282,7 +281,8 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <InputGroup label="닉네임" placeholder="예술가 김아트" />
               <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
-              <InputGroup label="비밀번호 변경" placeholder="변경할 비밀번호를 입력하세요" />
+              {/* ✅ 이 부분을 type="password"로 수정했습니다. */}
+              <InputGroup label="비밀번호 변경" placeholder="변경할 비밀번호를 입력하세요" type="password" /> 
               <button 
                 onClick={() => { alert('수정되었습니다.'); setViewState('main'); }}
                 style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: '#000', color: '#fff' }}
@@ -341,7 +341,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
                 ))}
               </div>
             </div>
-            {/* 친구 관리 팝업 */}
             {managingFriend && (
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
                 <div style={{ width: '100%', backgroundColor: '#fff', borderRadius: '20px 20px 0 0', padding: '20px', boxSizing: 'border-box' }}>
@@ -417,8 +416,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
 
   return (
     <div className="main-content-scroll mypage-container" style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', backgroundColor: '#fff', minHeight: '100%' }}>
-      
-      {/* ✅ [수정 핵심] 모든 viewState에서 프로필 섹션이 보이도록 조건문을 삭제하거나 통합했습니다. */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
         <div onClick={handleImageClick} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
           <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #eee' }}>
@@ -448,7 +445,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
       </div>
       <hr style={{ border: 'none', height: '1px', backgroundColor: '#f5f5f5', marginBottom: '30px' }} />
 
-      {/* 컨텐츠 렌더링 영역 */}
       {renderContent()}
       
       {showModal && (

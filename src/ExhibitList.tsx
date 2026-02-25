@@ -10,6 +10,7 @@ interface Exhibit {
     date: string;
     category: string;
     hashtags: string[];
+    dDay?: number; // 선택적 프로퍼티로 추가
 }
 
 const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
@@ -22,6 +23,8 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const filters = ['전체', '전시', '공연', '인기', '오픈예정', '종료임박'];
 
     useEffect(() => {
+        // 데이터가 없으면 '오픈예정' 탭에서 아무것도 안 보이므로,
+        // 테스트를 위해 dDay가 포함된 4번째 데이터를 추가했습니다.
         const mockData: Exhibit[] = [
             {
                 id: 1,
@@ -50,6 +53,16 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 date: '2024.04.01 - 06.30',
                 hashtags: ['힙한', '체험형', '공간디자인', '주말'],
             },
+            {
+                id: 4,
+                tag: 'COMING SOON',
+                category: '전시',
+                title: '미래를 향한 발걸음:\n인터랙티브 아트전',
+                location: '예술의 전당',
+                date: '2024.08.01 - 10.31',
+                hashtags: ['디지털아트', '신규전시'],
+                dDay: 30, // 오픈예정 탭에서 보일 데이터
+            },
         ];
         setExhibits(mockData);
     }, []);
@@ -70,9 +83,15 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             const matchesTitle = item.title.toLowerCase().includes(lowerQuery);
             if (!matchesTag && !matchesTitle) return false;
         }
+
         if (activeFilter === '전체') return true;
         if (activeFilter === '인기') return ['TRENDING', 'POPULAR', 'HOT'].includes(item.tag);
         if (activeFilter === '전시') return item.category === '전시' || item.tag === 'TRENDING';
+
+        // '오픈예정' 클릭 시 dDay가 있는 데이터만 반환하도록 설정
+        if (activeFilter === '오픈예정') return item.dDay !== undefined;
+        if (activeFilter === '종료임박') return item.tag === '종료임박';
+
         return item.category === activeFilter;
     });
 
@@ -102,7 +121,13 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </div>
 
                 <div className="header-side right">
-                    <button onClick={() => { setIsSearching(!isSearching); if (isSearching) setSearchQuery(''); }} className="icon-btn">
+                    <button
+                        onClick={() => {
+                            setIsSearching(!isSearching);
+                            if (isSearching) setSearchQuery('');
+                        }}
+                        className="icon-btn"
+                    >
                         {isSearching ? <span className="cancel-txt">취소</span> : <Search size={24} color="#111" />}
                     </button>
                 </div>
@@ -111,9 +136,9 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <nav className="category-nav">
                 <div className="filter-chip-container">
                     {filters.map((f) => (
-                        <button 
-                            key={f} 
-                            className={`filter-chip ${activeFilter === f ? 'active' : ''}`} 
+                        <button
+                            key={f}
+                            className={`filter-chip ${activeFilter === f ? 'active' : ''}`}
                             onClick={() => setActiveFilter(f)}
                         >
                             {f}
@@ -124,7 +149,8 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
             <main className="list-scroll-view">
                 <div className="list-count-area">
-                    {searchQuery ? `'${searchQuery}' 결과 ` : '총 '}<b>{filteredExhibits.length}</b>건
+                    {searchQuery ? `'${searchQuery}' 결과 ` : '총 '}
+                    <b>{filteredExhibits.length}</b>건
                 </div>
 
                 {filteredExhibits.length > 0 ? (
@@ -134,17 +160,26 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             <div key={item.id} className="exhibit-horizontal-card">
                                 <div className="card-thumb">
                                     <div className="thumb-placeholder"></div>
+
+                                    {/* D-Day 배지 표시 부분 */}
+                                    {item.dDay !== undefined && <div className="d-day-badge">D-{item.dDay}</div>}
+
                                     <button className="wish-heart-btn-circle" onClick={() => toggleLike(item.id)}>
-                                        <Heart size={18} fill={isLiked ? '#ff3b30' : 'none'} stroke={isLiked ? '#ff3b30' : '#bbb'} strokeWidth={2.5} />
+                                        <Heart
+                                            size={18}
+                                            fill={isLiked ? '#ff3b30' : 'none'}
+                                            stroke={isLiked ? '#ff3b30' : '#bbb'}
+                                            strokeWidth={2.5}
+                                        />
                                     </button>
                                 </div>
                                 <div className="card-info">
                                     <span className="card-tag-red">{item.tag}</span>
                                     <h3 className="card-title-bold">{item.title}</h3>
-                                    
+
                                     <div className="hashtag-row">
                                         {item.hashtags.map((tag) => (
-                                            <span 
+                                            <span
                                                 key={tag}
                                                 onClick={() => handleTagClick(tag)}
                                                 className="hashtag-item"
