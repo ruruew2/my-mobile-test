@@ -331,18 +331,20 @@ export default function App() {
                                 }}
                             />
                         )
-                    ) : activeTab === 'gift' ? (
-                        <Giftshop />
-                    ) : activeTab === 'mypage' ? (
-                        <MyPage
-                            isLoggedIn={isLoggedIn}
-                            setIsLoggedIn={setIsLoggedIn}
-                            onLogout={() => {
-                                setStep('login');
-                                setActiveTab('home');
-                            }}
-                        />
-                    ) : (
+) : activeTab === 'gift' ? (
+    <Giftshop />
+) : activeTab === 'mypage' ? (
+    <MyPage
+        isLoggedIn={isLoggedIn}
+        setIsLoggedIn={setIsLoggedIn}
+        // 💡 이 부분이 추가되었습니다! MyPage 안에서 탭을 바꿀 수 있게 해줍니다.
+        onTabChange={(tab: string) => setActiveTab(tab)} 
+        onLogout={() => {
+            setStep('login');
+            setActiveTab('home');
+        }}
+    />
+) : (
                         <div style={{ padding: '100px 20px', textAlign: 'center' }}>준비 중인 페이지입니다.</div>
                     )}
 
