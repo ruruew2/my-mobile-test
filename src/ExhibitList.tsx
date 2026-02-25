@@ -19,7 +19,7 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [isSearching, setIsSearching] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const filters = ['전체', '전시', '공연', '인기', '종료임박'];
+    const filters = ['전체', '전시', '공연', '인기', '오픈예정', '종료임박'];
 
     useEffect(() => {
         const mockData: Exhibit[] = [

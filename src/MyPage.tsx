@@ -370,7 +370,7 @@ const handleSendTicket = (friend: FriendItem) => {
                       onClick={() => handleSendTicket(managingFriend)}
                       style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
                     >
-                      🎁 전시 초대권 보내기
+                      🎁 전시 초대권 · 굿즈 보내기
                     </button>
                     <button 
                       onClick={() => handleDeleteFriend(managingFriend.id)}
