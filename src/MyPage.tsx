@@ -4,9 +4,10 @@ import {
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users 
 } from 'lucide-react';
 
-// 외부 임포트 컴포넌트 (해당 파일들이 같은 경로에 있어야 합니다)
+// 외부 임포트 컴포넌트
 import ReviewForm from './ReviewForm';
 import SuccessModal from './SuccessModal_review';
+import ExhibitList from './ExhibitList'; // 👈 파일명 맞춤
 
 // --- 1. 타입 정의 ---
 interface MyPageProps {
@@ -15,7 +16,8 @@ interface MyPageProps {
   onLogout?: () => void;     
 }
 
-type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend';
+// 👈 'exhibitList' 상태 추가
+type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend' | 'exhibitList';
 
 interface FriendItem {
   id: number;
@@ -157,11 +159,10 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
     }
   };
 
-  // 초대권 보내기 로직
+  // 초대권 보내기 로직 수정 👈
   const handleSendTicket = (friend: FriendItem) => {
-    alert(`${friend.name}님에게 전시 초대권을 선물하러 이동합니다. ✨`);
     setManagingFriend(null);
-    // setViewState('gift'); // 선물함 페이지로 이동시키고 싶을 때 활성화
+    setViewState('exhibitList'); // 👈 알림창 대신 페이지 이동으로 변경
   };
 
   const SubViewHeader = ({ title, backTo = 'main' as ViewState }: { title: string, backTo?: ViewState }) => (
@@ -306,109 +307,115 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
           </div>
         );
 
-case 'friend':
-  return (
-    <div className="sub-view" style={{ position: 'relative', minHeight: '600px', overflow: 'hidden' }}>
-      <SubViewHeader title="친구" />
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>친구 추가</label>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input 
-            type="email" 
-            value={friendEmail}
-            onChange={(e) => setFriendEmail(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleAddFriend()}
-            placeholder="친구의 이메일을 입력하세요" 
-            style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} 
-          />
-          <button 
-            onClick={handleAddFriend}
-            style={{ padding: '0 20px', borderRadius: '10px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}
-          >
-            추가
-          </button>
-        </div>
-        
-        <div style={{ marginTop: '20px' }}>
-          <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>내 친구 {friends.length}명</p>
-          {friends.map(friend => (
-            <ListCard 
-              key={friend.id} 
-              icon={<span>👤</span>} 
-              title={friend.name} 
-              sub={friend.email} 
-              btnLabel="관리" 
-              onBtnClick={() => setManagingFriend(friend)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* --- 모바일 프레임에 맞춘 바텀 시트 --- */}
-      {managingFriend && (
-        <div style={{ 
-          position: 'absolute', // fixed가 아닌 absolute로 프레임 안에 가둠
-          top: 0, left: 0, right: 0, bottom: 0, 
-          backgroundColor: 'rgba(0,0,0,0.4)', 
-          zIndex: 100, 
-          display: 'flex', 
-          alignItems: 'flex-end'
-        }}>
-          <div style={{ 
-            width: '100%', 
-            backgroundColor: '#fff', 
-            borderRadius: '20px 20px 0 0', 
-            padding: '20px', 
-            boxSizing: 'border-box',
-            animation: 'slideUp 0.3s ease-out' // 아래에서 위로 올라오는 느낌
-          }}>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ width: '40px', height: '4px', backgroundColor: '#eee', borderRadius: '2px', margin: '0 auto 15px' }} />
-              <h3 style={{ margin: 0, fontSize: '16px' }}><b>{managingFriend.name}</b>님 관리</h3>
-            </div>
+      case 'friend':
+        return (
+          <div className="sub-view" style={{ position: 'relative', minHeight: '600px', overflow: 'hidden' }}>
+            <SubViewHeader title="친구" />
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {/* 이름 수정 버튼 추가 */}
-              <button 
-                onClick={() => {
-                  const newName = prompt('수정할 이름을 입력하세요', managingFriend.name);
-                  if (newName && newName.trim()) {
-                    setFriends(friends.map(f => f.id === managingFriend.id ? { ...f, name: newName } : f));
-                    setManagingFriend(null);
-                  }
-                }}
-                style={{ padding: '16px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-              >
-                ✏️ 이름 수정하기
-              </button>
-
-              <button 
-                onClick={() => handleSendTicket(managingFriend)}
-                style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-              >
-                🎁 전시 초대권 보내기
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>친구 추가</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="email" 
+                  value={friendEmail}
+                  onChange={(e) => setFriendEmail(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddFriend()}
+                  placeholder="친구의 이메일을 입력하세요" 
+                  style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} 
+                />
+                <button 
+                  onClick={handleAddFriend}
+                  style={{ padding: '0 20px', borderRadius: '10px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  추가
+                </button>
+              </div>
               
-              <button 
-                onClick={() => handleDeleteFriend(managingFriend.id)}
-                style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-              >
-                삭제하기
-              </button>
-              
-              <button 
-                onClick={() => setManagingFriend(null)}
-                style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}
-              >
-                취소
-              </button>
+              <div style={{ marginTop: '20px' }}>
+                <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>내 친구 {friends.length}명</p>
+                {friends.map(friend => (
+                  <ListCard 
+                    key={friend.id} 
+                    icon={<span>👤</span>} 
+                    title={friend.name} 
+                    sub={friend.email} 
+                    btnLabel="관리" 
+                    onBtnClick={() => setManagingFriend(friend)}
+                  />
+                ))}
+              </div>
             </div>
+
+            {/* --- 모바일 프레임에 맞춘 바텀 시트 --- */}
+            {managingFriend && (
+              <div style={{ 
+                position: 'absolute', 
+                top: 0, left: 0, right: 0, bottom: 0, 
+                backgroundColor: 'rgba(0,0,0,0.4)', 
+                zIndex: 100, 
+                display: 'flex', 
+                alignItems: 'flex-end'
+              }}>
+                <div style={{ 
+                  width: '100%', 
+                  backgroundColor: '#fff', 
+                  borderRadius: '20px 20px 0 0', 
+                  padding: '20px', 
+                  boxSizing: 'border-box'
+                }}>
+                  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    <div style={{ width: '40px', height: '4px', backgroundColor: '#eee', borderRadius: '2px', margin: '0 auto 15px' }} />
+                    <h3 style={{ margin: 0, fontSize: '16px' }}><b>{managingFriend.name}</b>님 관리</h3>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button 
+                      onClick={() => {
+                        const newName = prompt('수정할 이름을 입력하세요', managingFriend.name);
+                        if (newName && newName.trim()) {
+                          setFriends(friends.map(f => f.id === managingFriend.id ? { ...f, name: newName } : f));
+                          setManagingFriend(null);
+                        }
+                      }}
+                      style={{ padding: '16px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+                    >
+                      ✏️ 이름 수정하기
+                    </button>
+
+                    <button 
+                      onClick={() => handleSendTicket(managingFriend)}
+                      style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+                    >
+                      🎁 전시 초대권 보내기
+                    </button>
+                    
+                    <button 
+                      onClick={() => handleDeleteFriend(managingFriend.id)}
+                      style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+                    >
+                      삭제하기
+                    </button>
+                    
+                    <button 
+                      onClick={() => setManagingFriend(null)}
+                      style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
-    </div>
-  );
+        );
+
+      case 'exhibitList': // 👈 새로 추가된 전시 목록 화면 케이스
+        return (
+          <div className="sub-view">
+            <SubViewHeader title="초대권 보낼 전시 선택" backTo="friend" />
+            <ExhibitList onBack={() => setViewState('friend')} />
+          </div>
+        );
 
       case 'gift':
         const currentGifts = giftTab === 'received' 
