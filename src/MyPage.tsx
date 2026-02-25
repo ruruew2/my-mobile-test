@@ -4,7 +4,7 @@ import {
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users 
 } from 'lucide-react';
 
-// 외부 임포트 컴포넌트
+// 외부 임포트 컴포넌트 (기존 경로 유지)
 import ReviewForm from './ReviewForm';
 import SuccessModal from './SuccessModal_review';
 import GiftShop from './GiftShop'; 
@@ -14,11 +14,9 @@ interface MyPageProps {
   isLoggedIn: boolean;       
   setIsLoggedIn: (val: boolean) => void; 
   onLogout?: () => void;     
-  // ✅ 부모 컨테이너의 탭을 변경하기 위한 프롭스 추가
   onTabChange?: (tabName: string) => void; 
 }
 
-// giftShop 뷰타입은 레이아웃을 깨트리므로 제거합니다.
 type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend';
 
 interface FriendItem {
@@ -28,7 +26,7 @@ interface FriendItem {
   memo: string;
 }
 
-// --- 2. 하위 공통 UI 컴포넌트 (생략 없이 유지) ---
+// --- 2. 하위 공통 UI 컴포넌트 ---
 
 const MenuRow = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
   <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderRadius: '12px', border: '1px solid #f5f5f5', backgroundColor: '#fff', marginBottom: '10px', cursor: 'pointer' }}>
@@ -157,15 +155,14 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
     }
   };
 
-  // ✅ [수정 핵심] 선물하기 버튼 클릭 시 로직
-const handleSendTicket = (friend: FriendItem) => {
-  setManagingFriend(null);
-  
-  if (onTabChange) {
-    onTabChange('gift'); // 이제 App.tsx의 setActiveTab('gift')가 실행됩니다!
-  }
-};
+  const handleSendTicket = (friend: FriendItem) => {
+    setManagingFriend(null);
+    if (onTabChange) {
+      onTabChange('gift'); 
+    }
+  };
 
+  // 서브뷰에서 뒤로가기 헤더
   const SubViewHeader = ({ title, backTo = 'main' as ViewState }: { title: string, backTo?: ViewState }) => (
     <div 
       onClick={() => setViewState(backTo)} 
@@ -236,7 +233,7 @@ const handleSendTicket = (friend: FriendItem) => {
                 ))}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
                 <div style={{ marginBottom: '25px', color: '#666', lineHeight: '1.6' }}>
                   <p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>작성 된 후기가 없습니다.</p>
                   <p style={{ margin: '4px 0 0', fontSize: '15px' }}>후기를 쓰러 가볼까요? ✨</p>
@@ -310,7 +307,7 @@ const handleSendTicket = (friend: FriendItem) => {
 
       case 'friend':
         return (
-          <div className="sub-view" style={{ position: 'relative', minHeight: '600px', overflow: 'hidden' }}>
+          <div className="sub-view" style={{ position: 'relative', minHeight: '600px' }}>
             <SubViewHeader title="친구" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>친구 추가</label>
@@ -344,7 +341,6 @@ const handleSendTicket = (friend: FriendItem) => {
                 ))}
               </div>
             </div>
-
             {/* 친구 관리 팝업 */}
             {managingFriend && (
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
@@ -354,36 +350,16 @@ const handleSendTicket = (friend: FriendItem) => {
                     <h3 style={{ margin: 0, fontSize: '16px' }}><b>{managingFriend.name}</b>님 관리</h3>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button 
-                      onClick={() => {
+                    <button onClick={() => {
                         const newName = prompt('수정할 이름을 입력하세요', managingFriend.name);
                         if (newName && newName.trim()) {
                           setFriends(friends.map(f => f.id === managingFriend.id ? { ...f, name: newName } : f));
                           setManagingFriend(null);
                         }
-                      }}
-                      style={{ padding: '16px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-                    >
-                      ✏️ 이름 수정하기
-                    </button>
-                    <button 
-                      onClick={() => handleSendTicket(managingFriend)}
-                      style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-                    >
-                      🎁 전시 초대권 · 굿즈 보내기
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteFriend(managingFriend.id)}
-                      style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-                    >
-                      삭제하기
-                    </button>
-                    <button 
-                      onClick={() => setManagingFriend(null)}
-                      style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}
-                    >
-                      취소
-                    </button>
+                      }} style={{ padding: '16px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>✏️ 이름 수정하기</button>
+                    <button onClick={() => handleSendTicket(managingFriend)} style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>🎁 전시 초대권 · 굿즈 보내기</button>
+                    <button onClick={() => handleDeleteFriend(managingFriend.id)} style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>삭제하기</button>
+                    <button onClick={() => setManagingFriend(null)} style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}>취소</button>
                   </div>
                 </div>
               </div>
@@ -430,7 +406,7 @@ const handleSendTicket = (friend: FriendItem) => {
             </div>
             <button 
               onClick={() => isLoggedIn ? setIsLoggedIn(false) : onLogout?.()}
-              style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
+              style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#ffffff', cursor: 'pointer', fontWeight: 'bold' }}
             >
               {isLoggedIn ? "로그아웃" : "로그인하러 가기"}
             </button>
@@ -441,40 +417,38 @@ const handleSendTicket = (friend: FriendItem) => {
 
   return (
     <div className="main-content-scroll mypage-container" style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', backgroundColor: '#fff', minHeight: '100%' }}>
-      {/* 프로필 헤더 (viewState가 main, history 등일 때만 표시) */}
-      {(viewState === 'main' || viewState === 'history' || viewState === 'likes' || viewState === 'reviews' || viewState === 'friend' || viewState === 'gift') && (
-        <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
-            <div onClick={handleImageClick} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
-              <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #eee' }}>
-                {isLoggedIn && profileImage ? (
-                  <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <span style={{ fontSize: '30px' }}>👤</span>
-                )}
-              </div>
-              <div style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: '#444', borderRadius: '50%', padding: '6px', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Camera size={14} color="#fff" />
-              </div>
-              <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
-            </div>
-            <div style={{ overflow: 'hidden' }}>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {isLoggedIn ? "예술가 김아트님" : "로그인이 필요합니다"}
-              </h2>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#666' }}>미니멀리즘과 현대미술을 사랑하는 탐험가</p>
-            </div>
+      
+      {/* ✅ [수정 핵심] 모든 viewState에서 프로필 섹션이 보이도록 조건문을 삭제하거나 통합했습니다. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
+        <div onClick={handleImageClick} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+          <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #eee' }}>
+            {isLoggedIn && profileImage ? (
+              <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span style={{ fontSize: '30px' }}>👤</span>
+            )}
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
-            <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
-            <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
-            <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
+          <div style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: '#444', borderRadius: '50%', padding: '6px', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Camera size={14} color="#fff" />
           </div>
-          <hr style={{ border: 'none', height: '1px', backgroundColor: '#f5f5f5', marginBottom: '30px' }} />
-        </>
-      )}
+          <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
+        </div>
+        <div style={{ overflow: 'hidden' }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {isLoggedIn ? "예술가 김아트님" : "로그인이 필요합니다"}
+          </h2>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#666' }}>미니멀리즘과 현대미술을 사랑하는 탐험가</p>
+        </div>
+      </div>
 
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
+        <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
+        <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
+        <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
+      </div>
+      <hr style={{ border: 'none', height: '1px', backgroundColor: '#f5f5f5', marginBottom: '30px' }} />
+
+      {/* 컨텐츠 렌더링 영역 */}
       {renderContent()}
       
       {showModal && (
