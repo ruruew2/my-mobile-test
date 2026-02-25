@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2, Minus, Plus, CheckCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate, useLocation } from 'react-router-dom'; 
 import './Cart.css';
 
 // 장바구니 아이템 타입 정의
@@ -22,7 +22,25 @@ interface CartProps {
 
 const Cart = ({ cartItems, onBack, onRemove, onUpdateQuantity, onClearCart }: CartProps) => {
   const [showSuccess, setShowSuccess] = useState(false);
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // --- 모바일 결제 리디렉션 결과 처리 ---
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const imp_success = queryParams.get('imp_success');
+    const error_msg = queryParams.get('error_msg');
+
+    // 모바일 결제 후 m_redirect_url로 돌아온 경우
+    if (imp_success === 'true') {
+      setShowSuccess(true);
+      // URL 파라미터 지우기 (성공 모달이 떠 있으므로 사용자에게 깔끔한 URL 노출)
+      window.history.replaceState({}, '', location.pathname);
+    } else if (imp_success === 'false') {
+      alert(`결제 실패: ${error_msg}`);
+      window.history.replaceState({}, '', location.pathname);
+    }
+  }, [location]);
 
   // 가격 계산 로직
   const totalPrice = cartItems.reduce((acc, item) => {
@@ -34,7 +52,6 @@ const Cart = ({ cartItems, onBack, onRemove, onUpdateQuantity, onClearCart }: Ca
 
   // 결제하기 핸들러
   const handleOrder = () => {
-    // 🚩 window를 any로 타입 캐스팅하여 IMP 호출 (가장 확실한 방법)
     const { IMP } = window as any;
     if (!IMP) {
       alert("결제 모듈을 불러올 수 없습니다.");
@@ -44,42 +61,40 @@ const Cart = ({ cartItems, onBack, onRemove, onUpdateQuantity, onClearCart }: Ca
     IMP.init('imp03310872'); 
 
     const paymentData = {
-        pg: 'kakaopay.TC0ONETIME',
-        pay_method: 'card',
-        merchant_uid: `mid_${new Date().getTime()}`,
-        name: cartItems.length > 1 
-            ? `${cartItems[0].title} 외 ${cartItems.length - 1}건` 
-            : cartItems.length === 1 ? cartItems[0].title : "상품 주문",
-        amount: totalPrice,
-        buyer_name: '테스터',
+      pg: 'kakaopay.TC0ONETIME',
+      pay_method: 'card',
+      merchant_uid: `mid_${new Date().getTime()}`,
+      name: cartItems.length > 1 
+        ? `${cartItems[0].title} 외 ${cartItems.length - 1}건` 
+        : cartItems.length === 1 ? cartItems[0].title : "상품 주문",
+      amount: totalPrice,
+      buyer_name: '테스터',
+      // ✅ 모바일 대응 필수 설정
+      // 리디렉션 주소는 현재 페이지 주소를 그대로 전달하여 useEffect에서 처리하게 합니다.
+      m_redirect_url: `${window.location.origin}${location.pathname}`,
+      app_scheme: 'my-mobile-test' // 아이폰 앱 복귀를 위한 스킴
     };
 
     IMP.request_pay(paymentData, (response: any) => {
-        if (response.success) {
-            console.log("결제 성공:", response);
-            setShowSuccess(true); 
-        } else {
-            alert(`결제 실패: ${response.error_msg}`);
+      // PC 환경에서는 이 콜백이 실행됩니다.
+      if (response.success) {
+        setShowSuccess(true); 
+      } else {
+        // 모바일 리디렉션 시에는 이 창 자체가 닫히므로 콜백이 안 뜰 수 있습니다.
+        if (response.error_msg) {
+          alert(`결제 실패: ${response.error_msg}`);
         }
+      }
     });
   };
 
-const handleFinalConfirm = () => {
+  const handleFinalConfirm = () => {
     try {
-      console.log("확인 버튼 클릭됨");
-      
-      // 1. 장바구니 비우기 함수 실행
       if (onClearCart) onClearCart();
-      
-      // 2. 모달 상태를 명시적으로 false로 변경 (가장 중요!)
       setShowSuccess(false); 
-      
-      // 3. 메인 페이지로 이동
-      console.log("메인으로 이동 시도");
       navigate('/'); 
     } catch (error) {
       console.error("확인 버튼 처리 중 에러 발생:", error);
-      // 에러가 나더라도 일단 모달은 닫고 메인으로 보냅니다.
       setShowSuccess(false);
       navigate('/');
     }
