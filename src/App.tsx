@@ -197,6 +197,7 @@ export default function App() {
                 <PreferenceSelection onComplete={() => setStep('main')} />
             ) : (
                 <div className="art-log-container">
+                    
                     {activeTab === 'home' ? (
                         <>
                             <header className="header">
