@@ -7,7 +7,7 @@ import {
 // 외부 임포트 컴포넌트
 import ReviewForm from './ReviewForm';
 import SuccessModal from './SuccessModal_review';
-import ExhibitList from './ExhibitList'; // 👈 파일명 맞춤
+import ExhibitList from './ExhibitList'; 
 
 // --- 1. 타입 정의 ---
 interface MyPageProps {
@@ -16,7 +16,6 @@ interface MyPageProps {
   onLogout?: () => void;     
 }
 
-// 👈 'exhibitList' 상태 추가
 type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend' | 'exhibitList';
 
 interface FriendItem {
@@ -106,10 +105,8 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
     { id: 2, email: 'friend2@test.com', name: '친구2', memo: '대학 동기' },
   ]);
 
-  // 후기 목록 상태
   const [reviewItems, setReviewItems] = useState<string[]>([]); 
 
-  // 알림 상태 관리
   const [notifSettings, setNotifSettings] = useState(() => {
     const saved = localStorage.getItem('user_notif_settings');
     return saved ? JSON.parse(saved) : { recommend: true, payment: true, notice: true };
@@ -134,7 +131,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
     }
   };
 
-  // 친구 추가 로직
   const handleAddFriend = () => {
     if (!friendEmail.trim()) {
       alert('이메일을 입력해주세요.');
@@ -151,7 +147,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
     alert(`${friendEmail} 님이 친구로 추가되었습니다.`);
   };
 
-  // 친구 삭제 로직
   const handleDeleteFriend = (id: number) => {
     if (window.confirm("정말 친구를 삭제하시겠습니까?")) {
       setFriends(friends.filter(f => f.id !== id));
@@ -159,10 +154,10 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
     }
   };
 
-  // 초대권 보내기 로직 수정 👈
+  // 초대권 보내기 -> ExhibitList 뷰로 전환
   const handleSendTicket = (friend: FriendItem) => {
     setManagingFriend(null);
-    setViewState('exhibitList'); // 👈 알림창 대신 페이지 이동으로 변경
+    setViewState('exhibitList'); 
   };
 
   const SubViewHeader = ({ title, backTo = 'main' as ViewState }: { title: string, backTo?: ViewState }) => (
@@ -311,7 +306,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
         return (
           <div className="sub-view" style={{ position: 'relative', minHeight: '600px', overflow: 'hidden' }}>
             <SubViewHeader title="친구" />
-            
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>친구 추가</label>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -330,7 +324,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
                   추가
                 </button>
               </div>
-              
               <div style={{ marginTop: '20px' }}>
                 <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>내 친구 {friends.length}명</p>
                 {friends.map(friend => (
@@ -346,28 +339,13 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
               </div>
             </div>
 
-            {/* --- 모바일 프레임에 맞춘 바텀 시트 --- */}
             {managingFriend && (
-              <div style={{ 
-                position: 'absolute', 
-                top: 0, left: 0, right: 0, bottom: 0, 
-                backgroundColor: 'rgba(0,0,0,0.4)', 
-                zIndex: 100, 
-                display: 'flex', 
-                alignItems: 'flex-end'
-              }}>
-                <div style={{ 
-                  width: '100%', 
-                  backgroundColor: '#fff', 
-                  borderRadius: '20px 20px 0 0', 
-                  padding: '20px', 
-                  boxSizing: 'border-box'
-                }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
+                <div style={{ width: '100%', backgroundColor: '#fff', borderRadius: '20px 20px 0 0', padding: '20px', boxSizing: 'border-box' }}>
                   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                     <div style={{ width: '40px', height: '4px', backgroundColor: '#eee', borderRadius: '2px', margin: '0 auto 15px' }} />
                     <h3 style={{ margin: 0, fontSize: '16px' }}><b>{managingFriend.name}</b>님 관리</h3>
                   </div>
-                  
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <button 
                       onClick={() => {
@@ -381,21 +359,18 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
                     >
                       ✏️ 이름 수정하기
                     </button>
-
                     <button 
                       onClick={() => handleSendTicket(managingFriend)}
                       style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
                     >
                       🎁 전시 초대권 보내기
                     </button>
-                    
                     <button 
                       onClick={() => handleDeleteFriend(managingFriend.id)}
                       style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
                     >
                       삭제하기
                     </button>
-                    
                     <button 
                       onClick={() => setManagingFriend(null)}
                       style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}
@@ -409,9 +384,10 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
           </div>
         );
 
-      case 'exhibitList': // 👈 새로 추가된 전시 목록 화면 케이스
+      case 'exhibitList': 
         return (
           <div className="sub-view">
+            {/* 뒤로가기 시 다시 친구 목록('friend')으로 이동 */}
             <SubViewHeader title="초대권 보낼 전시 선택" backTo="friend" />
             <ExhibitList onBack={() => setViewState('friend')} />
           </div>
@@ -449,13 +425,11 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
               <MenuRow icon={<Users size={18} />} label="친구" onClick={() => setViewState('friend')} />
               <MenuRow icon={<Gift size={18} />} label="선물함" onClick={() => setViewState('gift')} />
             </div>
-
             <div className="menu-group" style={{ marginTop: '30px' }}>
               <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>SETTINGS</h4>
               <MenuRow icon={<Bell size={18} />} label="알림 설정" onClick={() => setViewState('notifSetting')} />
               <MenuRow icon={<Settings size={18} />} label="개인정보 수정" onClick={() => setViewState('profileEdit')} />
             </div>
-
             <button 
               onClick={() => isLoggedIn ? setIsLoggedIn(false) : onLogout?.()}
               style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', cursor: 'pointer', fontWeight: 'bold' }}
@@ -469,36 +443,39 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout }: MyPageProps) => {
 
   return (
     <div className="main-content-scroll mypage-container" style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', backgroundColor: '#fff', minHeight: '100%' }}>
-      {/* 프로필 헤더 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
-        <div onClick={handleImageClick} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
-          <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #eee' }}>
-            {isLoggedIn && profileImage ? (
-              <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <span style={{ fontSize: '30px' }}>👤</span>
-            )}
+      {/* 프로필 헤더 (메인 화면일 때만 노출하고 싶으면 조건부 렌더링 가능) */}
+      {(viewState === 'main' || viewState === 'history' || viewState === 'likes' || viewState === 'reviews' || viewState === 'friend' || viewState === 'gift') && (
+        <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
+            <div onClick={handleImageClick} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #eee' }}>
+                {isLoggedIn && profileImage ? (
+                  <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: '30px' }}>👤</span>
+                )}
+              </div>
+              <div style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: '#444', borderRadius: '50%', padding: '6px', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Camera size={14} color="#fff" />
+              </div>
+              <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
+            </div>
+            <div style={{ overflow: 'hidden' }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {isLoggedIn ? "예술가 김아트님" : "로그인이 필요합니다"}
+              </h2>
+              <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#666' }}>미니멀리즘과 현대미술을 사랑하는 탐험가</p>
+            </div>
           </div>
-          <div style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: '#444', borderRadius: '50%', padding: '6px', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Camera size={14} color="#fff" />
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
+            <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
+            <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
+            <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
           </div>
-          <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
-        </div>
-        <div style={{ overflow: 'hidden' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {isLoggedIn ? "예술가 김아트님" : "로그인이 필요합니다"}
-          </h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#666' }}>미니멀리즘과 현대미술을 사랑하는 탐험가</p>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
-        <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
-        <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
-        <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
-      </div>
-
-      <hr style={{ border: 'none', height: '1px', backgroundColor: '#f5f5f5', marginBottom: '30px' }} />
+          <hr style={{ border: 'none', height: '1px', backgroundColor: '#f5f5f5', marginBottom: '30px' }} />
+        </>
+      )}
 
       {renderContent()}
       
