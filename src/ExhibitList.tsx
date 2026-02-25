@@ -54,7 +54,6 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         setExhibits(mockData);
     }, []);
 
-    // 🚩 해시태그 클릭 시 검색창 활성화 및 검색어 입력 함수
     const handleTagClick = (tag: string) => {
         setIsSearching(true);
         setSearchQuery(tag);
@@ -79,33 +78,32 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     return (
         <div className="exhibit-list-page">
-            <header className="list-header" style={{ display: 'flex', alignItems: 'center', padding: '0 16px', height: '60px', backgroundColor: '#fff', gap: '8px' }}>
-                <div style={{ width: '32px', flexShrink: 0 }}>
-                    <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}>
+            <header className="list-header">
+                <div className="header-side">
+                    <button onClick={onBack} className="icon-btn">
                         <ChevronLeft size={28} color="#111" />
                     </button>
                 </div>
 
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                <div className="header-center">
                     {isSearching ? (
-                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#f5f5f5', borderRadius: '20px', padding: '6px 12px' }}>
+                        <div className="search-bar">
                             <input
                                 autoFocus
                                 placeholder="키워드 검색 (예: 몽환적인)"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                style={{ border: 'none', background: 'none', width: '100%', outline: 'none', fontSize: '14px' }}
                             />
-                            {searchQuery && <X size={16} onClick={() => setSearchQuery('')} style={{ cursor: 'pointer', color: '#888', marginLeft: '4px' }} />}
+                            {searchQuery && <X size={18} onClick={() => setSearchQuery('')} className="clear-icon" />}
                         </div>
                     ) : (
-                        <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', width: '100%', textAlign: 'center' }}>전시 둘러보기</h2>
+                        <h2 className="list-title">전시 둘러보기</h2>
                     )}
                 </div>
 
-                <div style={{ width: '40px', flexShrink: 0, textAlign: 'right' }}>
-                    <button onClick={() => { setIsSearching(!isSearching); if (isSearching) setSearchQuery(''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                        {isSearching ? <span style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>취소</span> : <Search size={24} color="#111" />}
+                <div className="header-side right">
+                    <button onClick={() => { setIsSearching(!isSearching); if (isSearching) setSearchQuery(''); }} className="icon-btn">
+                        {isSearching ? <span className="cancel-txt">취소</span> : <Search size={24} color="#111" />}
                     </button>
                 </div>
             </header>
@@ -113,7 +111,13 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <nav className="category-nav">
                 <div className="filter-chip-container">
                     {filters.map((f) => (
-                        <button key={f} className={`filter-chip ${activeFilter === f ? 'active' : ''}`} onClick={() => setActiveFilter(f)}>{f}</button>
+                        <button 
+                            key={f} 
+                            className={`filter-chip ${activeFilter === f ? 'active' : ''}`} 
+                            onClick={() => setActiveFilter(f)}
+                        >
+                            {f}
+                        </button>
                     ))}
                 </div>
             </nav>
@@ -136,15 +140,14 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                                 <div className="card-info">
                                     <span className="card-tag-red">{item.tag}</span>
-                                    <h3 className="card-title-bold" style={{ whiteSpace: 'pre-wrap' }}>{item.title}</h3>
+                                    <h3 className="card-title-bold">{item.title}</h3>
                                     
-                                    {/* 🚩 해시태그 영역: 클릭 가능하게 수정 */}
-                                    <div className="hashtag-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                                    <div className="hashtag-row">
                                         {item.hashtags.map((tag) => (
                                             <span 
                                                 key={tag}
-                                                onClick={() => handleTagClick(tag)} // 클릭 이벤트 연결
-                                                style={{ fontSize: '11px', color: '#007AFF', cursor: 'pointer', fontWeight: '500' }}
+                                                onClick={() => handleTagClick(tag)}
+                                                className="hashtag-item"
                                             >
                                                 #{tag}
                                             </span>
@@ -152,7 +155,10 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
 
                                     <div className="info-bottom">
-                                        <div className="info-row"><MapPin size={14} color="#888" /><span>{item.location}</span></div>
+                                        <div className="info-row">
+                                            <MapPin size={14} color="#888" />
+                                            <span>{item.location}</span>
+                                        </div>
                                         <div className="info-date">{item.date}</div>
                                     </div>
                                 </div>
@@ -160,7 +166,7 @@ const ExhibitionList: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         );
                     })
                 ) : (
-                    <div className="empty-list" style={{ textAlign: 'center', padding: '100px 0', color: '#aaa' }}>검색 결과가 없습니다.</div>
+                    <div className="empty-list">검색 결과가 없습니다.</div>
                 )}
                 <div className="scroll-spacer"></div>
             </main>

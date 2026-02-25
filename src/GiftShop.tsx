@@ -45,14 +45,13 @@ const GiftShop = () => {
         setCartItems((prev) => prev.filter((item) => item.id !== id));
     };
 
-    // 🚩 추가된 수량 조절 로직
     const updateCartQuantity = (id: number, newQty: number) => {
-        if (newQty < 1) return; // 1개 미만으로 내려가지 않게 보호
+        if (newQty < 1) return;
         setCartItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity: newQty } : item)));
     };
 
     const clearCart = () => {
-        setCartItems([]); // 장바구니 전체 비우기
+        setCartItems([]);
     };
 
     const handleQty = (type: 'plus' | 'minus') => {
@@ -60,10 +59,8 @@ const GiftShop = () => {
         else if (type === 'minus' && quantity > 1) setQuantity((prev) => prev - 1);
     };
 
-    // --- 카테고리 태그 (형용사 버전) ---
     const categories = ['전체', '문구/사무', '패션/생활', '주방/식기', '인테리어', '소품'];
 
-    // --- 전체 데이터 (누락된 상품 2종 복구 완료) ---
     const allProducts = [
         {
             id: 26,
@@ -123,7 +120,7 @@ const GiftShop = () => {
             isMain: true,
         },
         {
-            id: 4, // 누락 복구
+            id: 4,
             category: '패션/생활',
             title: '고양이 카드지갑',
             price: '20,000원',
@@ -137,7 +134,7 @@ const GiftShop = () => {
             isMain: false,
         },
         {
-            id: 7, // 누락 복구
+            id: 7,
             category: '패션/생활',
             title: '데니 태극기 키링',
             price: '20,000원',
@@ -220,10 +217,9 @@ const GiftShop = () => {
                 likedProducts={likedProducts}
                 onBack={() => setViewMode('main')}
                 onRemove={toggleLike}
-                /* ⭐️ 추가: 위시리스트에서 아이템 클릭 시 상세페이지로 이동하는 로직 */
                 onItemClick={(item: any) => {
-                    setSelectedProduct(item); // 선택된 상품 저장
-                    setViewMode('main'); // 메인 뷰로 돌아가되, selectedProduct가 있으므로 상세페이지가 뜸
+                    setSelectedProduct(item);
+                    setViewMode('main');
                 }}
             />
         );
@@ -235,13 +231,13 @@ const GiftShop = () => {
                 cartItems={cartItems}
                 onBack={() => setViewMode('main')}
                 onRemove={removeFromCart}
-                onUpdateQuantity={updateCartQuantity} // 🚩 드디어 함수 연결!
-                onClearCart={clearCart} // 🚩 장바구니 전체 비우는 함수 연결
+                onUpdateQuantity={updateCartQuantity}
+                onClearCart={clearCart}
             />
         );
     }
+
     if (selectedProduct) {
-        // 안전장치: detailImages가 없으면 기본 image를 배열로 사용
         const displayImages =
             selectedProduct.detailImages && selectedProduct.detailImages.length > 0
                 ? selectedProduct.detailImages
@@ -286,42 +282,12 @@ const GiftShop = () => {
                                 />
                             </button>
                         </div>
-                        <div
-                            className="price-quantity-row"
-                            style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '20px',
-                            }}
-                        >
-                            <p className="detail-price" style={{ margin: 0 }}>
-                                {selectedProduct.price}
-                            </p>
-                            <div
-                                className="quantity-counter"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '15px',
-                                    background: '#f5f5f5',
-                                    padding: '5px 15px',
-                                    borderRadius: '20px',
-                                }}
-                            >
-                                <button
-                                    onClick={() => handleQty('minus')}
-                                    style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}
-                                >
-                                    -
-                                </button>
-                                <span style={{ fontWeight: 'bold' }}>{quantity}</span>
-                                <button
-                                    onClick={() => handleQty('plus')}
-                                    style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer' }}
-                                >
-                                    +
-                                </button>
+                        <div className="price-quantity-row">
+                            <p className="detail-price">{selectedProduct.price}</p>
+                            <div className="quantity-counter">
+                                <button onClick={() => handleQty('minus')}>-</button>
+                                <span>{quantity}</span>
+                                <button onClick={() => handleQty('plus')}>+</button>
                             </div>
                         </div>
                         <p className="detail-description">{selectedProduct.description}</p>
@@ -329,22 +295,16 @@ const GiftShop = () => {
                             className="buy-button"
                             onClick={() => {
                                 setCartItems((prev) => {
-                                    // 1. 장바구니에 이미 이 상품이 있는지 찾기
                                     const isExist = prev.find((item) => item.id === selectedProduct.id);
-
                                     if (isExist) {
-                                        // 2. 있다면: 해당 상품의 quantity(수량)만 합쳐서 업데이트
                                         return prev.map((item) =>
                                             item.id === selectedProduct.id
                                                 ? { ...item, quantity: item.quantity + quantity }
                                                 : item,
                                         );
                                     }
-                                    // 3. 없다면: 원래 하던 대로 목록에 새로 추가
                                     return [...prev, { ...selectedProduct, quantity }];
                                 });
-
-                                // 장바구니 페이지로 이동하고 상세창 닫기
                                 setViewMode('cart');
                                 setSelectedProduct(null);
                             }}
@@ -362,7 +322,8 @@ const GiftShop = () => {
             <div className="shop-header">
                 <div className="header-title-row">
                     <div className="title-left">
-                        <ShoppingBag size={24} />
+                        {/* 🚩 일자 정렬을 위해 h2 안에 아이콘을 넣거나 나란히 배치 */}
+                        <ShoppingBag size={22} strokeWidth={2.5} />
                         <h2>아트 기프트 숍</h2>
                     </div>
                     <div className="header-icon-group">

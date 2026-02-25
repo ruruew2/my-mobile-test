@@ -14,37 +14,52 @@
     display: none;
 }
 
-/* [2] 헤더 영역 복구 */
+/* [2] 헤더 영역 - 가로 일자 정렬 "강제" 수정 */
 .shop-header {
     width: 100%;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* 왼쪽 정렬 */
 }
 
+/* [2] 헤더 영역 복구 */
 .header-title-row {
     display: flex;
-    justify-content: space-between; /* 좌우 끝으로 밀기 */
-    align-items: center;
+    justify-content: space-between;
+    align-items: center; 
     width: 100%;
-    margin-bottom: 12px;
+    margin-bottom: 4px;
 }
 
-/* 서브페이지(장바구니 등) 제목이 쏠리지 않게 */
-.header-title-row h2 {
-    margin: 0;
-    margin-left: 10px;
-    flex: 1;
-    font-size: 22px;
-    font-weight: bold;
-    color: #000;
+/* 🚩 아이콘과 제목을 묶는 컨테이너 정렬 추가 */
+.title-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
+
+.title-left h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.title-left svg {
+    display: block;
+    position: relative;
+    top: 1px;   /* 1px ~ 2px 조절 */
+}
+
+
 
 /* 설명글 스타일 - 독립된 행 유지 */
 .shop-description {
-    color: #666;
+    color: #888;
     font-size: 14px;
     margin: 0;
     padding-left: 2px;
-    display: block; /* 한 줄 전체 차지 */
 }
 
 .category-container {
