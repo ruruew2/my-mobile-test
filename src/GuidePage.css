@@ -4,6 +4,7 @@
   background: #fff;
   min-height: 100vh;
   box-sizing: border-box;
+  background-color: #f4f9ff !important; /* 배경색 적용 */
 }
 
 .art-header { margin-bottom: 25px; }
@@ -336,6 +337,7 @@
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  background-color: #f4f9ff !important; /* 배경색 적용 */
 }
 
 .result-header {
