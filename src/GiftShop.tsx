@@ -59,7 +59,7 @@ const GiftShop = () => {
         else if (type === 'minus' && quantity > 1) setQuantity((prev) => prev - 1);
     };
 
-    const categories = ['전체', '문구/사무', '패션/생활', '주방/식기', '인테리어', '소품'];
+    const categories = ['전체', '문구/사무', '패션/생활', '주방/식기', '인테리어', '소품', '금액권'];
 
     const allProducts = [
         {
@@ -201,6 +201,28 @@ const GiftShop = () => {
                 'https://res.cloudinary.com/ddr95otqk/image/upload/v1771479848/tableware_tumbler_02.jpg',
             ],
             description: '자개 공예 기법으로 문양을 새긴 텀블러입니다.',
+            isMain: false,
+        },
+        {
+            id: 998,
+            category: '금액권',
+            title: '3만원 금액권',
+            price: '30,000원',
+            image: 'https://st.kakaocdn.net/product/gift/product/20220218175702_d408d902f38d496790467e6999dd7ed5.png',
+            detailImages: [
+            ],
+            description: '결제 할 때 사용할 수 있는 금액권입니다.',
+            isMain: false,
+        },
+                {
+            id: 999,
+            category: '금액권',
+            title: '5만원 금액권',
+            price: '50,000원',
+            image: 'https://st.kakaocdn.net/product/gift/product/20220218175850_c234b015b60d4bf3bebadf8430f3f0c0.png',
+            detailImages: [
+            ],
+            description: '결제 할 때 사용할 수 있는 금액권입니다.',
             isMain: false,
         },
     ];
