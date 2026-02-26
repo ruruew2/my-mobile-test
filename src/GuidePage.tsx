@@ -4,10 +4,10 @@ import axios from 'axios';
 import './GuidePage.css';
 
 const isDev = import.meta.env.MODE === 'development';
-const API_BASE_URL = isDev ? '/api_proxy' : 'http://54.180.234.226:8000';
+// 배포 환경에서 Mixed Content 에러 방지를 위해 가변 주소 사용
+const API_BASE_URL = '/api_proxy';
 
 const GuidePage = ({ initialTab }: any) => {
-  // --- 상태 관리 ---
   const [activeTab, setActiveTab] = useState<'human' | 'ai'>(initialTab || 'human');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -25,17 +25,44 @@ const GuidePage = ({ initialTab }: any) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  // --- 카메라 로직 ---
+  // --- 카메라 로직 보완 ---
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-        audio: false,
-      });
+      // 1. 기존 스트림이 있다면 정리
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+
+      // 2. 카메라 제약 조건 설정 (ideal 값을 주어 유연하게 대응)
+      const constraints = {
+        video: { 
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      };
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      // 3. 상태 업데이트 및 비디오 태그 연결
       setStream(mediaStream);
-      if (videoRef.current) videoRef.current.srcObject = mediaStream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        
+        // 중요: iOS 및 일부 브라우저에서 play()가 명시적으로 호출되어야 함
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            await videoRef.current?.play();
+          } catch (playError) {
+            console.error("자동 재생 실패:", playError);
+          }
+        };
+      }
     } catch (err) {
-      alert("카메라 접근 권한이 필요합니다.");
+      console.error("카메라 상세 에러:", err);
+      alert("카메라를 시작할 수 없습니다. 브라우저 설정에서 카메라 권한과 '안전하지 않은 콘텐츠' 허용을 확인해주세요.");
       setIsScannerOpen(false);
     }
   };
@@ -47,21 +74,28 @@ const GuidePage = ({ initialTab }: any) => {
     }
   };
 
+  // 스캐너가 열릴 때만 카메라 작동
   useEffect(() => {
-    if (isScannerOpen) startCamera();
-    else stopCamera();
+    if (isScannerOpen) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
     return () => stopCamera();
   }, [isScannerOpen]);
 
-  // --- API 통신 로직 (캡처 및 분석) ---
+  // --- API 통신 로직 ---
   const handleCapture = async () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current || !stream) return;
     setIsAnalyzing(true);
 
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
-    canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0);
+    }
 
     canvas.toBlob(async (blob) => {
       if (!blob) return;
@@ -79,13 +113,12 @@ const GuidePage = ({ initialTab }: any) => {
         }
       } catch (error) {
         console.error("분석 실패:", error);
-        alert("서버 연결에 실패했습니다.");
+        alert("분석 서버(AWS) 연결에 실패했습니다.");
         setIsAnalyzing(false);
       }
     }, 'image/jpeg');
   };
 
-  // --- 오디오 제어 ---
   const toggleAudio = () => {
     if (!scannedArt.audio_url) return;
     
@@ -127,7 +160,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 2. 메인 화면 / 결과 화면 전환 */}
+      {/* 2. 메인 화면 */}
       {!showResult ? (
         <>
           <header className="art-header">
@@ -161,7 +194,7 @@ const GuidePage = ({ initialTab }: any) => {
           </div>
         </>
       ) : (
-        /* 3. 분석 결과 화면 (서버 데이터 반영) */
+        /* 3. 분석 결과 화면 */
         <div className="art-result-container">
           <header className="result-header">
             <button className="back-btn-inner" onClick={() => {setShowResult(false); if(audioRef.current) audioRef.current.pause(); setIsPlaying(false);}}><ChevronLeft size={24} /></button>
@@ -204,7 +237,6 @@ const GuidePage = ({ initialTab }: any) => {
                 </div>
               </div>
             )}
-            <div style={{ minHeight: '100px' }}></div>
           </div>
 
           <footer className="result-footer-simple">
@@ -216,7 +248,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 4. 스캐너 오버레이 */}
+      {/* 4. 스캐너 오버레이 (보완된 Video 태그) */}
       {isScannerOpen && (
         <div className="art-scanner-overlay">
             <div className="scanner-top">
@@ -225,7 +257,13 @@ const GuidePage = ({ initialTab }: any) => {
                 <div style={{width: 28}}></div>
             </div>
             <div className="scanner-frame-box">
-                <video ref={videoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover'}} />
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted // 정책상 muted가 있어야 자동재생 확률이 높음
+                  style={{ width: '100%', height: '100%', objectFit: 'cover'}} 
+                />
                 <div className="scanner-laser"></div>
             </div>
             <div className="scanner-bottom">
@@ -234,7 +272,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 5. 예약 모달 (인간 도슨트용) */}
+      {/* 5. 예약 모달 (기존 UI 유지) */}
       {isBookingOpen && (
         <div className="booking-modal-overlay">
           <div className="booking-modal">
