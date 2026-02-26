@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>전시회 지도</title>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=70ysuai3pr"></script>
+</head>
+<body>
+    <div id="map" style="width:100%;height:100vh;"></div>
+    <script>
+        // 지도가 뜨는지 테스트
+        var map = new naver.maps.Map('map', {
+            center: new naver.maps.LatLng(37.5666805, 126.9784147),
+            zoom: 15
+        });
+
+        // 데이터 가져오기 (8000번 포트 확인!)
+        fetch("http://127.0.0.1:8000/api/event")
+            .then(res => res.json())
+            .then(data => {
+                console.log("데이터 도착:", data);
+                data.forEach(evt => {
+                    if(evt.lat && evt.lng) {
+                        new naver.maps.Marker({
+                            position: new naver.maps.LatLng(evt.lat, evt.lng),
+                            map: map,
+                            title: evt.title
+                        });
+                    }
+                });
+            })
+            .catch(err => alert("데이터 불러오기 실패: " + err));
+    </script>
+</body>
+</html>

@@ -14,6 +14,14 @@ const GuidePage = ({ initialTab }: any) => {
   const [bookingStep, setBookingStep] = useState(1); 
   const [personCount, setPersonCount] = useState(1);
 
+  // 🚨 [추가] 서버에서 받은 작품 정보를 담을 상태
+  const [scannedArt, setScannedArt] = useState({
+    title: "",
+    artist: "",
+    year: "",
+    description: "",
+  });
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
@@ -50,22 +58,73 @@ const GuidePage = ({ initialTab }: any) => {
     return () => stopCamera();
   }, [isScannerOpen]);
 
-  const handleCapture = () => {
+  // 🚨 [수정] 캡처 및 서버 전송 로직
+  const handleCapture = async () => {
+    if (!videoRef.current) return;
     setIsAnalyzing(true);
-    if (videoRef.current) videoRef.current.pause();
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      setIsScannerOpen(false);
-      setShowResult(true);
-      stopCamera();
-    }, 3500);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const formData = new FormData();
+      formData.append('image', blob, 'scan.jpg');
+
+      try {
+        const response = await fetch('http://localhost:8000/api/ai/analyze-scan', {
+          method: 'POST',
+          body: formData,
+        });
+        const resData = await response.json();
+
+        if (resData.status === "success") {
+          // 🚨 서버 데이터로 상태 업데이트
+          setScannedArt(resData.data); 
+          setIsAnalyzing(false);
+          setIsScannerOpen(false);
+          setShowResult(true);
+        }
+      } catch (error) {
+        console.error("분석 실패:", error);
+        setIsAnalyzing(false);
+        alert("서버 연결에 실패했습니다.");
+      }
+    }, 'image/jpeg');
   };
 
-  const artData = {
-    title: "별이 빛나는 밤",
-    artist: "빈센트 반 고흐",
-    year: "1889",
-    description: "고흐의 가장 유명한 작품 중 하나로, 요양원에서 바라본 밤하늘을 소용돌이치는 역동적인 붓터치로 표현했습니다.",
+  // 🚨 [추가] 오디오 가이드 생성 및 재생 함수
+  const handleAudioGuide = async () => {
+    if (showPlayer) {
+      setShowPlayer(false);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/api/ai/docent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: scannedArt.title,
+          text: scannedArt.description,
+          style: "kind"
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.status === "success") {
+        const audio = new Audio(data.audio_url);
+        audio.play();
+        setShowPlayer(true);
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error("오디오 가이드 요청 실패:", error);
+      alert("오디오 가이드를 생성할 수 없습니다.");
+    }
   };
 
   const handleBooking = () => {
@@ -78,7 +137,7 @@ const GuidePage = ({ initialTab }: any) => {
 
   return (
     <div className="art-guide-container">
-      {/* 1. 분석 로딩 (애니메이션) */}
+      {/* 1. 분석 로딩 */}
       {isAnalyzing && (
         <div className="analysis-loading-overlay">
           <div className="loading-content">
@@ -127,7 +186,7 @@ const GuidePage = ({ initialTab }: any) => {
           </div>
         </>
       ) : (
-        /* 3. 분석 결과 화면 (하단 잘림 방지 처리) */
+        /* 3. 분석 결과 화면 (실제 서버 데이터 반영) */
         <div className="art-result-container">
           <header className="result-header">
             <button className="back-btn-inner" onClick={() => setShowResult(false)}><ChevronLeft size={24} /></button>
@@ -135,53 +194,50 @@ const GuidePage = ({ initialTab }: any) => {
             <div style={{ width: 24 }}></div>
           </header>
 
-<div className="result-body">
-  <div className="result-info-group">
-    <h1 className="result-title">{artData.title}</h1>
-    <p className="result-artist">{artData.artist}, {artData.year}</p>
-  </div>
+          <div className="result-body">
+            <div className="result-info-group">
+              {/* 🚨 고정 데이터 대신 scannedArt 사용 */}
+              <h1 className="result-title">{scannedArt.title}</h1>
+              <p className="result-artist">{scannedArt.artist}, {scannedArt.year}</p>
+            </div>
 
-<div className="result-image-placeholder">
-    <ImageIcon size={40} color="#ddd" />
-    <span>작품 이미지를 분석 중입니다</span>
-  </div>
+            <div className="result-image-placeholder">
+              <ImageIcon size={40} color="#ddd" />
+              <span>분석 완료된 이미지입니다</span>
+            </div>
 
-<div className="ai-speech-bubble">
-    <div className="ai-label">🤖 아티의 한마디</div>
-    <p>{artData.description}</p>
-  </div>
+            <div className="ai-speech-bubble">
+              <div className="ai-label">🤖 아티의 한마디</div>
+              <p>{scannedArt.description}</p>
+            </div>
 
-
-
-{/* 오디오 플레이어를 컨텐츠 폭에 맞게 배치 */}
-  {showPlayer && (
-    <div className="audio-mini-player">
-      <div className="mini-player-info">
-        <div className="mini-icon">🎵</div>
-        <div>
-          <div className="mini-title">{artData.title}</div>
-          <div className="mini-status">AI 해설 재생 중</div>
-        </div>
-      </div>
-      <div className="mini-controls">
-        <button onClick={() => setIsPlaying(!isPlaying)}>
-          {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
-        </button>
-        <button onClick={() => setShowPlayer(false)} style={{marginLeft: '12px', opacity: 0.6}}>
-          <X size={18} color="white" />
-        </button>
-      </div>
-    </div>
-  )}
+            {showPlayer && (
+              <div className="audio-mini-player">
+                <div className="mini-player-info">
+                  <div className="mini-icon">🎵</div>
+                  <div>
+                    <div className="mini-title">{scannedArt.title}</div>
+                    <div className="mini-status">AI 해설 재생 중</div>
+                  </div>
+                </div>
+                <div className="mini-controls">
+                  <button onClick={() => setIsPlaying(!isPlaying)}>
+                    {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
+                  </button>
+                  <button onClick={() => setShowPlayer(false)} style={{marginLeft: '12px', opacity: 0.6}}>
+                    <X size={18} color="white" />
+                  </button>
+                </div>
+              </div>
+            )}
             
-            {/* 하단 푸터 버튼 높이만큼 빈 공간을 주어 스크롤이 끝까지 올라오게 함 */}
             <div style={{ minHeight: '100px' }}></div>
           </div>
 
-          {/* 푸터를 absolute가 아닌 고정 위치로, 탭 바 위로 올림 */}
           <footer className="result-footer-simple">
             <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
-            <button className="footer-btn primary" onClick={() => setShowPlayer(!showPlayer)}>
+            {/* 🚨 handleAudioGuide 함수 연결 */}
+            <button className="footer-btn primary" onClick={handleAudioGuide}>
               <Volume2 size={18} /> {showPlayer ? '가이드 중단' : '오디오 가이드'}
             </button>
           </footer>
@@ -238,8 +294,7 @@ const GuidePage = ({ initialTab }: any) => {
                 </div>
                 <button className="booking-submit-btn" onClick={handleBooking}>결제 및 예약 확정</button>
               </>
-           ) : (
-              /* ✅ 예약 완료 화면: 괄호와 구조를 정확히 맞췄습니다 */
+            ) : (
               <div className="booking-success">
                 <div className="success-icon-container">
                   <CheckCircle 
@@ -249,14 +304,11 @@ const GuidePage = ({ initialTab }: any) => {
                     strokeWidth={3} 
                   />
                 </div>
-                
                 <h3 className="success-title">예약이 완료되었습니다!</h3><br></br>
                 <p className="success-desc">
                   도슨트가 곧 확인 연락을 드릴 예정입니다.
                   <br></br> 감사합니다.
                 </p>
-
-                
               </div>
             )}
           </div>
