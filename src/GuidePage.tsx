@@ -1,34 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, CheckCircle, Image as ImageIcon } from 'lucide-react'; 
+import axios from 'axios';
 import './GuidePage.css';
 
+const isDev = import.meta.env.MODE === 'development';
+const API_BASE_URL = isDev ? '/api_proxy' : 'http://54.180.234.226:8000';
+
 const GuidePage = ({ initialTab }: any) => {
+  // --- 상태 관리 ---
   const [activeTab, setActiveTab] = useState<'human' | 'ai'>(initialTab || 'human');
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false);
-  
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingStep, setBookingStep] = useState(1); 
   const [personCount, setPersonCount] = useState(1);
-
-  // 🚨 [추가] 서버에서 받은 작품 정보를 담을 상태
-  const [scannedArt, setScannedArt] = useState({
-    title: "",
-    artist: "",
-    year: "",
-    description: "",
+  const [scannedArt, setScannedArt] = useState<any>({
+    title: "", artist: "", year: "", description: "", audio_url: ""
   });
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  useEffect(() => {
-    if (initialTab) setActiveTab(initialTab);
-  }, [initialTab]);
-
+  // --- 카메라 로직 ---
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -36,11 +33,9 @@ const GuidePage = ({ initialTab }: any) => {
         audio: false,
       });
       setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
+      if (videoRef.current) videoRef.current.srcObject = mediaStream;
     } catch (err) {
-      console.error("카메라 접근 에러:", err);
+      alert("카메라 접근 권한이 필요합니다.");
       setIsScannerOpen(false);
     }
   };
@@ -58,7 +53,7 @@ const GuidePage = ({ initialTab }: any) => {
     return () => stopCamera();
   }, [isScannerOpen]);
 
-  // 🚨 [수정] 캡처 및 서버 전송 로직
+  // --- API 통신 로직 (캡처 및 분석) ---
   const handleCapture = async () => {
     if (!videoRef.current) return;
     setIsAnalyzing(true);
@@ -72,59 +67,40 @@ const GuidePage = ({ initialTab }: any) => {
       if (!blob) return;
       const formData = new FormData();
       formData.append('image', blob, 'scan.jpg');
+      formData.append('lang', 'ko');
 
       try {
-        const response = await fetch('http://localhost:8000/api/ai/analyze-scan', {
-          method: 'POST',
-          body: formData,
-        });
-        const resData = await response.json();
-
-        if (resData.status === "success") {
-          // 🚨 서버 데이터로 상태 업데이트
-          setScannedArt(resData.data); 
+        const response = await axios.post(`${API_BASE_URL}/api/ai/analyze-scan`, formData);
+        if (response.data.status === "success") {
+          setScannedArt(response.data.data); 
           setIsAnalyzing(false);
           setIsScannerOpen(false);
           setShowResult(true);
         }
       } catch (error) {
         console.error("분석 실패:", error);
-        setIsAnalyzing(false);
         alert("서버 연결에 실패했습니다.");
+        setIsAnalyzing(false);
       }
     }, 'image/jpeg');
   };
 
-  // 🚨 [추가] 오디오 가이드 생성 및 재생 함수
-  const handleAudioGuide = async () => {
-    if (showPlayer) {
-      setShowPlayer(false);
-      return;
+  // --- 오디오 제어 ---
+  const toggleAudio = () => {
+    if (!scannedArt.audio_url) return;
+    
+    if (!audioRef.current) {
+      audioRef.current = new Audio(scannedArt.audio_url);
+      audioRef.current.onended = () => setIsPlaying(false);
     }
 
-    try {
-      const response = await fetch('http://localhost:8000/api/ai/docent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: scannedArt.title,
-          text: scannedArt.description,
-          style: "kind"
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.status === "success") {
-        const audio = new Audio(data.audio_url);
-        audio.play();
-        setShowPlayer(true);
-        setIsPlaying(true);
-      }
-    } catch (error) {
-      console.error("오디오 가이드 요청 실패:", error);
-      alert("오디오 가이드를 생성할 수 없습니다.");
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+      setShowPlayer(true);
     }
+    setIsPlaying(!isPlaying);
   };
 
   const handleBooking = () => {
@@ -137,7 +113,7 @@ const GuidePage = ({ initialTab }: any) => {
 
   return (
     <div className="art-guide-container">
-      {/* 1. 분석 로딩 */}
+      {/* 1. 분석 로딩 오버레이 */}
       {isAnalyzing && (
         <div className="analysis-loading-overlay">
           <div className="loading-content">
@@ -151,12 +127,11 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 2. 메인 화면 전환 */}
+      {/* 2. 메인 화면 / 결과 화면 전환 */}
       {!showResult ? (
         <>
           <header className="art-header">
-            <h1 className="art-title"><p></p><p></p><br></br>
-            전문 도슨트 예약</h1>
+            <h1 className="art-title"><br/>전문 도슨트 서비스</h1>
             <p className="art-desc">전문 큐레이터부터 AI 가이드까지.</p>
           </header>
           <nav className="art-tab-nav">
@@ -186,17 +161,16 @@ const GuidePage = ({ initialTab }: any) => {
           </div>
         </>
       ) : (
-        /* 3. 분석 결과 화면 (실제 서버 데이터 반영) */
+        /* 3. 분석 결과 화면 (서버 데이터 반영) */
         <div className="art-result-container">
           <header className="result-header">
-            <button className="back-btn-inner" onClick={() => setShowResult(false)}><ChevronLeft size={24} /></button>
+            <button className="back-btn-inner" onClick={() => {setShowResult(false); if(audioRef.current) audioRef.current.pause(); setIsPlaying(false);}}><ChevronLeft size={24} /></button>
             <span className="header-tag">🤖 AI 도슨트 리포트</span>
             <div style={{ width: 24 }}></div>
           </header>
 
           <div className="result-body">
             <div className="result-info-group">
-              {/* 🚨 고정 데이터 대신 scannedArt 사용 */}
               <h1 className="result-title">{scannedArt.title}</h1>
               <p className="result-artist">{scannedArt.artist}, {scannedArt.year}</p>
             </div>
@@ -217,11 +191,11 @@ const GuidePage = ({ initialTab }: any) => {
                   <div className="mini-icon">🎵</div>
                   <div>
                     <div className="mini-title">{scannedArt.title}</div>
-                    <div className="mini-status">AI 해설 재생 중</div>
+                    <div className="mini-status">{isPlaying ? '재생 중' : '일시 정지'}</div>
                   </div>
                 </div>
                 <div className="mini-controls">
-                  <button onClick={() => setIsPlaying(!isPlaying)}>
+                  <button onClick={toggleAudio}>
                     {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
                   </button>
                   <button onClick={() => setShowPlayer(false)} style={{marginLeft: '12px', opacity: 0.6}}>
@@ -230,21 +204,19 @@ const GuidePage = ({ initialTab }: any) => {
                 </div>
               </div>
             )}
-            
             <div style={{ minHeight: '100px' }}></div>
           </div>
 
           <footer className="result-footer-simple">
             <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
-            {/* 🚨 handleAudioGuide 함수 연결 */}
-            <button className="footer-btn primary" onClick={handleAudioGuide}>
-              <Volume2 size={18} /> {showPlayer ? '가이드 중단' : '오디오 가이드'}
+            <button className="footer-btn primary" onClick={toggleAudio}>
+              <Volume2 size={18} /> {isPlaying ? '가이드 중단' : '오디오 가이드'}
             </button>
           </footer>
         </div>
       )}
 
-      {/* 5. 스캐너 */}
+      {/* 4. 스캐너 오버레이 */}
       {isScannerOpen && (
         <div className="art-scanner-overlay">
             <div className="scanner-top">
@@ -262,7 +234,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 6. 예약 모달 */}
+      {/* 5. 예약 모달 (인간 도슨트용) */}
       {isBookingOpen && (
         <div className="booking-modal-overlay">
           <div className="booking-modal">
@@ -297,18 +269,10 @@ const GuidePage = ({ initialTab }: any) => {
             ) : (
               <div className="booking-success">
                 <div className="success-icon-container">
-                  <CheckCircle 
-                    size={65} 
-                    color="#000" 
-                    fill="#22c55e" 
-                    strokeWidth={3} 
-                  />
+                  <CheckCircle size={65} color="#000" fill="#22c55e" strokeWidth={3} />
                 </div>
-                <h3 className="success-title">예약이 완료되었습니다!</h3><br></br>
-                <p className="success-desc">
-                  도슨트가 곧 확인 연락을 드릴 예정입니다.
-                  <br></br> 감사합니다.
-                </p>
+                <h3 className="success-title">예약이 완료되었습니다!</h3>
+                <p className="success-desc">도슨트가 곧 확인 연락을 드릴 예정입니다.</p>
               </div>
             )}
           </div>
