@@ -3,9 +3,14 @@ import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, CheckCircl
 import axios from 'axios';
 import './GuidePage.css';
 
-const isDev = import.meta.env.MODE === 'development';
-// 배포 환경에서 Mixed Content 에러 방지를 위해 가변 주소 사용
-const API_BASE_URL = 'http://54.180.234.226:8000'; // 프록시 쓰지 말고 직접 입력
+/**
+ * [중요] PC 테스트 시 주의사항:
+ * 1. 브라우저 주소창 왼쪽 '자물쇠' 아이콘 클릭
+ * 2. '사이트 설정' 클릭
+ * 3. '보안되지 않은 콘텐츠(Insecure content)' -> [허용]으로 변경
+ * 4. 페이지 새로고침
+ */
+const API_BASE_URL = 'http://54.180.234.226:8000'; 
 
 const GuidePage = ({ initialTab }: any) => {
   const [activeTab, setActiveTab] = useState<'human' | 'ai'>(initialTab || 'human');
@@ -25,17 +30,16 @@ const GuidePage = ({ initialTab }: any) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  // --- 카메라 로직 보완 ---
+  // --- 카메라 로직 (PC/모바일 공용 최적화) ---
   const startCamera = async () => {
     try {
-      // 1. 기존 스트림이 있다면 정리
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
 
-      // 2. 카메라 제약 조건 설정 (ideal 값을 주어 유연하게 대응)
       const constraints = {
         video: { 
+          // ideal을 써야 PC 웹캠과 모바일 후면 카메라를 유연하게 잡습니다.
           facingMode: { ideal: "environment" },
           width: { ideal: 1280 },
           height: { ideal: 720 }
@@ -44,14 +48,12 @@ const GuidePage = ({ initialTab }: any) => {
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      // 3. 상태 업데이트 및 비디오 태그 연결
       setStream(mediaStream);
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         
-        // 중요: iOS 및 일부 브라우저에서 play()가 명시적으로 호출되어야 함
+        // metadata 로드 후 재생 (iOS 및 PC 크롬 대응)
         videoRef.current.onloadedmetadata = async () => {
           try {
             await videoRef.current?.play();
@@ -60,9 +62,9 @@ const GuidePage = ({ initialTab }: any) => {
           }
         };
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("카메라 상세 에러:", err);
-      alert("카메라를 시작할 수 없습니다. 브라우저 설정에서 카메라 권한과 '안전하지 않은 콘텐츠' 허용을 확인해주세요.");
+      alert(`카메라를 켤 수 없습니다.\n원인: ${err.name}\n\n도움말:\n1. 카메라 권한 허용을 확인하세요.\n2. 다른 앱에서 카메라를 사용 중인지 확인하세요.`);
       setIsScannerOpen(false);
     }
   };
@@ -74,7 +76,6 @@ const GuidePage = ({ initialTab }: any) => {
     }
   };
 
-  // 스캐너가 열릴 때만 카메라 작동
   useEffect(() => {
     if (isScannerOpen) {
       startCamera();
@@ -84,36 +85,53 @@ const GuidePage = ({ initialTab }: any) => {
     return () => stopCamera();
   }, [isScannerOpen]);
 
-  // --- API 통신 로직 ---
+  // --- API 분석 로직 ---
   const handleCapture = async () => {
-    if (!videoRef.current || !stream) return;
+    if (!videoRef.current || !stream || videoRef.current.videoWidth === 0) {
+      alert("카메라 준비가 완료되지 않았습니다.");
+      return;
+    }
+
     setIsAnalyzing(true);
 
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0);
+    
+    if (!ctx) {
+      setIsAnalyzing(false);
+      return;
     }
 
+    ctx.drawImage(videoRef.current, 0, 0);
+
     canvas.toBlob(async (blob) => {
-      if (!blob) return;
+      if (!blob) {
+        setIsAnalyzing(false);
+        return;
+      }
+      
       const formData = new FormData();
       formData.append('image', blob, 'scan.jpg');
       formData.append('lang', 'ko');
 
       try {
-        const response = await axios.post(`${API_BASE_URL}/api/ai/analyze-scan`, formData);
+        const response = await axios.post(`${API_BASE_URL}/api/ai/analyze-scan`, formData, {
+          timeout: 15000 // 15초 타임아웃 설정
+        });
+        
         if (response.data.status === "success") {
           setScannedArt(response.data.data); 
           setIsAnalyzing(false);
           setIsScannerOpen(false);
           setShowResult(true);
+        } else {
+          throw new Error("분석 결과가 올바르지 않습니다.");
         }
-      } catch (error) {
-        console.error("분석 실패:", error);
-        alert("분석 서버(AWS) 연결에 실패했습니다.");
+      } catch (error: any) {
+        console.error("분석 실패 상세:", error);
+        alert(`AWS 서버 연결 실패!\n\n해결방법:\n1. 브라우저 사이트 설정에서 '보안되지 않은 콘텐츠'를 [허용]했는지 확인하세요.\n2. AWS 서버(8000포트)가 정상 작동 중인지 확인하세요.`);
         setIsAnalyzing(false);
       }
     }, 'image/jpeg');
@@ -130,7 +148,7 @@ const GuidePage = ({ initialTab }: any) => {
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play();
+      audioRef.current.play().catch(e => alert("오디오 재생 실패: " + e.message));
       setShowPlayer(true);
     }
     setIsPlaying(!isPlaying);
@@ -248,7 +266,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 4. 스캐너 오버레이 (보완된 Video 태그) */}
+      {/* 4. 스캐너 오버레이 */}
       {isScannerOpen && (
         <div className="art-scanner-overlay">
             <div className="scanner-top">
@@ -261,7 +279,7 @@ const GuidePage = ({ initialTab }: any) => {
                   ref={videoRef} 
                   autoPlay 
                   playsInline 
-                  muted // 정책상 muted가 있어야 자동재생 확률이 높음
+                  muted 
                   style={{ width: '100%', height: '100%', objectFit: 'cover'}} 
                 />
                 <div className="scanner-laser"></div>
@@ -272,7 +290,7 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 5. 예약 모달 (기존 UI 유지) */}
+      {/* 5. 예약 모달 */}
       {isBookingOpen && (
         <div className="booking-modal-overlay">
           <div className="booking-modal">
