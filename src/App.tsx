@@ -152,8 +152,8 @@ export default function App() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                /* const response = await axios.get(`${API_BASE_URL}/api/events`);*/
-                const response = await axios.get('http://localhost:8000/api/events');
+                const response = await axios.get(`${API_BASE_URL}/api/events`);
+                /* const response = await axios.get('http://localhost:8000/api/events');*/
                 if (response.data.status === "success") {
                     setServerExhibitions(response.data.data);
                 }
