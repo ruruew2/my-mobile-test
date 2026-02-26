@@ -15,15 +15,15 @@ from fastapi import UploadFile, File
 
 app = FastAPI(title="ArtKok API Server")
 
+
 # 🚨 2. 프론트엔드 연동을 위한 CORS 설정 (리액트의 접근 허용)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # 모든 접속 허용
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # 🚨 3. AI 오디오 파일(MP3)을 리액트가 가져갈 수 있게 폴더 개방!
 os.makedirs("audio", exist_ok=True)
 app.mount("/audio", StaticFiles(directory="audio"), name="audio")

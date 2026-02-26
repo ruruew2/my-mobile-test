@@ -210,57 +210,44 @@ export default function App() {
                     backgroundColor: 'rgba(255, 255, 255, 0.85)', zIndex: 99999,
                     display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center'
                 }}>
-                    {/* animate-spin 클래스가 CSS의 @keyframes spin을 호출합니다 */}
                     <Loader2 size={50} className="animate-spin" strokeWidth={2.5} color="#333" />
                     <h2 style={{ marginTop: '24px', fontSize: '1.25rem', fontWeight: '700', color: '#111' }}>
                         AI가 당신의 취향을 분석 중입니다
                     </h2>
-                    <p style={{ marginTop: '10px', color: '#666', fontSize: '0.95rem' }}>
-                        잠시만 기다려 주시면 맞춤 전시를 찾아드릴게요.
-                    </p>
                 </div>
             )}
 
             {step === 'login' ? (
-                <LoginPage
-                    onLoginSuccess={() => {
-                        setIsLoggedIn(true);
-                        setStep('preference');
-                    }}
-                />
+                <LoginPage onLoginSuccess={() => { setIsLoggedIn(true); setStep('preference'); }} />
             ) : step === 'preference' ? (
                 <PreferenceSelection onComplete={handlePreferenceComplete} />
             ) : (
                 <div className="art-log-container">
-                    {activeTab === 'home' ? (
-                        <>
-                            <header className="header">
-                                <h1 className="logo">ART-LOG</h1>
-                                <div className="header-icons">
-                                    <div className="icon-item" onClick={() => setIsNotifyOpen(true)} style={{ position: 'relative' }}>
-                                        <Bell size={24} />
-                                        {hasUnread && <span className="notification-dot"></span>}
-                                    </div>
-                                    <div className="icon-item" onClick={() => setActiveTab('mypage')}>
-                                        <User size={24} />
-                                    </div>
+                    {/* 상단 헤더: 홈 탭에서만 노출 */}
+                    {activeTab === 'home' && (
+                        <header className="header">
+                            <h1 className="logo">ART-LOG</h1>
+                            <div className="header-icons">
+                                <div className="icon-item" onClick={() => setIsNotifyOpen(true)} style={{ position: 'relative' }}>
+                                    <Bell size={24} />
+                                    {hasUnread && <span className="notification-dot"></span>}
                                 </div>
-                            </header>
+                                <div className="icon-item" onClick={() => setActiveTab('mypage')}>
+                                    <User size={24} />
+                                </div>
+                            </div>
+                        </header>
+                    )}
 
-                            <div className="main-content-scroll">
-                                <p className="subtitle">
-                                    감각적인 예술 탐험을
-                                    <br />
-                                    함께하는 개인 맞춤 큐레이션
-                                </p>
+                    {/* 모든 컨텐츠가 들어가는 스크롤 영역 */}
+                    <main className="main-content-scroll">
+                        {activeTab === 'home' && (
+                            <>
+                                <p className="subtitle">감각적인 예술 탐험을<br />함께하는 개인 맞춤 큐레이션</p>
                                 <section className="ai-banner">
                                     <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
                                     <h2 className="ai-title">" 오늘은 종로의 감성에 빠져볼까요? "</h2>
-                                    <p className="ai-desc">
-                                        취향에 딱 맞는 전시와 코스를 준비했어요.
-                                        <br></br>
-                                        오늘 하루도 여유롭게 마음을 채워보세요!
-                                    </p>
+                                    <p className="ai-desc">취향에 딱 맞는 전시와 코스를 준비했어요.<br />오늘 하루도 여유롭게 마음을 채워보세요!</p>
                                     <button className="cta-button" onClick={() => setActiveTab('exhibits')}>
                                         추천 전시 보기 <ChevronRight size={20} className="cta-icon" />
                                     </button>
@@ -296,6 +283,7 @@ export default function App() {
                                     </ExhibitCarousel>
                                 </section>
 
+                                {/* 보물 같은 도슨트 섹션 복구! */}
                                 <section className="section">
                                     <div className="section-header">
                                         <div className="title-group">
@@ -317,30 +305,68 @@ export default function App() {
                                                 <button className="action-btn black" onClick={(e) => { e.stopPropagation(); navigateToGuide('ai'); }}>해설 시작</button>
                                             </div>
                                         </div>
+                                        <div className="docent-card active-guide" onClick={() => navigateToGuide('human')}>
+                                            <div className="docent-profile">👩‍🎨</div>
+                                            <div className="docent-info">
+                                                <div className="docent-name">김사랑 도슨트</div>
+                                                <p className="docent-desc">현대미술, 미술사학</p>
+                                                <div className="docent-price">45,000원</div>
+                                            </div>
+                                            <div className="docent-action">
+                                                <div className="rating">⭐ 4.9 <span className="count">(320)</span></div>
+                                                <button className="action-btn gray">예약하기</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </section>
-                            </div>
-                        </>
-                    ) : activeTab === 'exhibits' ? (
-                        <Exhibition onBack={() => setActiveTab('home')} />
-                    ) : activeTab === 'map' ? (
-                        <MapPage />
-                    ) : activeTab === 'guide' ? (
-                        <GuidePage initialTab={guideSubTab} />
-                    ) : activeTab === 'course' ? (
-                        isNavigating ? (
-                            <CourseNavigation courseData={selectedCourseData} onClose={() => setIsNavigating(false)} />
-                        ) : (
-                            <RootPage targetCourse={targetCourse} setTargetCourse={setTargetCourse} onStart={(data: any) => { setSelectedCourseData(data); setIsNavigating(true); }} />
-                        )
-                    ) : activeTab === 'gift' ? (
-                        <Giftshop />
-                    ) : activeTab === 'mypage' ? (
-                        <MyPage isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} onTabChange={(tab: string) => setActiveTab(tab)} onLogout={() => { setStep('login'); setActiveTab('home'); }} />
-                    ) : (
-                        <div style={{ padding: '100px 20px', textAlign: 'center' }}>준비 중인 페이지입니다.</div>
-                    )}
 
+                                {/* 추천 나들이 코스 섹션 복구! */}
+                                <section className="section">
+                                    <div className="section-header">
+                                        <div className="title-group">
+                                            <h3>추천 나들이 코스</h3>
+                                            <span className="sub-title">CURATED DAILY ROUTES</span>
+                                        </div>
+                                        <button className="view-all" onClick={() => setActiveTab('course')}>전체보기</button>
+                                    </div>
+                                    <div className="course-list">
+                                        <div className="course-card" onClick={() => setTargetCourse('course-seongsu')}>
+                                            <div className="course-content">
+                                                <span className="course-tag">2025.06.28~2026.09.20</span>
+                                                <h4>취향가옥 2: Art in Life</h4>
+                                                <p>예술이 일상이 되는 순간</p>
+                                            </div>
+                                            <div className="course-icon"><Compass size={20} /></div>
+                                        </div>
+                                        <div className="course-card" onClick={() => setTargetCourse('course-jongno')}>
+                                            <div className="course-content">
+                                                <span className="course-tag">2025.12.19~2026.6.7</span>
+                                                <h4>구의, 영감의 조각 산책</h4>
+                                                <p>그라운드시소에서 시작하는 감성 코스</p>
+                                            </div>
+                                            <div className="course-icon"><Compass size={20} /></div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </>
+                        )}
+
+                        {/* 다른 탭들 분기 */}
+                        {activeTab === 'exhibits' && <Exhibition onBack={() => setActiveTab('home')} />}
+                        {activeTab === 'map' && <MapPage />}
+                        {activeTab === 'guide' && <GuidePage initialTab={guideSubTab} />}
+                        {activeTab === 'course' && (
+                            isNavigating ? (
+                                <CourseNavigation courseData={selectedCourseData} onClose={() => setIsNavigating(false)} />
+                            ) : (
+                                <RootPage targetCourse={targetCourse} setTargetCourse={setTargetCourse} onStart={(data: any) => { setSelectedCourseData(data); setIsNavigating(true); }} />
+                            )
+                        )}
+                        {activeTab === 'gift' && <Giftshop />}
+                        {activeTab === 'mypage' && <MyPage isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} onTabChange={(tab: string) => setActiveTab(tab)} onLogout={() => { setStep('login'); setActiveTab('home'); }} />}
+                    </main>
+
+                    {/* 고정된 하단 네비게이션 */}
                     <nav className="bottom-nav">
                         <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}><Home size={24} /><span>홈</span></div>
                         <div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}><Map size={24} /><span>지도</span></div>
@@ -349,6 +375,7 @@ export default function App() {
                         <div className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} onClick={() => setActiveTab('gift')}><Gift size={24} /><span>기프트</span></div>
                     </nav>
 
+                    {/* 알림 모달 */}
                     {isNotifyOpen && (
                         <div className="modal-overlay" onClick={() => setIsNotifyOpen(false)}>
                             <div className="notification-modal" onClick={(e) => e.stopPropagation()}>
@@ -367,7 +394,6 @@ export default function App() {
                                         </div>
                                     ))}
                                 </div>
-                                <button className="mark-all-btn" onClick={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}>전체 알림 읽음 처리</button>
                             </div>
                         </div>
                     )}
