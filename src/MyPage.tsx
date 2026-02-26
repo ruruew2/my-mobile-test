@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { 
   Settings, Heart, BookOpen, CreditCard, Bell, 
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users,
-  Eye, EyeOff, MessageCircle, Handshake, Mic // 👈 도슨트용 아이콘 추가
+  Eye, EyeOff, MessageCircle, Handshake, Mic, building2 // 👈 아이콘 추가
 } from 'lucide-react';
 
 // 외부 임포트 컴포넌트 (실제 환경에 맞게 경로 확인 필요)
@@ -18,8 +18,8 @@ interface MyPageProps {
   onTabChange?: (tabName: string) => void; 
 }
 
-// docent(도슨트 신청) 상태 추가
-type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend' | 'inquiry' | 'docent';
+// partner(제휴/단체) 상태 추가
+type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend' | 'inquiry' | 'docent' | 'partner';
 
 interface FriendItem {
   id: number;
@@ -90,7 +90,7 @@ const InputGroup = ({ label, placeholder, type = "text", rightElement }: { label
       <input 
         type={type} 
         placeholder={placeholder} 
-        style={{ width: '100%', padding: '14px', paddingRight: rightElement ? '45px' : '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} 
+        style={{ width: '100%', padding: '14px', paddingRight: rightElement ? '45px' : '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} 
       />
       {rightElement && (
         <div style={{ position: 'absolute', right: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
@@ -340,7 +340,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
                   onChange={(e) => setFriendEmail(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAddFriend()}
                   placeholder="친구의 이메일을 입력하세요" 
-                  style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px' }} 
+                  style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} 
                 />
                 <button 
                   onClick={handleAddFriend}
@@ -429,19 +429,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
                 <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#444' }}>자기소개 및 경력</label>
                 <textarea 
                   placeholder="관련 경력이나 도슨트로서의 포부를 간단히 적어주세요." 
-                  style={{ 
-      width: '100%', 
-      height: '120px', 
-      padding: '14px',          // InputGroup의 padding과 동일하게 설정
-      borderRadius: '10px', 
-      border: '1px solid #eee', 
-      fontSize: '14px', 
-      outline: 'none', 
-      resize: 'none', 
-      lineHeight: '1.6',
-      boxSizing: 'border-box',  // 👈 테두리와 여백을 너비에 포함시켜 딱 맞게 해줍니다.
-      fontFamily: 'inherit'     // 👈 폰트가 input과 달라 보일 경우 추가
-    }}
+                  style={{ width: '100%', height: '120px', padding: '14px', borderRadius: '10px', border: '1px solid #eee', fontSize: '14px', outline: 'none', resize: 'none', lineHeight: '1.6', boxSizing: 'border-box', fontFamily: 'inherit' }}
                 />
               </div>
               <div style={{ backgroundColor: '#f5f5f5', padding: '15px', borderRadius: '10px' }}>
@@ -459,6 +447,76 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
             </div>
           </div>
         );
+
+case 'partner':
+  return (
+    <div className="sub-view">
+      <SubViewHeader title="제휴 및 단체 신청" />
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        
+        {/* 1. 단체명 & 2. 날짜 선택 (가로 배치) */}
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <InputGroup label="단체명" placeholder="회사/학교명" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <InputGroup label="방문 예정 날짜" placeholder="YYYY-MM-DD" type="date" />
+          </div>
+        </div>
+
+        {/* 3. 전시/공연명 */}
+        <InputGroup label="전시/공연명" placeholder="관람을 희망하는 전시 이름을 입력해주세요" />
+
+        {/* 4. 도슨트 신청 인원 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>도슨트 신청 인원</label>
+          <input 
+            type="number" 
+            placeholder="인원 수를 입력해주세요 (숫자)" 
+            style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} 
+          />
+        </div>
+
+        {/* 5. 전달할 사항 */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>전달할 사항</label>
+          <input 
+            type="text" 
+            placeholder="추가 요청 사항이나 문의 내용을 입력해주세요" 
+            style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} 
+          />
+        </div>
+
+        {/* 6. 유의사항 안내 (도슨트 폼 스타일) */}
+        <div style={{ backgroundColor: '#f5f5f5', padding: '15px', borderRadius: '10px', marginTop: '10px' }}>
+          <p style={{ margin: 0, fontSize: '12px', color: '#888', lineHeight: '1.6' }}>
+            • 신청 후 승인까지 영업일 기준 약 3~5일이 소요됩니다.<br/>
+            • 허위 정보 기재 시 권한 신청이 거절될 수 있습니다.
+          </p>
+        </div>
+
+        {/* 7. 신청하기 버튼 */}
+        <button 
+          onClick={() => { alert('제휴 및 단체 신청이 완료되었습니다.'); setViewState('main'); }}
+          style={{ 
+            width: '100%', 
+            padding: '16px', 
+            borderRadius: '12px', 
+            border: 'none', 
+            backgroundColor: '#000', 
+            color: '#fff', 
+            fontWeight: 'bold', 
+            fontSize: '15px', 
+            cursor: 'pointer',
+            marginTop: '10px'
+          }}
+        >
+          신청하기
+        </button>
+      </div>
+    </div>
+  );
 
       case 'inquiry':
         return (
@@ -500,7 +558,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
               <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>REQUEST</h4>
               <MenuRow icon={<Mic size={18} />} label="도슨트 권한 신청하기" onClick={() => setViewState('docent')} />
               <MenuRow icon={<MessageCircle size={18} />} label="1:1 문의하기" onClick={() => setViewState('inquiry')} />
-              <MenuRow icon={<Handshake size={18} />} label="제휴 및 단체 신청" onClick={() => alert('business@example.com으로 메일을 보내주세요.')} />
+              <MenuRow icon={<Handshake size={18} />} label="제휴 및 단체 신청" onClick={() => setViewState('partner')} />
             </div>
 
             {/* --- SETTINGS --- */}
