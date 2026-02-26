@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Compass, Send, Loader2, Sparkles, MapPin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Send, Loader2, Sparkles, Search } from 'lucide-react';
 import './Root.css';
 
 const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const [showAiMaker, setShowAiMaker] = useState(false); // AI 설계 모달 제어
+  const [showAiMaker, setShowAiMaker] = useState(false);
+  const [locationInput, setLocationInput] = useState('');
 
-  // 1, 2번 고정 코스 데이터
   const fixedCourses = [
     {
       id: 1,
@@ -35,49 +35,71 @@ const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
     }
   ];
 
-  // 🤖 [핵심 로직] AI에게 완전히 새로운 코스 짜달라고 하기
-const handleCreateCustomCourse = async (location: string, who: string) => {
-  setIsGenerating(true);
-  setShowAiMaker(false);
-
-  try {
-    // 🚨 주소가 'http://localhost:8000/api/ai/course' 인지 꼭 확인!
-    const response = await fetch('http://localhost:8000/api/ai/course', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        exh_name: `${location} 근처 전시`,
-        lat: "37.5665", // 테스트용 좌표
-        lng: "126.9780",
-        who: who // "연인", "친구" 등
-      }),
-    });
-
-    // 서버 에러(500)나 경로 에러(404) 체크
-    if (!response.ok) {
-      throw new Error(`서버 상태 이상: ${response.status}`);
+  const handleCreateCustomCourse = async (location: string, who: string) => {
+    if (!location.trim()) {
+      alert("어디로 가실지 지역을 입력해주세요!");
+      return;
     }
-      
+
+    setIsGenerating(true);
+    setShowAiMaker(false);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/ai/course', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          exh_name: location, // 백엔드에서 이 값을 검색어로 사용함
+          who: who,
+          lat: "37.5665",
+          lng: "126.9780"
+        }),
+      });
+
+      if (!response.ok) throw new Error(`서버 에러: ${response.status}`);
       const resData = await response.json();
-      
+
       if (resData.status === "success") {
-        // AI가 생성한 텍스트를 바탕으로 "가상의 3번 코스" 객체를 만듦
+        const aiData = resData.data;
+
+        // 🚨 중요: 상세페이지가 인식할 수 있는 데이터 구조로 변환
         const newAiCourse = {
-          id: 999,
+          id: Date.now(), // 고유 ID
           title: `AI 추천: ${location} ${who} 코스`,
-          desc: `${who}와(과) 함께하는 완벽한 하루를 설계했습니다.`,
-          aiPlan: resData.data,
-          steps: [{ type: 'AI_CUSTOM', name: 'AI 맞춤 코스 상세', sub: '아래 설명을 확인하세요' }]
+          desc: aiData.story.substring(0, 60) + "...", // GPT가 만든 스토리 요약
+          aiPlan: aiData, // 전체 원본 데이터 저장
+          steps: [
+            // 백엔드에서 검색해준 실제 장소들로 타임라인 구성
+            { 
+              type: 'RESTAURANT', 
+              name: aiData.places.restaurant?.name || "근처 맛집", 
+              sub: aiData.places.restaurant?.address || "식사" 
+            },
+            { 
+              type: 'EXHIBITION', 
+              name: aiData.exhibition?.title || `${location} 전시`, 
+              sub: aiData.exhibition?.place_name || "관람" 
+            },
+            { 
+              type: 'CAFE', 
+              name: aiData.places.cafe?.name || "근처 카페", 
+              sub: aiData.places.cafe?.address || "디저트" 
+            }
+          ]
         };
+
+        // 코스 시작 (부모 컴포넌트의 상태를 변경하여 화면 전환)
         onStart(newAiCourse);
+      } else {
+        alert("코스 생성 실패: " + resData.message);
       }
-} catch (error) {
-    console.error("상세 에러:", error);
-    alert("AI 코스 생성에 실패했습니다."); // 여기서 실패가 뜨는 것!
-  } finally {
-    setIsGenerating(false);
-  }
-};
+    } catch (error) {
+      console.error("Fetch 에러:", error);
+      alert("서버와 통신 중 문제가 발생했습니다.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   return (
     <div className="course-container">
@@ -86,9 +108,8 @@ const handleCreateCustomCourse = async (location: string, who: string) => {
         <p>A journey designed around your taste.</p>
       </header>
 
-      {/* 1. 기존 고정 코스 리스트 */}
       {fixedCourses.map((course) => (
-        <div key={course.id} id={course.anchorId} className="course-card-main" style={{ marginBottom: '30px' }}>
+        <div key={course.id} className="course-card-main" style={{ marginBottom: '30px' }}>
           <div className="course-badge">{course.badge}</div>
           <h3 className="course-main-title">{course.title}</h3>
           <p className="course-main-desc">{course.desc}</p>
@@ -108,7 +129,6 @@ const handleCreateCustomCourse = async (location: string, who: string) => {
         </div>
       ))}
 
-      {/* 2. ✨ AI 자동 설계 카드 (리스트 맨 아래에 추가) */}
       <div className="course-card-main ai-design-card" style={{ 
         border: '2px dashed #d1d1d1', 
         background: 'linear-gradient(to bottom right, #ffffff, #f0f7ff)',
@@ -119,82 +139,67 @@ const handleCreateCustomCourse = async (location: string, who: string) => {
             <Sparkles size={24} />
           </div>
           <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>나만의 AI 코스 자동 설계</h3>
-          <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>원하는 지역과 동행만 알려주세요.<br/>아티가 즉석에서 코스를 짜드립니다.</p>
+          <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>원하는 지역과 동행만 알려주세요.</p>
         </div>
       </div>
 
-{/* --- AI 코스 설정 모달 --- */}
-{showAiMaker && (
-  <div className="ai-modal-overlay" style={modalOverlayStyle}>
-    <div className="ai-modal" style={modalStyle}>
-      <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px' }}>어디로 가시나요?</h2>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-        {['성수', '한남', '종로', '구의'].map(loc => (
-          <button 
-            key={loc} 
-            type="button" // 👈 타입을 지정해서 폼 제출 방지
-            style={subBtnStyle}
-            onClick={(e) => {
-              e.stopPropagation(); // 부모 클릭 이벤트 전파 방지
-              console.log(loc + " 선택됨");
-            }}
-          >
-            {loc}
-          </button>
-        ))}
-      </div>
-      
-      <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px' }}>누구와 가시나요?</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-        {['연인', '친구', '아이', '부모님'].map(who => (
-          <button 
-            key={who} 
-            type="button"
-            className="who-select-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              console.log(who + " 버튼 눌림!"); // 👈 로그 찍어서 확인
-              handleCreateCustomCourse("성수", who);
-            }} 
-            style={whoBtnStyle}
-          >
-            {who}
-          </button>
-        ))}
-      </div>
-      
-      <button 
-        onClick={() => setShowAiMaker(false)} 
-        style={{ marginTop: '20px', width: '100%', color: '#999', border: 'none', background: 'none' }}
-      >
-        취소
-      </button>
-    </div>
-  </div>
-)}
+      {showAiMaker && (
+        <div className="ai-modal-overlay" style={modalOverlayStyle}>
+          <div className="ai-modal" style={modalStyle}>
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px' }}>어디로 가시나요?</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '25px', backgroundColor: '#f1f3f5', padding: '12px 16px', borderRadius: '16px' }}>
+              <Search size={18} color="#888" />
+              <input 
+                type="text"
+                placeholder="지역 입력 (예: 성수, 잠실)"
+                value={locationInput}
+                onChange={(e) => setLocationInput(e.target.value)}
+                style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', fontSize: '15px' }}
+              />
+            </div>
+            
+            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px' }}>누구와 가시나요?</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {['연인', '친구', '아이', '부모님'].map(who => (
+                <button 
+                  key={who} 
+                  className="who-select-btn"
+                  onClick={() => handleCreateCustomCourse(locationInput, who)} 
+                  style={whoBtnStyle}
+                >
+                  {who}
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={() => { setShowAiMaker(false); setLocationInput(''); }} 
+              style={{ marginTop: '20px', width: '100%', color: '#999', border: 'none', background: 'none', cursor: 'pointer' }}
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* 로딩 표시 */}
       {isGenerating && (
-        <div className="ai-modal-overlay" style={{ zIndex: 2000 }}>
+        <div style={{ ...modalOverlayStyle, zIndex: 2000 }}> 
           <div style={{ textAlign: 'center', color: '#fff' }}>
-            <Loader2 className="spinner" size={40} style={{ animation: 'spin 1s linear infinite' }} />
-            <p style={{ marginTop: '10px' }}>아티가 코스를 설계 중입니다...</p>
+            <Loader2 size={40} style={{ animation: 'spin 1s linear infinite', marginBottom: '15px' }} />
+            <p style={{ fontSize: '16px' }}>아티가 코스를 설계 중입니다...</p>
           </div>
         </div>
       )}
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .ai-design-card:hover { border-color: #000 !important; }
+        .who-select-btn:active { background-color: #e9ecef !important; }
       `}</style>
     </div>
   );
 };
 
-// 스타일 생략 (이전과 동일)
 const modalOverlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, backdropFilter: 'blur(4px)' };
 const modalStyle: React.CSSProperties = { backgroundColor: '#fff', padding: '30px 20px', borderRadius: '24px', width: '85%', maxWidth: '360px' };
-const whoBtnStyle: React.CSSProperties = { padding: '15px', borderRadius: '16px', border: '1px solid #eee', background: '#f8f9fa', fontWeight: '500' };
-const subBtnStyle: React.CSSProperties = { padding: '8px 15px', borderRadius: '20px', border: '1px solid #ddd', fontSize: '13px' };
+const whoBtnStyle: React.CSSProperties = { padding: '15px', borderRadius: '16px', border: '1px solid #eee', background: '#f8f9fa', fontWeight: '500', cursor: 'pointer' };
 
 export default RootPage;
