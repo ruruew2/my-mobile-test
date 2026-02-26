@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api_proxy/:path*",
+      "destination": "http://54.180.234.226:8000/:path*"
+    }
+  ]
+}

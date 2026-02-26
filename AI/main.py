@@ -9,25 +9,29 @@ import os
 import uvicorn
 
 # 🚨 1. 우리가 만든 DB와 AI 함수들 불러오기
+
 from database import get_connection
-from ai_service import recommend_exhibitions, generate_docent_audio, generate_course_text
-from fastapi import UploadFile, File
+from ai_service import recommend_exhibitions, generate_docent_audio, generate_course_text_v3
 
-app = FastAPI(title="ArtKok API Server")
+app = FastAPI(title="ArtLog API Server")
 
+origins = [
+    "https://my-mobile-test.vercel.app",  # 배포된 리액트 주소
+    "http://localhost:5173", 
+    "http://localhost:5174",      # 로컬 개발용 주소
+]
 
 # 🚨 2. 프론트엔드 연동을 위한 CORS 설정 (리액트의 접근 허용)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # 모든 접속 허용
+    allow_origins=origins,       
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-# 🚨 3. AI 오디오 파일(MP3)을 리액트가 가져갈 수 있게 폴더 개방!
+# 🚨 3. AI 오디오 파일(MP3) 경로 설정
 os.makedirs("audio", exist_ok=True)
 app.mount("/audio", StaticFiles(directory="audio"), name="audio")
-
 # ==========================================
 # 📡 [API 1] 전체 전시 목록 보내주기
 # ==========================================
@@ -79,7 +83,8 @@ def api_docent(req: DocentReq):
     
     if filename:
         # 리액트가 바로 재생할 수 있는 MP3 주소와 대본 자막을 같이 넘겨줌
-        audio_url = f"http://localhost:8000/{filename}"
+        YOUR_AWS_IP = "54.180.234.226"
+        audio_url = f"http://{YOUR_AWS_IP}:8000/audio/{filename}"
         return {"status": "success", "script": script, "audio_url": audio_url}
     else:
         return {"status": "fail", "message": "도슨트 생성에 실패했습니다."}
@@ -87,17 +92,41 @@ def api_docent(req: DocentReq):
 # ==========================================
 # 🗺️ [API 4] 나들이 코스 추천
 # ==========================================
+# 1. 모델 수정: 전시회 이름 대신 '목적지(destination)'를 받습니다.
 class CourseReq(BaseModel):
-    exh_name: str
-    lat: str
-    lng: str
-    who: str
+    destination: str  # 사용자가 검색창에 입력한 지역 (예: "성수", "한남동")
+    who: str          # 누구와 가는지 (예: "연인", "친구", "아이", "부모님")
 
+# 2. 로직 수정: DB 검색 + AI 코스 생성
 @app.post("/api/ai/course")
 def api_course(req: CourseReq):
-    plan = generate_course_text(req.exh_name, req.lat, req.lng, req.who)
-    return {"status": "success", "data": plan}
-
+    conn = get_connection()
+    try:
+        with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            # [DB 검색] 사용자가 입력한 지역에 있는 전시회 1개를 먼저 찾습니다.
+            # 주소(place_name)나 제목(title)에 검색어가 포함된 최신 전시를 가져옵니다.
+            sql = """
+                SELECT title, place_name, lat, lng 
+                FROM event 
+                WHERE (place_name LIKE %s OR title LIKE %s)
+                AND lat != '0' 
+                ORDER BY start_date DESC LIMIT 1
+            """
+            cursor.execute(sql, (f"%{req.destination}%", f"%{req.destination}%"))
+            exhibition = cursor.fetchone()
+            
+        # [AI 호출] 
+        # 전시회가 있으면 전시회 기반으로, 없으면 지역명 기반으로 코스를 짭니다.
+        # (ai_service.py에 새로 만든 v3 함수를 호출합니다.)
+        plan = generate_course_text_v3(req.destination, req.who, exhibition)
+        
+        return {"status": "success", "data": plan}
+        
+    except Exception as e:
+        print(f"❌ 코스 생성 중 에러 발생: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        conn.close()
 # ==========================================
 # 🛠️ 팀장님 전용 카카오맵 테스트 화면
 # ==========================================
@@ -123,68 +152,5 @@ def show_map():
     </script></body></html>
     """
 
-def get_unique_exhibitions():
-    # 1. 모든 소스에서 데이터 긁어모으기
-    all_data = []
-    all_data.extend(fetch_kopis_data())       # KOPIS
-    all_data.extend(fetch_seoul_events())     # 서울시
-    all_data.extend(fetch_interpark_ranking())# 인터파크
-    
-    print(f"📚 총 수집된 데이터: {len(all_data)}개 (중복 포함)")
-    
-    # 2. 중복 제거를 위한 딕셔너리 (Key: 제목+장소)
-    unique_dict = {}
-    
-    for item in all_data:
-        # 키 만들기: 공백 제거하고 제목+장소 합침 (예: "팀버튼특별전DDP")
-        # 이렇게 하면 출처가 달라도 제목과 장소가 같으면 같은 키가 됨
-        clean_title = item['title'].replace(" ", "")
-        clean_place = item['place'].replace(" ", "")
-        unique_key = f"{clean_title}_{clean_place}"
-        
-        if unique_key not in unique_dict:
-            # 처음 본 데이터면 저장
-            unique_dict[unique_key] = item
-        else:
-            # 이미 있는 데이터면? -> 정보 보강 (Merge)
-            # 예: 기존 데이터엔 이미지가 없는데, 새 데이터엔 있으면 채워넣기
-            existing = unique_dict[unique_key]
-            if not existing.get('image') and item.get('image'):
-                existing['image'] = item['image']
-            if not existing.get('price') and item.get('price'):
-                existing['price'] = item['price']
-                
-    # 3. 딕셔너리 값을 리스트로 변환
-    final_list = list(unique_dict.values())
-    print(f"✨ 중복 제거 후 최종 데이터: {len(final_list)}개")
-    
-    return final_list
-
-
-    # ==========================================
-# 🖼️ [API 5] 카메라 스캔 작품 분석 (Arty)
-# ==========================================
-# ai_service.py에 analyze_art_image 함수가 있다고 가정합니다.
-from ai_service import analyze_art_image 
-
-@app.post("/api/ai/analyze-scan")
-async def api_analyze_scan(image: UploadFile = File(...)):
-    try:
-        # 1. 리액트에서 보낸 이미지 파일 읽기
-        contents = await image.read()
-        
-        # 2. ai_service.py의 분석 함수 호출 (이미지 바이트 전송)
-        # 이 함수에서 OpenAI Vision API 등을 사용하여 제목, 작가, 해설을 뽑아냅니다.
-        analysis_result = analyze_art_image(contents)
-        
-        if analysis_result:
-            return {
-                "status": "success",
-                "data": analysis_result  # {title, artist, year, description} 포함
-            }
-        else:
-            return {"status": "fail", "message": "작품을 인식하지 못했습니다."}
-            
-    except Exception as e:
-        print(f"Error during scan: {e}")
-        return {"status": "error", "message": str(e)}
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

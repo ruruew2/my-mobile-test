@@ -22,7 +22,7 @@ import './Login.css';
 import './GuidePage.css';
 import './Wishlist.css';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = '/api_proxy';
 
 // --- [컴포넌트 1] 취향 선택 화면 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
@@ -136,7 +136,7 @@ export default function App() {
     const [activeTab, setActiveTab] = useState('home');
     const [isNotifyOpen, setIsNotifyOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isLoading, setIsLoading] = useState(false); // 로딩 상태 제어
+    const [isLoading, setIsLoading] = useState(false);
     const [targetCourse, setTargetCourse] = useState<string | null>(null);
     const [isNavigating, setIsNavigating] = useState(false);
     const [selectedCourseData, setSelectedCourseData] = useState<any>(null);
@@ -149,7 +149,6 @@ export default function App() {
         { id: 2, icon: <CheckCircle2 size={18} color="#4CAF50" />, title: '도슨트 예약 완료', desc: '예약이 확정되었습니다.', time: '2시간 전', isRead: false },
     ]);
 
-    // 초기 데이터 로딩
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -161,30 +160,22 @@ export default function App() {
                 console.error("❌ 서버 연결 실패:", error);
             }
         };
-
-        if (step === 'main') {
-            fetchInitialData();
-        }
+        if (step === 'main') { fetchInitialData(); }
     }, [step]);
 
-    // 취향 분석 및 AI 추천 요청
     const handlePreferenceComplete = async (selectedTags: string[]) => {
-        setIsLoading(true); // 분석 시작: 로딩 켬
+        setIsLoading(true);
         try {
             const cleanTags = selectedTags.map(tag => tag.replace('#', ''));
-            const response = await axios.post(`${API_BASE_URL}/api/ai/recommend`, {
-                tags: cleanTags
-            });
-
+            const response = await axios.post(`${API_BASE_URL}/api/ai/recommend`, { tags: cleanTags });
             if (response.data.status === "success") {
                 setRecommendedExhibitions(response.data.data);
             }
         } catch (error) {
             console.error("❌ AI 추천 요청 실패:", error);
         } finally {
-            // 인위적인 지연을 주어 분석 중임을 체감하게 할 수도 있습니다 (예: 1.5초)
             setTimeout(() => {
-                setIsLoading(false); // 분석 완료: 로딩 끔
+                setIsLoading(false);
                 setStep('main');
             }, 1500);
         }
@@ -195,16 +186,21 @@ export default function App() {
         setActiveTab('guide');
     };
 
+    // --- 알림 관련 함수 ---
     const markAsRead = (id: number) => {
         setNotifications((prev) => prev.map((noti) => (noti.id === id ? { ...noti, isRead: true } : noti)));
+    };
+
+    const markAllAsRead = () => {
+        setNotifications(prev => prev.map(noti => ({ ...noti, isRead: true })));
     };
 
     const hasUnread = notifications.some((n) => !n.isRead);
 
     return (
         <Router>
-            {/* 로딩 오버레이: isLoading이 true일 때만 표시 */}
-{isLoading && (
+            {/* 로딩 오버레이 */}
+            {isLoading && (
                 <div className="loading-overlay" style={{
                     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
                     backgroundColor: 'rgba(255, 255, 255, 0.85)', zIndex: 99999,
@@ -223,7 +219,6 @@ export default function App() {
                 <PreferenceSelection onComplete={handlePreferenceComplete} />
             ) : (
                 <div className="art-log-container">
-                    {/* 상단 헤더: 홈 탭에서만 노출 */}
                     {activeTab === 'home' && (
                         <header className="header">
                             <h1 className="logo">ART-LOG</h1>
@@ -239,7 +234,6 @@ export default function App() {
                         </header>
                     )}
 
-                    {/* 모든 컨텐츠가 들어가는 스크롤 영역 */}
                     <main className="main-content-scroll">
                         {activeTab === 'home' && (
                             <>
@@ -283,7 +277,6 @@ export default function App() {
                                     </ExhibitCarousel>
                                 </section>
 
-                                {/* 보물 같은 도슨트 섹션 복구! */}
                                 <section className="section">
                                     <div className="section-header">
                                         <div className="title-group">
@@ -320,7 +313,6 @@ export default function App() {
                                     </div>
                                 </section>
 
-                                {/* 추천 나들이 코스 섹션 복구! */}
                                 <section className="section">
                                     <div className="section-header">
                                         <div className="title-group">
@@ -351,7 +343,6 @@ export default function App() {
                             </>
                         )}
 
-                        {/* 다른 탭들 분기 */}
                         {activeTab === 'exhibits' && <Exhibition onBack={() => setActiveTab('home')} />}
                         {activeTab === 'map' && <MapPage />}
                         {activeTab === 'guide' && <GuidePage initialTab={guideSubTab} />}
@@ -366,7 +357,6 @@ export default function App() {
                         {activeTab === 'mypage' && <MyPage isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} onTabChange={(tab: string) => setActiveTab(tab)} onLogout={() => { setStep('login'); setActiveTab('home'); }} />}
                     </main>
 
-                    {/* 고정된 하단 네비게이션 */}
                     <nav className="bottom-nav">
                         <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}><Home size={24} /><span>홈</span></div>
                         <div className={`nav-item ${activeTab === 'map' ? 'active' : ''}`} onClick={() => setActiveTab('map')}><Map size={24} /><span>지도</span></div>
@@ -375,7 +365,6 @@ export default function App() {
                         <div className={`nav-item ${activeTab === 'gift' ? 'active' : ''}`} onClick={() => setActiveTab('gift')}><Gift size={24} /><span>기프트</span></div>
                     </nav>
 
-                    {/* 알림 모달 */}
                     {isNotifyOpen && (
                         <div className="modal-overlay" onClick={() => setIsNotifyOpen(false)}>
                             <div className="notification-modal" onClick={(e) => e.stopPropagation()}>
@@ -384,7 +373,7 @@ export default function App() {
                                     <button className="close-btn" onClick={() => setIsNotifyOpen(false)}><X size={20} /></button>
                                 </div>
                                 <div className="notification-list">
-                                    {notifications.map((noti) => (
+                                    {notifications.map(noti => (
                                         <div key={noti.id} className={`noti-item ${noti.isRead ? 'read' : 'unread'}`} onClick={() => markAsRead(noti.id)}>
                                             <div className="noti-icon-bg">{noti.icon}</div>
                                             <div className="noti-text">
@@ -394,6 +383,7 @@ export default function App() {
                                         </div>
                                     ))}
                                 </div>
+                                <button className="mark-all-btn" onClick={markAllAsRead}>전체 알림 읽음 처리</button>
                             </div>
                         </div>
                     )}
