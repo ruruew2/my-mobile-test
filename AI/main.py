@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+# main.py
+from fastapi import FastAPI,File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
@@ -7,38 +8,40 @@ import pymysql
 import os
 import uvicorn
 
-# 수정된 ai_service 임포트
+# 🚨 1. 우리가 만든 DB와 AI 함수들 불러오기
+
 from database import get_connection
-from ai_service import recommend_exhibitions, generate_docent_audio, generate_course_text_v3
+from ai_service import recommend_exhibitions, generate_multilingual_docent, generate_course_text_v3
 
 app = FastAPI(title="ArtLog API Server")
 
-# CORS 설정
 origins = [
-    "http://54.180.234.226:8000",
-    "https://my-mobile-test.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:5174",
+    "http://54.180.234.226:8000",  # AWS EC2에서 FastAPI가 돌아가는 주소
+    "https://my-mobile-test.vercel.app",  # 배포된 리액트 주소
+    "http://localhost:5173", 
+    "http://localhost:5174",      # 로컬 개발용 주소
 ]
 
+# 🚨 2. 프론트엔드 연동을 위한 CORS 설정 (리액트의 접근 허용)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins,       
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 오디오 경로 설정
+# 🚨 3. AI 오디오 파일(MP3) 경로 설정
 os.makedirs("audio", exist_ok=True)
 app.mount("/audio", StaticFiles(directory="audio"), name="audio")
-
-# [API 1] 전체 전시 목록
+# ==========================================
+# 📡 [API 1] 전체 전시 목록 보내주기
+# ==========================================
 @app.get("/api/events")
 def get_events():
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+            # lat이 0이거나 빈칸인 '가짜 좌표'들 필터링
             sql = """SELECT title, place_name, lat, lng, start_date, end_date, image_url, category as hashtag 
                      FROM event 
                      WHERE lat IS NOT NULL AND lat != '0' AND lat != '0.0'"""
@@ -48,9 +51,11 @@ def get_events():
     finally:
         conn.close()
 
-# [API 2] 취향 기반 전시 추천
+# ==========================================
+# 🤖 [API 2] 취향 기반 전시 추천
+# ==========================================
 class RecommendReq(BaseModel):
-    tags: list
+    tags: list # 프론트에서 ["화려한", "트렌디한"] 형태로 보냄
 
 @app.post("/api/ai/recommend")
 def api_recommend(req: RecommendReq):
@@ -59,44 +64,54 @@ def api_recommend(req: RecommendReq):
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
             cursor.execute("SELECT title, place_name, image_url, category as hashtag FROM event LIMIT 200")
             all_events = cursor.fetchall()
-        
-        # ai_service의 추천 함수 호출
+            
         results = recommend_exhibitions(req.tags, all_events)
         return {"status": "success", "data": results}
-    except Exception as e:
-        print(f"❌ 추천 API 에러: {e}")
-        return {"status": "error", "message": str(e)}
     finally:
         conn.close()
 
-# [API 3] AI 도슨트 생성
+# ==========================================
+# 🎤 [API 3] AI 도슨트 오디오 생성
+# ==========================================
 class DocentReq(BaseModel):
     title: str
     text: str
     style: str = "kind"
 
 @app.post("/api/ai/docent")
-def api_docent(req: DocentReq):
-    filename, script = generate_docent_audio(req.title, req.text, req.style)
-    if filename:
-        YOUR_AWS_IP = "54.180.234.226" # 실제 환경에 맞게 수정 가능
-        audio_url = f"http://{YOUR_AWS_IP}:8000/audio/{filename}"
-        return {"status": "success", "script": script, "audio_url": audio_url}
-    return {"status": "fail", "message": "도슨트 생성 실패"}
+async def api_docent(
+    file: UploadFile = File(...), 
+    lang: str = Form(...)  # 'ko', 'en', 'ja', 'zh'
+):
+    # 1. 파일을 서버에 임시 저장하거나 S3에 업로드 (여기서는 임시 저장 예시)
+    temp_path = f"temp_{file.filename}"
+    with open(temp_path, "wb") as buffer:
+        buffer.write(await file.read())
+    
+    # 2. 이미지 URL 생성 (실제 배포 시에는 S3 URL 권장)
+    image_url = f"http://54.180.234.226:8000/{temp_path}"
+    
+    # 3. 다국어 도슨트 실행
+    result = generate_multilingual_docent(image_url, lang)
+    
+    return {"status": "success", "data": result}
 
-# [API 4] 나들이 코스 추천
+# ==========================================
+# 🗺️ [API 4] 나들이 코스 추천
+# ==========================================
+# 1. 모델 수정: 전시회 이름 대신 '목적지(destination)'를 받습니다.
 class CourseReq(BaseModel):
-    exh_name: str
-    who: str
-    lat: str = "37.5665"
-    lng: str = "126.9780"
+    destination: str  # 사용자가 검색창에 입력한 지역 (예: "성수", "한남동")
+    who: str          # 누구와 가는지 (예: "연인", "친구", "아이", "부모님")
 
+# 2. 로직 수정: DB 검색 + AI 코스 생성
 @app.post("/api/ai/course")
 def api_course(req: CourseReq):
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-            # 입력받은 지역/전시명으로 DB 검색
+            # [DB 검색] 사용자가 입력한 지역에 있는 전시회 1개를 먼저 찾습니다.
+            # 주소(place_name)나 제목(title)에 검색어가 포함된 최신 전시를 가져옵니다.
             sql = """
                 SELECT title, place_name, lat, lng 
                 FROM event 
@@ -104,16 +119,45 @@ def api_course(req: CourseReq):
                 AND lat != '0' 
                 ORDER BY start_date DESC LIMIT 1
             """
-            cursor.execute(sql, (f"%{req.exh_name}%", f"%{req.exh_name}%"))
+            cursor.execute(sql, (f"%{req.destination}%", f"%{req.destination}%"))
             exhibition = cursor.fetchone()
             
-        plan = generate_course_text_v3(req.exh_name, req.who, exhibition)
+        # [AI 호출] 
+        # 전시회가 있으면 전시회 기반으로, 없으면 지역명 기반으로 코스를 짭니다.
+        # (ai_service.py에 새로 만든 v3 함수를 호출합니다.)
+        plan = generate_course_text_v3(req.destination, req.who, exhibition)
+        
         return {"status": "success", "data": plan}
+        
     except Exception as e:
-        print(f"❌ 코스 API 에러: {e}")
+        print(f"❌ 코스 생성 중 에러 발생: {e}")
         return {"status": "error", "message": str(e)}
     finally:
         conn.close()
+# ==========================================
+# 🛠️ 팀장님 전용 카카오맵 테스트 화면
+# ==========================================
+KAKAO_JS_KEY = "1cc92d0b3666ef740a88e12a74a1fe06"
+@app.get("/map", response_class=HTMLResponse)
+def show_map():
+    return f"""
+    <!DOCTYPE html><html><head><meta charset="utf-8"/><title>지도 테스트</title>
+    <style>body, html {{ margin: 0; height: 100%; }} #map {{ width: 100%; height: 100%; }}</style>
+    </head><body><div id="map"></div>
+    <script src="//dapi.kakao.com/v2/maps/sdk.js?appkey={KAKAO_JS_KEY}"></script>
+    <script>
+        var map = new kakao.maps.Map(document.getElementById('map'), {{center: new kakao.maps.LatLng(37.5665, 126.9780), level: 7}});
+        fetch("/api/events").then(r => r.json()).then(res => {{
+            res.data.forEach(evt => {{
+                if (evt.lat && evt.lng) {{
+                    var m = new kakao.maps.Marker({{ position: new kakao.maps.LatLng(evt.lat, evt.lng), map: map }});
+                    var iw = new kakao.maps.InfoWindow({{ content : '<div style="padding:5px;"><b>'+evt.title+'</b></div>', removable : true }});
+                    kakao.maps.event.addListener(m, 'click', () => iw.open(map, m));
+                }}
+            }});
+        }});
+    </script></body></html>
+    """
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
