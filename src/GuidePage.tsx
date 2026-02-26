@@ -5,7 +5,7 @@ import './GuidePage.css';
 
 const isDev = import.meta.env.MODE === 'development';
 // 배포 환경에서 Mixed Content 에러 방지를 위해 가변 주소 사용
-const API_BASE_URL = '/api_proxy';
+const API_BASE_URL = 'http://54.180.234.226:8000'; // 프록시 쓰지 말고 직접 입력
 
 const GuidePage = ({ initialTab }: any) => {
   const [activeTab, setActiveTab] = useState<'human' | 'ai'>(initialTab || 'human');
