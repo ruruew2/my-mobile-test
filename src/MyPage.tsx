@@ -2,10 +2,10 @@ import React, { useState, useRef } from 'react';
 import { 
   Settings, Heart, BookOpen, CreditCard, Bell, 
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users,
-  Eye, EyeOff // 👈 눈 모양 아이콘 추가
+  Eye, EyeOff, MessageCircle, Handshake, Mic // 👈 도슨트용 아이콘 추가
 } from 'lucide-react';
 
-// 외부 임포트 컴포넌트
+// 외부 임포트 컴포넌트 (실제 환경에 맞게 경로 확인 필요)
 import ReviewForm from './ReviewForm';
 import SuccessModal from './SuccessModal_review';
 import GiftShop from './GiftShop'; 
@@ -18,7 +18,8 @@ interface MyPageProps {
   onTabChange?: (tabName: string) => void; 
 }
 
-type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend';
+// docent(도슨트 신청) 상태 추가
+type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend' | 'inquiry' | 'docent';
 
 interface FriendItem {
   id: number;
@@ -82,7 +83,6 @@ const ToggleRow = ({ title, desc, checked, onChange }: { title: string, desc: st
   </div>
 );
 
-// ✅ InputGroup 수정: 오른쪽 아이콘(rightElement)을 받을 수 있게 함
 const InputGroup = ({ label, placeholder, type = "text", rightElement }: { label: string, placeholder: string, type?: string, rightElement?: React.ReactNode }) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
     <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>{label}</label>
@@ -110,8 +110,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
   const [giftTab, setGiftTab] = useState<'received' | 'sent'>('received');
   const [selectedExhibition, setSelectedExhibition] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
-  
-  // ✅ 비밀번호 보기/숨기기 상태 추가
   const [showPassword, setShowPassword] = useState(false);
 
   // 친구 관련 상태
@@ -297,8 +295,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <InputGroup label="닉네임" placeholder="예술가 김아트" />
               <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
-              
-              {/* ✅ 비밀번호 보기/숨기기 토글 적용 */}
               <InputGroup 
                 label="비밀번호 변경" 
                 placeholder="변경할 비밀번호를 입력하세요" 
@@ -309,7 +305,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
                   </div>
                 }
               /> 
-
               <button 
                 onClick={() => { alert('수정되었습니다.'); setViewState('main'); }}
                 style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: '#000', color: '#fff' }}
@@ -413,9 +408,83 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
           </div>
         );
 
+      case 'docent':
+        return (
+          <div className="sub-view">
+            <SubViewHeader title="도슨트 권한 신청" />
+            <div style={{ padding: '30px 20px', textAlign: 'center', backgroundColor: '#f8fbff', borderRadius: '20px', border: '1px solid #e0eefe', marginBottom: '25px' }}>
+              <div style={{ width: '60px', height: '60px', backgroundColor: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
+                <Mic size={28} color="#007aff" />
+              </div>
+              <p style={{ margin: 0, fontSize: '17px', fontWeight: 'bold', color: '#333' }}>특별한 전시 해설가가 되어보세요!</p>
+              <p style={{ marginTop: '10px', fontSize: '13px', color: '#666', lineHeight: '1.6' }}>
+                도슨트 권한을 승인받으시면 직접 전시 해설 콘텐츠를<br/>
+                업로드하고 관람객과 소통할 수 있습니다.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <InputGroup label="활동명 (닉네임)" placeholder="도슨트로 활동할 이름을 입력해주세요" />
+              <InputGroup label="주요 활동 분야" placeholder="예: 현대미술, 서양화, 조각 등" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#444' }}>자기소개 및 경력</label>
+                <textarea 
+                  placeholder="관련 경력이나 도슨트로서의 포부를 간단히 적어주세요." 
+                  style={{ 
+      width: '100%', 
+      height: '120px', 
+      padding: '14px',          // InputGroup의 padding과 동일하게 설정
+      borderRadius: '10px', 
+      border: '1px solid #eee', 
+      fontSize: '14px', 
+      outline: 'none', 
+      resize: 'none', 
+      lineHeight: '1.6',
+      boxSizing: 'border-box',  // 👈 테두리와 여백을 너비에 포함시켜 딱 맞게 해줍니다.
+      fontFamily: 'inherit'     // 👈 폰트가 input과 달라 보일 경우 추가
+    }}
+                />
+              </div>
+              <div style={{ backgroundColor: '#f5f5f5', padding: '15px', borderRadius: '10px' }}>
+                <p style={{ margin: 0, fontSize: '12px', color: '#888', lineHeight: '1.5' }}>
+                  • 신청 후 승인까지 영업일 기준 약 3~5일이 소요됩니다.<br/>
+                  • 허위 정보 기재 시 권한 신청이 거절될 수 있습니다.
+                </p>
+              </div>
+              <button 
+                onClick={() => { alert('도슨트 권한 신청이 완료되었습니다.'); setViewState('main'); }}
+                style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#007aff', color: '#fff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+              >
+                권한 신청하기
+              </button>
+            </div>
+          </div>
+        );
+
+      case 'inquiry':
+        return (
+          <div className="sub-view">
+            <SubViewHeader title="1:1 문의하기" />
+            <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: '#f9f9f9', borderRadius: '15px' }}>
+              <MessageCircle size={40} color="#ccc" style={{ marginBottom: '15px' }} />
+              <p style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>문의사항이 있으신가요?</p>
+              <p style={{ marginTop: '8px', fontSize: '13px', color: '#888', lineHeight: '1.5' }}>
+                평일 10:00 ~ 18:00 (주말/공휴일 제외)<br/>
+                순차적으로 답변해 드립니다.
+              </p>
+              <button 
+                style={{ marginTop: '20px', width: '100%', padding: '14px', borderRadius: '10px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}
+                onClick={() => alert('문의 폼으로 이동합니다.')}
+              >
+                문의글 작성하기
+              </button>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <>
+            {/* --- MY ACTIVITY --- */}
             <div className="menu-group">
               <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>MY ACTIVITY</h4>
               <MenuRow icon={<BookOpen size={18} />} label="다녀온 전시 목록" onClick={() => setViewState('history')} />
@@ -425,11 +494,22 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
               <MenuRow icon={<Users size={18} />} label="친구" onClick={() => setViewState('friend')} />
               <MenuRow icon={<Gift size={18} />} label="선물함" onClick={() => setViewState('gift')} />
             </div>
+
+            {/* --- REQUEST --- */}
+            <div className="menu-group" style={{ marginTop: '30px' }}>
+              <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>REQUEST</h4>
+              <MenuRow icon={<Mic size={18} />} label="도슨트 권한 신청하기" onClick={() => setViewState('docent')} />
+              <MenuRow icon={<MessageCircle size={18} />} label="1:1 문의하기" onClick={() => setViewState('inquiry')} />
+              <MenuRow icon={<Handshake size={18} />} label="제휴 및 단체 신청" onClick={() => alert('business@example.com으로 메일을 보내주세요.')} />
+            </div>
+
+            {/* --- SETTINGS --- */}
             <div className="menu-group" style={{ marginTop: '30px' }}>
               <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>SETTINGS</h4>
               <MenuRow icon={<Bell size={18} />} label="알림 설정" onClick={() => setViewState('notifSetting')} />
               <MenuRow icon={<Settings size={18} />} label="개인정보 수정" onClick={() => setViewState('profileEdit')} />
             </div>
+
             <button 
               onClick={() => isLoggedIn ? setIsLoggedIn(false) : onLogout?.()}
               style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#ffffff', cursor: 'pointer', fontWeight: 'bold' }}
@@ -443,6 +523,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
 
   return (
     <div className="main-content-scroll mypage-container" style={{ padding: '20px', maxWidth: '500px', margin: '0 auto', backgroundColor: '#fff', minHeight: '100%' }}>
+      {/* 프로필 헤더 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '30px' }}>
         <div onClick={handleImageClick} style={{ position: 'relative', cursor: 'pointer', flexShrink: 0 }}>
           <div style={{ width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid #eee' }}>
@@ -465,6 +546,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
         </div>
       </div>
 
+      {/* 통계 카드 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
         <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
         <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
