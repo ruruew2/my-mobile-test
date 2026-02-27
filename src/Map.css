@@ -14,14 +14,19 @@
     position: absolute;
     top: 0;
     left: 0;
-    z-index: 0;
+    z-index: 1; /* 0보다 1이 안정적일 수 있습니다 */
 }
 
 /* 상단 필터 */
+/* 3. 상단 필터: 지도보다는 위, 바텀 시트보다는 아래 */
 .map-top-filter {
-    position: relative;
-    z-index: 10;
+    position: absolute; /* relative에서 absolute로 변경 (지도 위에 띄우기 위해) */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 50; /* 지도(1)보다 높게 */
     padding: 15px;
+    pointer-events: none; /* 필터 버튼 외 빈 영역은 지도 터치가 가능하게 함 */
 }
 
 .filter-scroll-container {
@@ -54,23 +59,21 @@
     color: white;
 }
 
-/* 바텀 시트 본체 수정 */
+/* 4. 🚀 바텀 시트: 가장 위에 올라와야 함 */
 .map-bottom-sheet {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    /* 높이를 고정하거나 vh를 사용하되, js에서 조절하기 편하게 설정 */
     height: 70vh; 
     background-color: white;
     border-radius: 24px 24px 0 0;
-    padding: 0 20px 20px 20px; /* 상단 패딩 제거 (핸들 영역에서 잡기 위해) */
-    z-index: 10;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    padding: 0 20px 20px 20px;
+    /* ⭐ z-index를 필터(50)보다 높은 100으로 설정 */
+    z-index: 100; 
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
-    
-    /* 부드러운 이동을 위한 트랜지션 (드래그 중에는 JS에서 제거할 예정) */
     transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
     will-change: transform;
 }
