@@ -171,48 +171,46 @@ export default function App() {
 useEffect(() => {
     const fetchInitialData = async () => {
         try {
-            // 1. 현재 브라우저 주소가 localhost면 로컬 서버, 아니면 Vercel용 API 서버 사용
             const API_BASE_URL = window.location.hostname === 'localhost' 
                 ? 'http://localhost:8000' 
-                : 'http://54.180.234.226:8000'; // ← 여기에 Vercel에서 쓰던 실제 서버 IP/도메인을 넣으세요.
+                : 'http://54.180.234.226:8000';
 
+            console.log("📍 요청 보내는 주소:", `${API_BASE_URL}/api/events`);
             const response = await axios.get(`${API_BASE_URL}/api/events`);
-            
+            console.log("✅ 서버 응답 데이터:", response.data);
+
             if (response.data && response.data.status === "success") {
                 setServerExhibitions(response.data.data || []);
             }
         } catch (error) { 
-            console.error("❌ 데이터 로딩 실패:", error); 
-            setServerExhibitions([]); 
+            console.error("❌ [전체보기] 에러:", error.message); // 에러 메시지 상세 출력
         }
     };
-    
     if (step === 'main' && activeTab === 'home') fetchInitialData();
 }, [step, activeTab]);
 
-    // 2. AI 추천 데이터 (외부 AI 서버 연결)
-    const handlePreferenceComplete = async (selectedTags: string[]) => {
-        setIsLoading(true);
-        try {
-            const cleanTags = selectedTags.map(tag => tag.replace('#', ''));
-            
-            const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { 
-                tags: cleanTags 
-            });
+   // --- 2. AI 추천용 (둘 다 안 뜨는 문제 확인용) ---
+const handlePreferenceComplete = async (selectedTags: string[]) => {
+    setIsLoading(true);
+    try {
+        const cleanTags = selectedTags.map(tag => tag.replace('#', ''));
+        console.log("📤 AI 서버로 보낼 태그:", cleanTags);
 
-            if (response.data && response.data.status === "success") {
-                setRecommendedExhibitions(response.data.data || []);
-            }
-        } catch (error) { 
-            console.error("❌ AI 추천 서버 연결 실패:", error);
-            setRecommendedExhibitions([]);
-        } finally {
-            setTimeout(() => { 
-                setIsLoading(false); 
-                setStep('main'); 
-            }, 1500);
+        const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { 
+            tags: cleanTags 
+        });
+
+        console.log("📥 AI 서버 응답:", response.data);
+
+        if (response.data && response.data.status === "success") {
+            setRecommendedExhibitions(response.data.data || []);
         }
-    };
+    } catch (error) { 
+        console.error("❌ [AI추천] 에러:", error.response?.data || error.message);
+    } finally {
+        setTimeout(() => { setIsLoading(false); setStep('main'); }, 1000);
+    }
+};
 
     const navigateToGuide = (subType: 'human' | 'ai') => {
         setGuideSubTab(subType);
