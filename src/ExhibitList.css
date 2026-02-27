@@ -144,6 +144,7 @@
     border-radius: 24px;
     gap: 20px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+    position: relative; /* 기준점 */
 }
 
 .card-thumb {
@@ -151,10 +152,21 @@
     height: 150px;
     background: #eee;
     border-radius: 14px;
-    position: relative; /* 배지 위치의 기준 */
+    position: relative; 
     flex-shrink: 0;
-    overflow: hidden;
+    overflow: hidden; /* 배지가 잘리지 않게 하려면 유지하되 아래 설정이 중요해 */
+    isolation: isolate;
 }
+
+/* 이미지 자체가 클릭을 방해하지 않도록 설정 */
+.thumb-img-element {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    object-fit: cover;
+    pointer-events: none; /* 👈 이미지가 하트 버튼 클릭을 방해하지 못하게 함 */
+}
+
 
 /* ★ 추가된 D-Day 배지 스타일 ★ */
 .d-day-badge {
@@ -190,7 +202,13 @@
     justify-content: center;
     border: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 2;
+    z-index: 999;
+    cursor: pointer; /* 마우스 올렸을 때 손가락 모양 나오게 */
+    pointer-events: auto; /* 👈 클릭을 확실히 받도록 설정 */
+}
+
+.wish-heart-btn-circle svg {
+    pointer-events: none; /* 아이콘 클릭해도 버튼 클릭으로 인식되게 */
 }
 
 .card-info {

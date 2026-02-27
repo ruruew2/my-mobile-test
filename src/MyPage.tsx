@@ -2,23 +2,22 @@ import React, { useState, useRef } from 'react';
 import { 
   Settings, Heart, BookOpen, CreditCard, Bell, 
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users,
-  Eye, EyeOff, MessageCircle, Handshake, Mic, building2 // 👈 아이콘 추가
+  Eye, EyeOff, MessageCircle, Handshake, Mic
 } from 'lucide-react';
 
 // 외부 임포트 컴포넌트 (실제 환경에 맞게 경로 확인 필요)
 import ReviewForm from './ReviewForm';
 import SuccessModal from './SuccessModal_review';
-import GiftShop from './GiftShop'; 
 
 // --- 1. 타입 정의 ---
 interface MyPageProps {
-  isLoggedIn: boolean;       
+  isLoggedIn: boolean;
+  likedCount: number; 
   setIsLoggedIn: (val: boolean) => void; 
   onLogout?: () => void;     
   onTabChange?: (tabName: string) => void; 
 }
 
-// partner(제휴/단체) 상태 추가
 type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend' | 'inquiry' | 'docent' | 'partner';
 
 interface FriendItem {
@@ -103,24 +102,20 @@ const InputGroup = ({ label, placeholder, type = "text", rightElement }: { label
 
 // --- 3. 메인 MyPage 컴포넌트 ---
 
-const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProps) => {
+const MyPage = ({ isLoggedIn, likedCount, setIsLoggedIn, onLogout, onTabChange }: MyPageProps) => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [viewState, setViewState] = useState<ViewState>('main');
-  const [giftTab, setGiftTab] = useState<'received' | 'sent'>('received');
   const [selectedExhibition, setSelectedExhibition] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // 친구 관련 상태
   const [friendEmail, setFriendEmail] = useState('');
   const [managingFriend, setManagingFriend] = useState<FriendItem | null>(null);
   const [friends, setFriends] = useState<FriendItem[]>([
     { id: 1, email: 'friend1@test.com', name: '친구1', memo: '전시 메이트' },
     { id: 2, email: 'friend2@test.com', name: '친구2', memo: '대학 동기' },
   ]);
-
-  const [reviewItems, setReviewItems] = useState<string[]>([]); 
 
   const [notifSettings, setNotifSettings] = useState(() => {
     const saved = localStorage.getItem('user_notif_settings');
@@ -151,29 +146,10 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
       alert('이메일을 입력해주세요.');
       return;
     }
-    const newFriend: FriendItem = {
-      id: Date.now(),
-      email: friendEmail,
-      name: friendEmail.split('@')[0],
-      memo: ''
-    };
+    const newFriend: FriendItem = { id: Date.now(), email: friendEmail, name: friendEmail.split('@')[0], memo: '' };
     setFriends([newFriend, ...friends]);
     setFriendEmail('');
     alert(`${friendEmail} 님이 친구로 추가되었습니다.`);
-  };
-
-  const handleDeleteFriend = (id: number) => {
-    if (window.confirm("정말 친구를 삭제하시겠습니까?")) {
-      setFriends(friends.filter(f => f.id !== id));
-      setManagingFriend(null);
-    }
-  };
-
-  const handleSendTicket = (friend: FriendItem) => {
-    setManagingFriend(null);
-    if (onTabChange) {
-      onTabChange('gift'); 
-    }
   };
 
   const SubViewHeader = ({ title, backTo = 'main' as ViewState }: { title: string, backTo?: ViewState }) => (
@@ -211,13 +187,13 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
           <div className="sub-view">
             <SubViewHeader title="보고싶은 전시" />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {[1, 2].map(i => (
+              {Array.from({ length: likedCount || 0 }).map((_, i) => (
                 <div key={i} style={{ borderRadius: '15px', overflow: 'hidden', border: '1px solid #eee', cursor: 'pointer' }}>
                   <div style={{ width: '100%', height: '120px', backgroundColor: '#fff0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Heart size={24} color="#ff4d4d" fill="#ff4d4d" />
                   </div>
                   <div style={{ padding: '12px' }}>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>찜한 전시 {i}</p>
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>찜한 전시 {i + 1}</p>
                   </div>
                 </div>
               ))}
@@ -229,39 +205,18 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
         return (
           <div className="sub-view">
             <SubViewHeader title="후기 작성" />
-            {reviewItems.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {reviewItems.map((title, i) => (
-                  <ListCard 
-                    key={i} 
-                    icon={<PenLine size={20} color="#10b981" />} 
-                    title={title} 
-                    sub="관람 완료 • 후기를 남겨주세요" 
-                    btnLabel="후기 작성" 
-                    onBtnClick={() => {
-                      setSelectedExhibition(title);
-                      setViewState('writeReview');
-                    }}
-                  />
-                ))}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
+              <div style={{ marginBottom: '25px', color: '#666', lineHeight: '1.6' }}>
+                <p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>작성된 후기가 없습니다.</p>
+                <p style={{ margin: '4px 0 0', fontSize: '15px' }}>후기를 쓰러 가볼까요? ✨</p>
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', textAlign: 'center' }}>
-                <div style={{ marginBottom: '25px', color: '#666', lineHeight: '1.6' }}>
-                  <p style={{ margin: 0, fontSize: '16px', fontWeight: '500' }}>작성 된 후기가 없습니다.</p>
-                  <p style={{ margin: '4px 0 0', fontSize: '15px' }}>후기를 쓰러 가볼까요? ✨</p>
-                </div>
-                <button 
-                  onClick={() => {
-                    setSelectedExhibition('새로운 전시 후기');
-                    setViewState('writeReview');
-                  }}
-                  style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
-                >
-                  후기 작성하기
-                </button>
-              </div>
-            )}
+              <button 
+                onClick={() => { setSelectedExhibition('새로운 전시 후기'); setViewState('writeReview'); }}
+                style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+              >
+                후기 작성하기
+              </button>
+            </div>
           </div>
         );
 
@@ -269,10 +224,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
         return (
           <div className="sub-view">
             <SubViewHeader title="후기 남기기" backTo="reviews" />
-            <ReviewForm 
-              exhibitionTitle={selectedExhibition} 
-              onComplete={() => { setShowModal(true); }} 
-            />
+            <ReviewForm exhibitionTitle={selectedExhibition} onComplete={() => { setShowModal(true); }} />
           </div>
         );
 
@@ -338,7 +290,6 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
                   type="email" 
                   value={friendEmail}
                   onChange={(e) => setFriendEmail(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddFriend()}
                   placeholder="친구의 이메일을 입력하세요" 
                   style={{ flex: 1, padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} 
                 />
@@ -352,58 +303,9 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
               <div style={{ marginTop: '20px' }}>
                 <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>내 친구 {friends.length}명</p>
                 {friends.map(friend => (
-                  <ListCard 
-                    key={friend.id} 
-                    icon={<span>👤</span>} 
-                    title={friend.name} 
-                    sub={friend.email} 
-                    btnLabel="관리" 
-                    onBtnClick={() => setManagingFriend(friend)}
-                  />
+                  <ListCard key={friend.id} icon={<span>👤</span>} title={friend.name} sub={friend.email} btnLabel="관리" onBtnClick={() => setManagingFriend(friend)} />
                 ))}
               </div>
-            </div>
-            {managingFriend && (
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
-                <div style={{ width: '100%', backgroundColor: '#fff', borderRadius: '20px 20px 0 0', padding: '20px', boxSizing: 'border-box' }}>
-                  <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                    <div style={{ width: '40px', height: '4px', backgroundColor: '#eee', borderRadius: '2px', margin: '0 auto 15px' }} />
-                    <h3 style={{ margin: 0, fontSize: '16px' }}><b>{managingFriend.name}</b>님 관리</h3>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button onClick={() => {
-                        const newName = prompt('수정할 이름을 입력하세요', managingFriend.name);
-                        if (newName && newName.trim()) {
-                          setFriends(friends.map(f => f.id === managingFriend.id ? { ...f, name: newName } : f));
-                          setManagingFriend(null);
-                        }
-                      }} style={{ padding: '16px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>✏️ 이름 수정하기</button>
-                    <button onClick={() => handleSendTicket(managingFriend)} style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>🎁 전시 초대권 · 굿즈 보내기</button>
-                    <button onClick={() => handleDeleteFriend(managingFriend.id)} style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>삭제하기</button>
-                    <button onClick={() => setManagingFriend(null)} style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}>취소</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-
-      case 'gift':
-        const currentGifts = giftTab === 'received' 
-          ? [{ id: 1, title: "한정판 전시 굿즈 패키지", sub: "배송 중 • 2024.03.10", btnLabel: "배송조회" }]
-          : [{ id: 101, title: "반 고흐 포스터 세트", sub: "전달 완료 • 2024.02.20", extra: "결제 완료" }];
-
-        return (
-          <div className="sub-view">
-            <SubViewHeader title="보유한 선물" />
-            <div style={{ display: 'flex', borderBottom: '1px solid #eee', marginBottom: '20px' }}>
-              <button onClick={() => setGiftTab('received')} style={{ flex: 1, padding: '12px', border: 'none', background: 'none', fontWeight: giftTab === 'received' ? 'bold' : 'normal', borderBottom: giftTab === 'received' ? '2px solid #000' : 'none', cursor: 'pointer' }}>받은 선물함</button>
-              <button onClick={() => setGiftTab('sent')} style={{ flex: 1, padding: '12px', border: 'none', background: 'none', fontWeight: giftTab === 'sent' ? 'bold' : 'normal', borderBottom: giftTab === 'sent' ? '2px solid #000' : 'none', cursor: 'pointer' }}>보낸 선물함</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {currentGifts.map((gift) => (
-                <ListCard key={gift.id} icon={<Package size={20} color={giftTab === 'received' ? "#666" : "#4f46e5"} />} title={gift.title} sub={gift.sub} btnLabel={gift.btnLabel} extra={gift.extra} />
-              ))}
             </div>
           </div>
         );
@@ -413,34 +315,15 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
           <div className="sub-view">
             <SubViewHeader title="도슨트 권한 신청" />
             <div style={{ padding: '30px 20px', textAlign: 'center', backgroundColor: '#f8fbff', borderRadius: '20px', border: '1px solid #e0eefe', marginBottom: '25px' }}>
-              <div style={{ width: '60px', height: '60px', backgroundColor: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}>
-                <Mic size={28} color="#007aff" />
-              </div>
-              <p style={{ margin: 0, fontSize: '17px', fontWeight: 'bold', color: '#333' }}>특별한 전시 해설가가 되어보세요!</p>
-              <p style={{ marginTop: '10px', fontSize: '13px', color: '#666', lineHeight: '1.6' }}>
-                도슨트 권한을 승인받으시면 직접 전시 해설 콘텐츠를<br/>
-                업로드하고 관람객과 소통할 수 있습니다.
-              </p>
+              <Mic size={28} color="#007aff" style={{ marginBottom: '15px' }} />
+              <p style={{ margin: 0, fontSize: '17px', fontWeight: 'bold' }}>특별한 전시 해설가가 되어보세요!</p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <InputGroup label="활동명 (닉네임)" placeholder="도슨트로 활동할 이름을 입력해주세요" />
               <InputGroup label="주요 활동 분야" placeholder="예: 현대미술, 서양화, 조각 등" />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 'bold', color: '#444' }}>자기소개 및 경력</label>
-                <textarea 
-                  placeholder="관련 경력이나 도슨트로서의 포부를 간단히 적어주세요." 
-                  style={{ width: '100%', height: '120px', padding: '14px', borderRadius: '10px', border: '1px solid #eee', fontSize: '14px', outline: 'none', resize: 'none', lineHeight: '1.6', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                />
-              </div>
-              <div style={{ backgroundColor: '#f5f5f5', padding: '15px', borderRadius: '10px' }}>
-                <p style={{ margin: 0, fontSize: '12px', color: '#888', lineHeight: '1.5' }}>
-                  • 신청 후 승인까지 영업일 기준 약 3~5일이 소요됩니다.<br/>
-                  • 허위 정보 기재 시 권한 신청이 거절될 수 있습니다.
-                </p>
-              </div>
               <button 
-                onClick={() => { alert('도슨트 권한 신청이 완료되었습니다.'); setViewState('main'); }}
-                style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#007aff', color: '#fff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+                onClick={() => { alert('신청되었습니다.'); setViewState('main'); }}
+                style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#007aff', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}
               >
                 권한 신청하기
               </button>
@@ -448,75 +331,44 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
           </div>
         );
 
-case 'partner':
-  return (
-    <div className="sub-view">
-      <SubViewHeader title="제휴 및 단체 신청" />
-      
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        
-        {/* 1. 단체명 & 2. 날짜 선택 (가로 배치) */}
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <div style={{ flex: 1 }}>
-            <InputGroup label="단체명" placeholder="회사/학교명" />
+      case 'partner':
+        return (
+          <div className="sub-view">
+            <SubViewHeader title="제휴 및 단체 신청" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <InputGroup label="단체명" placeholder="회사/학교명" />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <InputGroup label="방문 예정 날짜" placeholder="YYYY-MM-DD" type="date" />
+                </div>
+              </div>
+              <InputGroup label="전시/공연명" placeholder="관람을 희망하는 전시 이름을 입력해주세요" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>도슨트 신청 인원</label>
+                <input 
+                  type="number" 
+                  placeholder="인원 수를 입력해주세요 (숫자)" 
+                  style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} 
+                />
+              </div>
+              <InputGroup label="전달할 사항" placeholder="추가 요청 사항이나 문의 내용을 입력해주세요" />
+              <div style={{ backgroundColor: '#f5f5f5', padding: '15px', borderRadius: '10px' }}>
+                <p style={{ margin: 0, fontSize: '12px', color: '#888', lineHeight: '1.6' }}>
+                  • 신청 후 승인까지 영업일 기준 약 3~5일이 소요됩니다.<br/>
+                  • 단체 관람 혜택은 별도로 안내해 드립니다.
+                </p>
+              </div>
+              <button 
+                onClick={() => { alert('제휴 및 단체 신청이 완료되었습니다.'); setViewState('main'); }}
+                style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                신청하기
+              </button>
+            </div>
           </div>
-          <div style={{ flex: 1 }}>
-            <InputGroup label="방문 예정 날짜" placeholder="YYYY-MM-DD" type="date" />
-          </div>
-        </div>
-
-        {/* 3. 전시/공연명 */}
-        <InputGroup label="전시/공연명" placeholder="관람을 희망하는 전시 이름을 입력해주세요" />
-
-        {/* 4. 도슨트 신청 인원 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>도슨트 신청 인원</label>
-          <input 
-            type="number" 
-            placeholder="인원 수를 입력해주세요 (숫자)" 
-            style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} 
-          />
-        </div>
-
-        {/* 5. 전달할 사항 */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>전달할 사항</label>
-          <input 
-            type="text" 
-            placeholder="추가 요청 사항이나 문의 내용을 입력해주세요" 
-            style={{ width: '100%', padding: '14px', borderRadius: '10px', border: '1px solid #eee', outline: 'none', fontSize: '14px', boxSizing: 'border-box' }} 
-          />
-        </div>
-
-        {/* 6. 유의사항 안내 (도슨트 폼 스타일) */}
-        <div style={{ backgroundColor: '#f5f5f5', padding: '15px', borderRadius: '10px', marginTop: '10px' }}>
-          <p style={{ margin: 0, fontSize: '12px', color: '#888', lineHeight: '1.6' }}>
-            • 신청 후 승인까지 영업일 기준 약 3~5일이 소요됩니다.<br/>
-            • 허위 정보 기재 시 권한 신청이 거절될 수 있습니다.
-          </p>
-        </div>
-
-        {/* 7. 신청하기 버튼 */}
-        <button 
-          onClick={() => { alert('제휴 및 단체 신청이 완료되었습니다.'); setViewState('main'); }}
-          style={{ 
-            width: '100%', 
-            padding: '16px', 
-            borderRadius: '12px', 
-            border: 'none', 
-            backgroundColor: '#000', 
-            color: '#fff', 
-            fontWeight: 'bold', 
-            fontSize: '15px', 
-            cursor: 'pointer',
-            marginTop: '10px'
-          }}
-        >
-          신청하기
-        </button>
-      </div>
-    </div>
-  );
+        );
 
       case 'inquiry':
         return (
@@ -525,10 +377,6 @@ case 'partner':
             <div style={{ padding: '40px 20px', textAlign: 'center', backgroundColor: '#f9f9f9', borderRadius: '15px' }}>
               <MessageCircle size={40} color="#ccc" style={{ marginBottom: '15px' }} />
               <p style={{ margin: 0, fontSize: '15px', fontWeight: 'bold' }}>문의사항이 있으신가요?</p>
-              <p style={{ marginTop: '8px', fontSize: '13px', color: '#888', lineHeight: '1.5' }}>
-                평일 10:00 ~ 18:00 (주말/공휴일 제외)<br/>
-                순차적으로 답변해 드립니다.
-              </p>
               <button 
                 style={{ marginTop: '20px', width: '100%', padding: '14px', borderRadius: '10px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}
                 onClick={() => alert('문의 폼으로 이동합니다.')}
@@ -542,7 +390,6 @@ case 'partner':
       default:
         return (
           <>
-            {/* --- MY ACTIVITY --- */}
             <div className="menu-group">
               <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>MY ACTIVITY</h4>
               <MenuRow icon={<BookOpen size={18} />} label="다녀온 전시 목록" onClick={() => setViewState('history')} />
@@ -550,26 +397,20 @@ case 'partner':
               <MenuRow icon={<PenLine size={18} />} label="후기 작성" onClick={() => setViewState('reviews')} />
               <MenuRow icon={<CreditCard size={18} />} label="결제 내역" onClick={() => setViewState('payments')} />
               <MenuRow icon={<Users size={18} />} label="친구" onClick={() => setViewState('friend')} />
-              <MenuRow icon={<Gift size={18} />} label="선물함" onClick={() => setViewState('gift')} />
             </div>
-
-            {/* --- REQUEST --- */}
             <div className="menu-group" style={{ marginTop: '30px' }}>
               <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>REQUEST</h4>
               <MenuRow icon={<Mic size={18} />} label="도슨트 권한 신청하기" onClick={() => setViewState('docent')} />
-              <MenuRow icon={<MessageCircle size={18} />} label="1:1 문의하기" onClick={() => setViewState('inquiry')} />
               <MenuRow icon={<Handshake size={18} />} label="제휴 및 단체 신청" onClick={() => setViewState('partner')} />
+              <MenuRow icon={<MessageCircle size={18} />} label="1:1 문의하기" onClick={() => setViewState('inquiry')} />
             </div>
-
-            {/* --- SETTINGS --- */}
             <div className="menu-group" style={{ marginTop: '30px' }}>
               <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>SETTINGS</h4>
               <MenuRow icon={<Bell size={18} />} label="알림 설정" onClick={() => setViewState('notifSetting')} />
               <MenuRow icon={<Settings size={18} />} label="개인정보 수정" onClick={() => setViewState('profileEdit')} />
             </div>
-
             <button 
-              onClick={() => isLoggedIn ? setIsLoggedIn(false) : onLogout?.()}
+              onClick={() => isLoggedIn ? onLogout?.() : setIsLoggedIn(true)}
               style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#ffffff', cursor: 'pointer', fontWeight: 'bold' }}
             >
               {isLoggedIn ? "로그아웃" : "로그인하러 가기"}
@@ -607,15 +448,37 @@ case 'partner':
       {/* 통계 카드 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
         <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
-        <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
+        <StatCard val={isLoggedIn ? String(likedCount || 0) : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
         <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
       </div>
+
       <hr style={{ border: 'none', height: '1px', backgroundColor: '#f5f5f5', marginBottom: '30px' }} />
 
       {renderContent()}
       
+      {/* 모달 로직 */}
       {showModal && (
         <SuccessModal onClose={() => { setShowModal(false); setViewState('main'); }} />
+      )}
+
+      {/* 친구 관리 모달 (추가) */}
+      {managingFriend && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '15px', width: '80%', maxWidth: '300px' }}>
+            <h4 style={{ marginTop: 0 }}>{managingFriend.name}님 관리</h4>
+            <button style={{ width: '100%', padding: '10px', marginBottom: '8px', border: 'none', backgroundColor: '#f5f5f5', borderRadius: '8px', fontWeight: 'bold' }}>메모 수정</button>
+            <button 
+              onClick={() => {
+                setFriends(friends.filter(f => f.id !== managingFriend.id));
+                setManagingFriend(null);
+              }}
+              style={{ width: '100%', padding: '10px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', borderRadius: '8px', fontWeight: 'bold' }}
+            >
+              친구 삭제
+            </button>
+            <button onClick={() => setManagingFriend(null)} style={{ width: '100%', marginTop: '10px', background: 'none', border: 'none', color: '#999', cursor: 'pointer' }}>닫기</button>
+          </div>
+        </div>
       )}
       
       <div style={{ height: '120px' }} /> 

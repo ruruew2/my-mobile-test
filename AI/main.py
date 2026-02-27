@@ -10,7 +10,7 @@ import ai_service
 
 app = FastAPI()
 
-# CORS 설정 (Vercel 및 모든 접속 허용)
+# CORS 설정: 모든 접속 허용
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 오디오 저장 폴더 및 스태틱 경로 설정
+# 오디오 저장 폴더 설정
 if not os.path.exists("audio"):
     os.makedirs("audio")
 app.mount("/audio", StaticFiles(directory="audio"), name="audio")
@@ -37,6 +37,7 @@ def get_events():
 # 2. 취향 추천 API
 class RecommendReq(BaseModel):
     tags: list
+
 @app.post("/api/ai/recommend")
 def api_recommend(req: RecommendReq):
     conn = get_connection()
@@ -47,7 +48,7 @@ def api_recommend(req: RecommendReq):
         return {"status": "success", "data": ai_service.recommend_exhibitions(req.tags, all_events)}
     finally: conn.close()
 
-# 3. AI 도슨트 스캔 API (핵심)
+# 3. AI 도슨트 스캔 API
 @app.post("/api/ai/analyze-scan")
 async def analyze_scan(image: UploadFile = File(...), lang: str = Form("ko")):
     temp_path = f"audio/temp_{image.filename}"
@@ -70,20 +71,32 @@ async def analyze_scan(image: UploadFile = File(...), lang: str = Form("ko")):
         }
     }
 
-# 4. 코스 추천 API
-class CourseReq(BaseModel):
-    destination: str
+# 4. 코스 추천 API (수정 완료)
+class CourseRequest(BaseModel):
+    exh_name: str
     who: str
+    lat: float
+    lng: float
+
 @app.post("/api/ai/course")
-def api_course(req: CourseReq):
+def api_course(req: CourseRequest):
+    print(f"📡 요청 도착: exh_name={req.exh_name}, who={req.who}")
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-            cursor.execute("SELECT * FROM event WHERE place_name LIKE %s LIMIT 1", (f"%{req.destination}%",))
+            query = "SELECT * FROM event WHERE place_name LIKE %s LIMIT 1"
+            cursor.execute(query, (f"%{req.exh_name}%",))
             exhibition = cursor.fetchone()
-        plan = ai_service.generate_course_text_v3(req.destination, req.who, exhibition)
+            print(f"🔎 DB 조회 결과: {exhibition}")
+
+        # ai_service 호출
+        plan = ai_service.generate_course_text_v3(req.exh_name, req.who, exhibition)
         return {"status": "success", "data": plan}
-    finally: conn.close()
+    except Exception as e:
+        print(f"❌ 서버 에러: {str(e)}")
+        return {"status": "error", "message": str(e)}
+    finally: 
+        conn.close()
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

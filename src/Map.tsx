@@ -2,205 +2,164 @@ import React, { useState, useRef, useEffect } from 'react';
 import './Map.css';
 
 declare global {
-    interface window {
-        kakao: any;
-    }
+  interface Window {
+    kakao: any;
+  }
 }
 
 const MapPage = () => {
-    const [activeFilter, setActiveFilter] = useState<string>('전체');
-    const mapContainerRef = useRef<HTMLDivElement>(null);
-    const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
+  const [activeFilter, setActiveFilter] = useState<string>('전체');
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [events, setEvents] = useState<any[]>([]);
+  const filters = ['전체', '무료전시', '힙플레이스', '조용한', '얼리버드'];
 
-    // --- 📌 바텀 시트 드래그 로직 ---
-    const SHEET_HEIGHT = window.innerHeight * 0.7;
-    const MIN_Y = 0;
-    const MAX_Y = SHEET_HEIGHT - 100;
+  // 바텀 시트 상태
+  const SHEET_HEIGHT = window.innerHeight * 0.7;
+  const MAX_Y = SHEET_HEIGHT - 100;
+  const [translateY, setTranslateY] = useState(MAX_Y);
+  const [isDragging, setIsDragging] = useState(false);
+  const startY = useRef(0);
 
-    const [translateY, setTranslateY] = useState(MAX_Y);
-    const [isDragging, setIsDragging] = useState(false);
-    const startY = useRef(0);
+  // 1. 데이터 가져오기 및 지도 로드
+  useEffect(() => {
+    const loadDataAndMap = async () => {
+      try {
+        console.log("1. 데이터 요청 시작...");
+        const response = await fetch('http://localhost:8000/api/events');
+        const result = await response.json();
+        
+        if (result.status === "success" || result.data) {
+          const realData = result.data || result;
+          console.log("2. 데이터 수신 완료:", realData.length, "개");
+          setEvents(realData);
 
-    const [events, setEvents] = useState<any[]>([]); // 🚨 진짜 데이터를 담을 바구니
-
-    const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
-        setIsDragging(true);
-        const clientY = 'touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY;
-        startY.current = clientY - translateY;
-    };
-
-    const handleTouchMove = (e: React.TouchEvent | React.MouseEvent) => {
-        if (!isDragging) return;
-        const clientY = 'touches' in e ? (e as React.TouchEvent).touches[0].clientY : (e as React.MouseEvent).clientY;
-        let nextY = clientY - startY.current;
-
-        if (nextY < MIN_Y) nextY = MIN_Y;
-        if (nextY > MAX_Y) nextY = MAX_Y;
-
-        setTranslateY(nextY);
-    };
-
-    const handleTouchEnd = () => {
-        setIsDragging(false);
-        if (translateY < MAX_Y / 2) {
-            setTranslateY(MIN_Y);
-        } else {
-            setTranslateY(MAX_Y);
+          const { kakao } = window as any;
+          if (kakao && kakao.maps) {
+            console.log("3. 카카오맵 객체 확인, 지도 초기화 시작");
+            kakao.maps.load(() => initMap(realData));
+          } else {
+            console.error("🚨 카카오맵 SDK가 로드되지 않았습니다. index.html을 확인하세요.");
+          }
         }
+      } catch (err) {
+        console.error("🚨 데이터 로딩 실패:", err);
+      }
     };
 
-    // --- 📌 지도 및 현위치 로직 ---
-    // useEffect(() => {
-    //     const { kakao } = window as any;
-    //     if (kakao && kakao.maps) {
-    //         kakao.maps.load(() => initMap());
-    //     }
-    // }, []);
+    loadDataAndMap();
+  }, []);
 
-    useEffect(() => {
-        // 🚨 내 파이썬 서버로 통신을 보냅니다!
-        fetch('http://localhost:8000/api/events')
-            .then((res) => res.json())
-            .then((result) => {
-                console.log('🔥 백엔드 데이터 도착:', result.data); // F12 누르면 콘솔에 데이터 보임!
-                setEvents(result.data); // 바구니에 데이터 담기
+  const initMap = (realEvents: any[]) => {
+    if (!mapContainerRef.current) {
+      console.error("🚨 지도 컨테이너(ref)를 찾을 수 없습니다.");
+      return;
+    }
 
-                // 데이터를 다 받아온 뒤에 지도를 그립니다.
-                const { kakao } = window as any;
-                if (kakao && kakao.maps) {
-                    kakao.maps.load(() => initMap(result.data));
-                }
-            })
-            .catch((err) => console.error('🚨 통신 에러:', err));
-    }, []);
-
-    // 🚨 매개변수로 realEvents를 받도록 수정!
-    const initMap = (realEvents: any[]) => {
-        if (!mapContainerRef.current) return;
-        const { kakao } = window as any;
-
-        // 서울시청 중심, 서울 전역이 보이게 level을 7로 넓힘
-        const map = new kakao.maps.Map(mapContainerRef.current, {
-            center: new kakao.maps.LatLng(37.5665, 126.978),
-            level: 7,
-        });
-
-        // 🚨 백엔드에서 온 수백 개의 데이터로 마커 폭격!
-        realEvents.forEach((evt) => {
-            if (evt.lat && evt.lng) {
-                new kakao.maps.Marker({
-                    map: map,
-                    position: new kakao.maps.LatLng(evt.lat, evt.lng),
-                    title: evt.title, // 마우스 올리면 전시 제목이 툴팁으로 뜸
-                });
-            }
-        });
-
-        // (내 위치 가져오는 geolocation 로직은 기존 코드 그대로 밑에 두시면 됩니다!)
+    const { kakao } = window as any;
+    
+    // 지도 생성 옵션
+    const options = {
+      center: new kakao.maps.LatLng(37.5665, 126.978),
+      level: 8, // 조금 더 넓게 서울 전역이 보이도록 설정
     };
 
-    // const initMap = () => {
-    //     if (!mapContainerRef.current) return;
-    //     const { kakao } = window as any;
+    const map = new kakao.maps.Map(mapContainerRef.current, options);
+    console.log("4. 지도 객체 생성 완료");
 
-    //     // 1. 기본 중심 설정 (서울시청)
-    //     const defaultCenter = new kakao.maps.LatLng(37.5665, 126.978);
-    //     const options = {
-    //         center: defaultCenter,
-    //         level: 3,
-    //     };
-    //     const map = new kakao.maps.Map(mapContainerRef.current, options);
+    // 현위치 시도
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const locPosition = new kakao.maps.LatLng(lat, lng);
+          map.setCenter(locPosition);
+          console.log("📍 현위치 이동 완료");
+        },
+        () => console.warn("현위치를 가져올 수 없어 기본 위치를 사용합니다.")
+      );
+    }
 
-    //     // 2. 내 위치 가져오기 및 마커 표시
-    //     if (navigator.geolocation) {
-    //         navigator.geolocation.getCurrentPosition(
-    //             (position) => {
-    //                 const lat = position.coords.latitude;
-    //                 const lon = position.coords.longitude;
-    //                 const locPosition = new kakao.maps.LatLng(lat, lon);
+    // 마커 표시
+    realEvents.forEach((evt, idx) => {
+      // 위도 경도가 문자열일 경우를 대비해 Number() 처리
+      const lat = Number(evt.lat);
+      const lng = Number(evt.lng);
 
-    //                 // 내 위치에 마커 생성
-    //                 const marker = new kakao.maps.Marker({
-    //                     map: map,
-    //                     position: locPosition,
-    //                 });
+      if (!isNaN(lat) && !isNaN(lng)) {
+        new kakao.maps.Marker({
+          map: map,
+          position: new kakao.maps.LatLng(lat, lng),
+          title: evt.title,
+        });
+      } else {
+        // 데이터는 있는데 좌표가 이상할 경우 콘솔에 찍어봄
+        if (idx < 5) console.warn(`데이터 좌표 이상함 (index ${idx}):`, evt.lat, evt.lng);
+      }
+    });
+  };
 
-    //                 // 지도 중심을 내 위치로 이동
-    //                 map.setCenter(locPosition);
-    //             },
-    //             (error) => {
-    //                 console.error('위치 정보를 가져오는데 실패했습니다.', error);
-    //             },
-    //         );
-    //     } else {
-    //         alert('이 브라우저에서는 현위치 기능을 사용할 수 없습니다.');
-    //     }
-    // };
+  // 드래그 핸들러
+  const handleStart = (e: any) => {
+    setIsDragging(true);
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    startY.current = clientY - translateY;
+  };
 
-    return (
-        <div
-            className="map-page-wrapper"
-            onMouseMove={handleTouchMove}
-            onMouseUp={handleTouchEnd}
-            onMouseLeave={handleTouchEnd}
-        >
-            <div ref={mapContainerRef} className="map-canvas" />
+  const handleMove = (e: any) => {
+    if (!isDragging) return;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    let nextY = clientY - startY.current;
+    if (nextY < 0) nextY = 0;
+    if (nextY > MAX_Y) nextY = MAX_Y;
+    setTranslateY(nextY);
+  };
 
-            {/* 필터 UI */}
-            <div className="map-top-filter">
-                <div className="filter-scroll-container">
-                    {filters.map((f) => (
-                        <button
-                            key={f}
-                            onClick={() => setActiveFilter(f)}
-                            className={`map-chip ${activeFilter === f ? 'active' : ''}`}
-                        >
-                            {f}
-                        </button>
-                    ))}
-                </div>
-            </div>
+  const handleEnd = () => {
+    setIsDragging(false);
+    setTranslateY(translateY < MAX_Y / 2 ? 0 : MAX_Y);
+  };
 
-            {/* 바텀 시트 */}
-            <div
-                className={`map-bottom-sheet ${isDragging ? 'dragging' : ''}`}
-                style={{ transform: `translateY(${translateY}px)` }}
-            >
-                <div
-                    className="sheet-handle-wrapper"
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                    onMouseDown={handleTouchStart}
-                >
-                    <div className="sheet-handle" />
-                </div>
+  return (
+    <div className="map-page-wrapper" onMouseMove={handleMove} onMouseUp={handleEnd} onMouseLeave={handleEnd}>
+      {/* 🚨 중요: 여기에 z-index가 없어도 CSS에서 절대위치 잡혀있어야 함 */}
+      <div ref={mapContainerRef} className="map-canvas" />
 
-                <div className="sheet-header">
-                    <h3 className="sheet-title">
-                        내 주변 전시 <span className="count">12</span>
-                    </h3>
-                    <p className="sheet-subtitle">지도를 움직여 다양한 예술 공간을 찾아보세요.</p>
-                </div>
-
-                <div className="sheet-list-container">
-                    {[1, 2, 3, 4, 5, 6].map((item) => (
-                        <div key={item} className="nearby-item">
-                            <div className="item-thumb" />
-                            <div className="item-info">
-                                <h4 className="item-name">전시회 제목 {item}</h4>
-                                <p className="item-location">장소 정보 · 1.5km</p>
-                                <div className="item-tags">
-                                    <span className="mini-tag">#무료</span>
-                                    <span className="mini-tag">#힙플레이스</span>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+      <div className="map-top-filter">
+        <div className="filter-scroll-container">
+          {filters.map((f) => (
+            <button key={f} onClick={() => setActiveFilter(f)} className={`map-chip ${activeFilter === f ? 'active' : ''}`}>
+              {f}
+            </button>
+          ))}
         </div>
-    );
+      </div>
+
+      <div className={`map-bottom-sheet ${isDragging ? 'dragging' : ''}`} style={{ transform: `translateY(${translateY}px)` }}>
+        <div className="sheet-handle-wrapper" onTouchStart={handleStart} onTouchMove={handleMove} onTouchEnd={handleEnd} onMouseDown={handleStart}>
+          <div className="sheet-handle" />
+        </div>
+        <div className="sheet-header">
+          <h3 className="sheet-title">내 주변 전시 <span className="count">{events.length}</span></h3>
+          <p className="sheet-subtitle">지도를 움직여 다양한 예술 공간을 찾아보세요.</p>
+        </div>
+        <div className="sheet-list-container">
+          {events.map((evt, idx) => (
+            <div key={idx} className="nearby-item">
+              <div className="item-thumb" style={{ background: `url(${evt.img_url}) center/cover`, backgroundColor: '#f0f0f0' }} />
+              <div className="item-info">
+                <h4 className="item-name">{evt.title}</h4>
+                <p className="item-location">{evt.place_name}</p>
+                <div className="item-tags">
+                  <span className="mini-tag">#전시</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default MapPage;
