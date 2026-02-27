@@ -11,7 +11,7 @@ import {
     CheckCircle,
     Image as ImageIcon,
     Clock,
-    Upload, // 업로드 아이콘 추가
+    Upload,
 } from 'lucide-react';
 import './GuidePage.css';
 
@@ -46,40 +46,31 @@ const GuidePage = ({ initialTab }: any) => {
         imagePreview: ''
     });
 
-    // 🚀 [수정] 카메라 관련 함수(startCamera, stopCamera 등) 모두 삭제
-
-    // 공통 분석 요청 함수 (카메라 캡처 대신 파일을 직접 받음)
     const sendToAIApi = async (fileOrBlob: Blob | File, previewUrl: string) => {
         setIsAnalyzing(true);
-        
         const formData = new FormData();
         formData.append('file', fileOrBlob, 'image.jpg'); 
         formData.append('lang', 'ko');
 
         try {
-            // 🚨 백엔드 IP 주소 확인 필수
             const response = await fetch('http://54.180.234.226:8000/api/ai/docent', { 
                 method: 'POST',
                 body: formData,
             });
 
             if (!response.ok) throw new Error(`서버 응답 에러: ${response.status}`);
-
             const result = await response.json();
 
             if (result.status === "success" && result.data) {
                 const [audioUrl, script] = result.data;
-
                 setScannedArt({
                     title: '분석된 작품',
                     artist: 'AI 도슨트',
                     year: '2024',
                     description: script,
-                    // 🚨 로컬 테스트가 아닌 서버 IP 주소를 사용해야 합니다.
                     audioPath: `http://54.180.234.226:8000/${audioUrl}`,
                     imagePreview: previewUrl
                 });
-                
                 setIsAnalyzing(false);
                 setShowResult(true);
             } else {
@@ -88,18 +79,16 @@ const GuidePage = ({ initialTab }: any) => {
         } catch (error) {
             console.error('분석 실패 상세:', error);
             setIsAnalyzing(false);
-            alert('분석에 실패했습니다. 사이트 설정에서 [보안되지 않은 콘텐츠] 허용 여부를 확인해 주세요.');
+            alert('분석에 실패했습니다.');
         }
     };
 
-    // [수정] 파일 업로드 처리
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-
         const previewUrl = URL.createObjectURL(file);
         sendToAIApi(file, previewUrl);
-        event.target.value = ''; // 초기화
+        event.target.value = '';
     };
 
     const handleAudioGuide = async () => {
@@ -138,23 +127,36 @@ const GuidePage = ({ initialTab }: any) => {
     };
 
     return (
-        <div className="art-guide-container">
-            {/* 로딩 오버레이는 그대로 유지 */}
+        <div className="art-guide-container" style={{ 
+            height: 'calc(100vh - 75px)', 
+            overflowY: showResult ? 'hidden' : 'auto', // 결과창일 때는 부모 스크롤 잠금
+            position: 'relative' 
+        }}>
+            
+            {/* --- 1. 로딩 오버레이 (Fixed로 완전히 독립) --- */}
             {isAnalyzing && (
-                <div className="analysis-loading-overlay">
-                    <div className="loading-content">
-                        <div className="ai-pulse-circle">
-                            <div className="pulse-ring"></div>
-                            <span className="ai-icon">🤖</span>
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    width: '100vw', height: '100vh',
+                    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                    zIndex: 10000, display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                }}>
+                    <div className="ai-loading-container" style={{ textAlign: 'center' }}>
+                        <div className="ai-avatar-pulse" style={{ position: 'relative', display: 'inline-block' }}>
+                            <span style={{ fontSize: '60px' }}>🤖</span>
                         </div>
-                        <h3 className="loading-title">아티가 작품을 분석 중입니다...</h3>
-                        <div className="loading-bar-bg">
-                            <div className="loading-bar-fill"></div>
+                        <h3 style={{ marginTop: '24px', fontSize: '1.2rem', fontWeight: '700', color: '#222' }}>
+                            아티가 작품을 분석 중입니다...
+                        </h3>
+                        <div className="progress-track" style={{ width: '200px', height: '6px', backgroundColor: '#f0f0f0', borderRadius: '10px', marginTop: '30px', overflow: 'hidden', position: 'relative', margin: '30px auto 0' }}>
+                            <div className="progress-fill" style={{ position: 'absolute', height: '100%', backgroundColor: '#7148fc', borderRadius: '10px' }}></div>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* --- 2. 메인 리스트 화면 --- */}
             {!showResult ? (
                 <>
                     <header className="art-header">
@@ -196,8 +198,6 @@ const GuidePage = ({ initialTab }: any) => {
                                     </div>
                                     <p className="art-price">{guide.price}</p>
                                 </div>
-                                
-                                {/* 🚀 [수정] AI 가이드일 때는 직접 파일 업로드 인풋을 트리거합니다. */}
                                 {activeTab === 'ai' ? (
                                     <label className="art-btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                                         <Upload size={16} /> 사진 업로드
@@ -213,103 +213,76 @@ const GuidePage = ({ initialTab }: any) => {
                     </div>
                 </>
             ) : (
-                /* 결과 화면 UI는 그대로 유지 */
-                <div className="art-result-container">
-                    <header className="result-header">
-                        <button className="back-btn-inner" onClick={() => setShowResult(false)}>
+                /* --- 3. 분석 결과 화면 (전체 화면을 덮는 독립 레이어) --- */
+                <div className="art-result-page-wrapper" style={{ 
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex', flexDirection: 'column', backgroundColor: '#fff', zIndex: 50
+                }}>
+                    <header className="result-header" style={{ flexShrink: 0, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #eee' }}>
+                        <button className="back-btn-inner" onClick={() => setShowResult(false)} style={{ background: 'none', border: 'none', padding: 0 }}>
                             <ChevronLeft size={24} />
                         </button>
-                        <span className="header-tag">🤖 AI 도슨트 리포트</span>
+                        <span className="header-tag" style={{ fontWeight: 'bold', color: '#7148fc' }}>🤖 AI 도슨트 리포트</span>
                         <div style={{ width: 24 }}></div>
                     </header>
 
-                    <div className="result-body">
+                    <div className="result-body-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: '180px', WebkitOverflowScrolling: 'touch' }}>
                         <div className="result-info-group">
-                            <h1 className="result-title">{scannedArt.title}</h1>
-                            <p className="result-artist">{scannedArt.artist}, {scannedArt.year}</p>
+                            <h1 className="result-title" style={{ fontSize: '22px', marginBottom: '4px', fontWeight: '800' }}>{scannedArt.title}</h1>
+                            <p className="result-artist" style={{ color: '#666', marginBottom: '20px' }}>{scannedArt.artist}, {scannedArt.year}</p>
                         </div>
 
-                        <div className="result-image-placeholder" style={{ padding: 0, overflow: 'hidden' }}>
+                        <div className="result-image-card" style={{ borderRadius: '16px', overflow: 'hidden', marginBottom: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
                             {scannedArt.imagePreview ? (
-                                <img src={scannedArt.imagePreview} alt="Scanned Art" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={scannedArt.imagePreview} alt="Scanned Art" style={{ width: '100%', display: 'block' }} />
                             ) : (
-                                <><ImageIcon size={40} color="#ddd" /><span>분석 완료</span></>
+                                <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
+                                    <ImageIcon size={40} color="#ddd" />
+                                </div>
                             )}
                         </div>
 
-                        <div className="ai-speech-bubble">
-                            <div className="ai-label">🤖 아티의 한마디</div>
-                            <p>{scannedArt.description}</p>
+                        <div className="ai-speech-bubble" style={{ backgroundColor: '#f8f7ff', padding: '20px', borderRadius: '16px', borderTopLeftRadius: '4px', lineHeight: '1.6' }}>
+                            <div className="ai-label" style={{ fontWeight: 'bold', color: '#7148fc', marginBottom: '8px', fontSize: '14px' }}>🤖 아티의 한마디</div>
+                            <p style={{ margin: 0, wordBreak: 'keep-all', fontSize: '15px' }}>{scannedArt.description}</p>
                         </div>
-
-
-{showPlayer && (
-    <div 
-        className="audio-mini-player" 
-        style={{ 
-            position: 'fixed',
-            left: '16px',
-            right: '16px',
-            bottom: '110px', // 하단바 위로 충분히 올림 (이미지 기준 약 110px이 적당해 보입니다)
-            zIndex: 9999,
-            backgroundColor: 'rgba(26, 26, 26, 0.98)', // 배경색 진하게
-            borderRadius: '20px',
-            padding: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.1)' // 살짝 테두리 추가로 고급스럽게
-        }}
-    >
-        <div className="mini-player-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="mini-icon" style={{ fontSize: '24px' }}>🎵</div>
-            <div style={{ textAlign: 'left' }}>
-                <div className="mini-title" style={{ color: 'white', fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
-                    {scannedArt.title || '분석된 작품'}
-                </div>
-                <div className="mini-status" style={{ color: '#007AFF', fontSize: '12px', fontWeight: '500' }}>
-                    AI 도슨트 해설 재생 중
-                </div>
-            </div>
-        </div>
-        
-        <div className="mini-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button 
-                onClick={() => setIsPlaying(!isPlaying)} 
-                style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}
-            >
-                {isPlaying ? 
-                    <Pause size={28} fill="white" color="white" /> : 
-                    <Play size={28} fill="white" color="white" />
-                }
-            </button>
-            <button 
-                onClick={() => { audioElement?.pause(); setShowPlayer(false); }} 
-                style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', opacity: 0.5 }}
-            >
-                <X size={22} color="white" />
-            </button>
-        </div>
-    </div>
-)}
                     </div>
 
-                    <footer className="result-footer-simple">
-                        <label className="footer-btn secondary" style={{ cursor: 'pointer', textAlign: 'center' }}>
-                            다시 선택
-                            <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
-                        </label>
-                        <button className="footer-btn primary" onClick={handleAudioGuide}>
-                            <Volume2 size={18} /> {showPlayer ? '가이드 중단' : '오디오 가이드'}
-                        </button>
-                    </footer>
+                    {/* 하단 고정 조작 영역 */}
+                    <div className="result-fixed-bottom" style={{ position: 'fixed', bottom: '85px', left: '20px', right: '20px', display: 'flex', flexDirection: 'column', gap: '12px', zIndex: 100 }}>
+                        {showPlayer && (
+                            <div className="audio-inline-player" style={{ backgroundColor: '#1a1a1a', borderRadius: '16px', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <div className="music-icon-ani">🎵</div>
+                                    <div style={{ textAlign: 'left' }}>
+                                        <div style={{ color: 'white', fontSize: '13px', fontWeight: 'bold' }}>작품 해설 재생 중</div>
+                                        <div style={{ color: '#aaa', fontSize: '11px' }}>AI 아티</div>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <button onClick={() => setIsPlaying(!isPlaying)} style={{ background: 'none', border: 'none', color: '#fff' }}>
+                                        {isPlaying ? <Pause size={24} fill="white" /> : <Play size={24} fill="white" />}
+                                    </button>
+                                    <button onClick={() => { audioElement?.pause(); setShowPlayer(false); }} style={{ background: 'none', border: 'none', opacity: 0.5 }}>
+                                        <X size={18} color="white" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                            <label className="footer-btn secondary" style={{ cursor: 'pointer', flex: 1, backgroundColor: '#eee', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', fontWeight: '600' }}>
+                                다시 선택
+                                <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+                            </label>
+                            <button className="footer-btn primary" onClick={handleAudioGuide} style={{ flex: 1.8, backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontWeight: '600' }}>
+                                <Volume2 size={18} /> {showPlayer ? '가이드 중단' : '오디오 가이드'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* 🚀 [수정] isScannerOpen 관련 오버레이 코드 전체 삭제 */}
-
-            {/* 예약 모달 기능은 그대로 유지 */}
+            {/* --- 4. 예약 모달 --- */}
             {isBookingOpen && (
                 <div className="booking-modal-overlay">
                     <div className="booking-modal">

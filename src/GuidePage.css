@@ -305,14 +305,26 @@
     width: 80%;
 }
 
+
+/* 1. 로딩바 진행 애니메이션 */
+.progress-track {
+  width: 200px;
+  height: 6px;
+  background-color: #f0f0f0;
+  border-radius: 10px;
+  margin-top: 30px;
+  overflow: hidden;
+  position: relative;
+}
+
+
 .ai-pulse-circle {
     position: relative;
-    width: 100px;
-    height: 100px;
-    margin: 0 auto 30px;
     display: flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
 }
 
 .ai-icon {
@@ -320,13 +332,19 @@
     z-index: 10;
 }
 
+/* 펄스 애니메이션 */
 .pulse-ring {
     position: absolute;
-    width: 100%;
-    height: 100%;
-    border: 2px solid #7c4dff;
+    width: 80px;
+    height: 80px;
+    border: 4px solid #000;
     border-radius: 50%;
-    animation: pulse 2s infinite ease-out;
+    animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+    0% { transform: scale(0.8); opacity: 0.5; }
+    100% { transform: scale(1.5); opacity: 0; }
 }
 
 .delay-1 {
@@ -379,12 +397,56 @@
     overflow: hidden;
 }
 
+/* 로딩바 애니메이션 - 이것이 누락되면 바가 움직이지 않습니다 */
 .loading-bar-fill {
-    width: 0%;
+    width: 30%;
     height: 100%;
-    background: #7c4dff;
-    box-shadow: 0 0 10px #7c4dff;
-    animation: loading-fill 3.5s linear forwards;
+    background-color: #000;
+    border-radius: 10px;
+    animation: loading-progress 1.5s infinite ease-in-out;
+}
+
+
+@keyframes slide-progress {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+/* 2. 아이콘 두근거리는 애니메이션 */
+.ai-avatar-pulse {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-avatar-pulse::after {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px solid #7148fc;
+  border-radius: 50%;
+  animation: circle-pulse 2s infinite;
+}
+
+@keyframes circle-pulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+
+.progress-fill {
+  width: 40%;
+  height: 100%;
+  background-color: #7148fc; /* 앱의 메인 테마 색상으로 변경 가능 */
+  border-radius: 10px;
+  animation: slide-progress 1.5s infinite ease-in-out;
+}
+
+@keyframes loading-progress {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
 }
 
 @keyframes loading-fill {
