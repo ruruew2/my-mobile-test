@@ -1,341 +1,494 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, CheckCircle, Image as ImageIcon } from 'lucide-react'; 
-import axios from 'axios';
+import {
+    Star,
+    X,
+    ChevronLeft,
+    Volume2,
+    Play,
+    Pause,
+    Calendar,
+    Users,
+    CheckCircle,
+    Image as ImageIcon,
+    Clock,
+} from 'lucide-react';
 import './GuidePage.css';
 
-/**
- * [중요] PC 테스트 시 주의사항:
- * 1. 브라우저 주소창 왼쪽 '자물쇠' 아이콘 클릭
- * 2. '사이트 설정' 클릭
- * 3. '보안되지 않은 콘텐츠(Insecure content)' -> [허용]으로 변경
- * 4. 페이지 새로고침
- */
-const API_BASE_URL = 'http://54.180.234.226:8000'; 
+// ✅ 1. 톱니바퀴 모양의 커스텀 인증 배지 컴포넌트 (VerifiedBadge)
+const VerifiedBadge = () => (
+    <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ flexShrink: 0, marginLeft: '4px' }}
+    >
+        <path
+            d="M10.5213 2.62368C11.3147 1.75217 12.6853 1.75217 13.4787 2.62368L14.4827 3.72658C14.8035 4.07886 15.2555 4.26596 15.7281 4.24227L17.2069 4.16813C18.3741 4.10961 19.3555 5.03928 19.349 6.20735L19.3407 7.68798C19.338 8.16128 19.5541 8.60432 19.9363 8.88241L21.1325 9.75271C22.0772 10.4399 22.2198 11.7663 21.4354 12.6369L20.4404 13.7411C20.1226 14.0936 20.0152 14.5714 20.1444 15.013L20.5488 16.3949C20.8681 17.4857 20.1481 18.6111 19.0191 18.7844L17.588 19.0041C17.1305 19.0743 16.7328 19.3475 16.4913 19.7441L15.7358 20.9849C15.1394 21.9644 13.824 22.2965 12.8258 21.72L11.5606 20.9897C11.1561 20.7563 10.6661 20.7563 10.2616 20.9897L8.99645 21.72C7.99818 22.2965 6.6828 21.9644 6.08638 20.9849L5.33091 19.7441C5.08945 19.3475 4.6917 19.0743 4.2342 19.0041L2.8031 18.7844C1.67406 18.6111 0.954056 17.4857 1.27338 16.3949L1.67781 15.013C1.80698 14.5714 1.69963 14.0936 1.38178 13.7411L0.386801 12.6369C-0.397633 11.7663 -0.254992 10.4399 0.689679 9.75271L1.88588 8.88241C2.26811 8.60432 2.48417 8.16128 2.48152 7.68798L2.47321 6.20735C2.46671 5.03928 3.44812 4.10961 4.61529 4.16813L6.09409 4.24227C6.56667 4.26596 7.01869 4.07886 7.3395 3.72658L8.3435 2.62368C9.13689 1.75217 10.5101 1.75217 11.3035 2.62368H10.5213Z"
+            fill="#3897f0"
+        />
+        <path d="M8 12L11 15L16 10" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+);
 
 const GuidePage = ({ initialTab }: any) => {
-  const [activeTab, setActiveTab] = useState<'human' | 'ai'>(initialTab || 'human');
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showPlayer, setShowPlayer] = useState(false);
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [bookingStep, setBookingStep] = useState(1); 
-  const [personCount, setPersonCount] = useState(1);
-  const [scannedArt, setScannedArt] = useState<any>({
-    title: "", artist: "", year: "", description: "", audio_url: ""
-  });
+    const [activeTab, setActiveTab] = useState<'human' | 'ai'>(initialTab || 'human');
+    const [isScannerOpen, setIsScannerOpen] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [showResult, setShowResult] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(true);
+    const [showPlayer, setShowPlayer] = useState(false);
+    const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+    const [isBookingOpen, setIsBookingOpen] = useState(false);
+    const [bookingStep, setBookingStep] = useState(1);
+    const [personCount, setPersonCount] = useState(1);
 
-  // --- 카메라 로직 (PC/모바일 공용 최적화) ---
-  const startCamera = async () => {
-    try {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+    // ✅ 2. 시간 상태 관리 (24시간제)
+    const [selectedTime, setSelectedTime] = useState<string>('14:00');
+    const [selectedDate, setSelectedDate] = useState<string>('2026-05-20');
 
-      const constraints = {
-        video: { 
-          // ideal을 써야 PC 웹캠과 모바일 후면 카메라를 유연하게 잡습니다.
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
-      };
+    const [scannedArt, setScannedArt] = useState({
+        title: '',
+        artist: '',
+        year: '',
+        description: '',
+    });
 
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      setStream(mediaStream);
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        
-        // metadata 로드 후 재생 (iOS 및 PC 크롬 대응)
-        videoRef.current.onloadedmetadata = async () => {
-          try {
-            await videoRef.current?.play();
-          } catch (playError) {
-            console.error("자동 재생 실패:", playError);
-          }
-        };
-      }
-    } catch (err: any) {
-      console.error("카메라 상세 에러:", err);
-      alert(`카메라를 켤 수 없습니다.\n원인: ${err.name}\n\n도움말:\n1. 카메라 권한 허용을 확인하세요.\n2. 다른 앱에서 카메라를 사용 중인지 확인하세요.`);
-      setIsScannerOpen(false);
-    }
-  };
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [stream, setStream] = useState<MediaStream | null>(null);
 
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  };
+    useEffect(() => {
+        if (initialTab) setActiveTab(initialTab);
+    }, [initialTab]);
 
-  useEffect(() => {
-    if (isScannerOpen) {
-      startCamera();
-    } else {
-      stopCamera();
-    }
-    return () => stopCamera();
-  }, [isScannerOpen]);
-
-  // --- API 분석 로직 ---
-  const handleCapture = async () => {
-    if (!videoRef.current || !stream || videoRef.current.videoWidth === 0) {
-      alert("카메라 준비가 완료되지 않았습니다.");
-      return;
-    }
-
-    setIsAnalyzing(true);
-
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    
-    if (!ctx) {
-      setIsAnalyzing(false);
-      return;
-    }
-
-    ctx.drawImage(videoRef.current, 0, 0);
-
-    canvas.toBlob(async (blob) => {
-      if (!blob) {
-        setIsAnalyzing(false);
-        return;
-      }
-      
-      const formData = new FormData();
-      formData.append('image', blob, 'scan.jpg');
-      formData.append('lang', 'ko');
-
-      try {
-        const response = await axios.post(`${API_BASE_URL}/api/ai/analyze-scan`, formData, {
-          timeout: 15000 // 15초 타임아웃 설정
-        });
-        
-        if (response.data.status === "success") {
-          setScannedArt(response.data.data); 
-          setIsAnalyzing(false);
-          setIsScannerOpen(false);
-          setShowResult(true);
-        } else {
-          throw new Error("분석 결과가 올바르지 않습니다.");
+    const startCamera = async () => {
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' },
+                audio: false,
+            });
+            setStream(mediaStream);
+            if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+            }
+        } catch (err) {
+            console.error('카메라 접근 에러:', err);
+            alert('카메라 권한을 허용해주세요.');
+            setIsScannerOpen(false);
         }
-      } catch (error: any) {
-        console.error("분석 실패 상세:", error);
-        alert(`AWS 서버 연결 실패!\n\n해결방법:\n1. 브라우저 사이트 설정에서 '보안되지 않은 콘텐츠'를 [허용]했는지 확인하세요.\n2. AWS 서버(8000포트)가 정상 작동 중인지 확인하세요.`);
-        setIsAnalyzing(false);
-      }
-    }, 'image/jpeg');
-  };
+    };
 
-  const toggleAudio = () => {
-    if (!scannedArt.audio_url) return;
-    
-    if (!audioRef.current) {
-      audioRef.current = new Audio(scannedArt.audio_url);
-      audioRef.current.onended = () => setIsPlaying(false);
-    }
+    const stopCamera = () => {
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            setStream(null);
+        }
+    };
 
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(e => alert("오디오 재생 실패: " + e.message));
-      setShowPlayer(true);
-    }
-    setIsPlaying(!isPlaying);
-  };
+    useEffect(() => {
+        if (isScannerOpen) startCamera();
+        else stopCamera();
+        return () => stopCamera();
+    }, [isScannerOpen]);
 
-  const handleBooking = () => {
-    setBookingStep(2);
-    setTimeout(() => {
-      setIsBookingOpen(false);
-      setBookingStep(1);
-    }, 2000);
-  };
+    const handleCapture = async () => {
+        if (!videoRef.current) return;
+        setIsAnalyzing(true);
 
-  return (
-    <div className="art-guide-container">
-      {/* 1. 분석 로딩 오버레이 */}
-      {isAnalyzing && (
-        <div className="analysis-loading-overlay">
-          <div className="loading-content">
-            <div className="ai-pulse-circle">
-              <div className="pulse-ring"></div>
-              <span className="ai-icon">🤖</span>
-            </div>
-            <h3 className="loading-title">아티가 작품을 분석 중입니다...</h3>
-            <div className="loading-bar-bg"><div className="loading-bar-fill"></div></div>
-          </div>
-        </div>
-      )}
+        const canvas = document.createElement('canvas');
+        canvas.width = videoRef.current.videoWidth;
+        canvas.height = videoRef.current.videoHeight;
+        canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
 
-      {/* 2. 메인 화면 */}
-      {!showResult ? (
-        <>
-          <header className="art-header">
-            <h1 className="art-title"><br/>전문 도슨트 서비스</h1>
-            <p className="art-desc">전문 큐레이터부터 AI 가이드까지.</p>
-          </header>
-          <nav className="art-tab-nav">
-            <button className={`art-tab-item ${activeTab === 'human' ? 'is-active' : ''}`} onClick={() => setActiveTab('human')}>인간 도슨트</button>
-            <button className={`art-tab-item ${activeTab === 'ai' ? 'is-active' : ''}`} onClick={() => setActiveTab('ai')}>AI 가이드</button>
-          </nav>
-          <div className="art-list">
-            {(activeTab === 'human' ? 
-              [{ id: 1, name: '김사랑 도슨트', job: '현대미술, 미술사학', price: '45,000원', rating: 4.9, emoji: '👩‍🎨' }] : 
-              [{ id: 1, name: '아티 (AI 가이드)', job: '추상화, 디지털 아트', price: '무료 (AI)', rating: 4.8, emoji: '🤖' }]
-            ).map((guide) => (
-              <div key={guide.id} className={`art-card ${activeTab === 'ai' ? 'ai-special' : ''}`}>
-                <div className="art-avatar">{guide.emoji}</div>
-                <div className="art-info">
-                  <div className="art-name-row">
-                    <span className="art-name">{guide.name}</span>
-                    <span className="art-rating"><Star size={12} fill="#ffcc00" color="#ffcc00" /> {guide.rating}</span>
-                  </div>
-                  <p className="art-job">{guide.job}</p>
-                  <p className="art-price">{guide.price}</p>
-                </div>
-                <button className="art-btn" onClick={() => activeTab === 'ai' ? setIsScannerOpen(true) : setIsBookingOpen(true)}>
-                  {activeTab === 'human' ? '예약하기' : '해설 시작'}
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        /* 3. 분석 결과 화면 */
-        <div className="art-result-container">
-          <header className="result-header">
-            <button className="back-btn-inner" onClick={() => {setShowResult(false); if(audioRef.current) audioRef.current.pause(); setIsPlaying(false);}}><ChevronLeft size={24} /></button>
-            <span className="header-tag">🤖 AI 도슨트 리포트</span>
-            <div style={{ width: 24 }}></div>
-          </header>
+        canvas.toBlob(async (blob) => {
+            if (!blob) return;
+            const formData = new FormData();
+            formData.append('image', blob, 'scan.jpg');
 
-          <div className="result-body">
-            <div className="result-info-group">
-              <h1 className="result-title">{scannedArt.title}</h1>
-              <p className="result-artist">{scannedArt.artist}, {scannedArt.year}</p>
-            </div>
+            try {
+                // 가짜 데이터 응답 시뮬레이션
+                setTimeout(() => {
+                    setScannedArt({
+                        title: '별이 빛나는 밤',
+                        artist: '빈센트 반 고흐',
+                        year: '1889',
+                        description:
+                            '고흐가 생레미의 정신병원에 입원했을 때 그린 작품입니다. 소용돌이치는 하늘과 밝은 달은 고흐의 감정 상태를 대변합니다.',
+                    });
+                    setIsAnalyzing(false);
+                    setIsScannerOpen(false);
+                    setShowResult(true);
+                }, 2000);
+            } catch (error) {
+                console.error('분석 실패:', error);
+                setIsAnalyzing(false);
+                alert('분석에 실패했습니다.');
+            }
+        }, 'image/jpeg');
+    };
 
-            <div className="result-image-placeholder">
-              <ImageIcon size={40} color="#ddd" />
-              <span>분석 완료된 이미지입니다</span>
-            </div>
+    const handleAudioGuide = async () => {
+        if (showPlayer) {
+            audioElement?.pause();
+            setShowPlayer(false);
+            return;
+        }
 
-            <div className="ai-speech-bubble">
-              <div className="ai-label">🤖 아티의 한마디</div>
-              <p>{scannedArt.description}</p>
-            </div>
+        try {
+            const mockAudioUrl = 'https://actions.google.com/sounds/v1/meta/soft_notification.ogg';
+            const audio = new Audio(mockAudioUrl);
+            audio.play();
+            setAudioElement(audio);
+            setShowPlayer(true);
+            setIsPlaying(true);
 
-            {showPlayer && (
-              <div className="audio-mini-player">
-                <div className="mini-player-info">
-                  <div className="mini-icon">🎵</div>
-                  <div>
-                    <div className="mini-title">{scannedArt.title}</div>
-                    <div className="mini-status">{isPlaying ? '재생 중' : '일시 정지'}</div>
-                  </div>
-                </div>
-                <div className="mini-controls">
-                  <button onClick={toggleAudio}>
-                    {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
-                  </button>
-                  <button onClick={() => setShowPlayer(false)} style={{marginLeft: '12px', opacity: 0.6}}>
-                    <X size={18} color="white" />
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            audio.onended = () => {
+                setShowPlayer(false);
+                setIsPlaying(false);
+            };
+        } catch (error) {
+            console.error('오디오 가이드 요청 실패:', error);
+            alert('오디오 가이드를 생성할 수 없습니다.');
+        }
+    };
 
-          <footer className="result-footer-simple">
-            <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
-            <button className="footer-btn primary" onClick={toggleAudio}>
-              <Volume2 size={18} /> {isPlaying ? '가이드 중단' : '오디오 가이드'}
-            </button>
-          </footer>
-        </div>
-      )}
+    useEffect(() => {
+        if (!audioElement) return;
+        if (isPlaying) audioElement.play();
+        else audioElement.pause();
+    }, [isPlaying, audioElement]);
 
-      {/* 4. 스캐너 오버레이 */}
-      {isScannerOpen && (
-        <div className="art-scanner-overlay">
-            <div className="scanner-top">
-                <button className="close-btn" onClick={() => setIsScannerOpen(false)}><X size={28} /></button>
-                <span>작품 스캔</span>
-                <div style={{width: 28}}></div>
-            </div>
-            <div className="scanner-frame-box">
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  muted 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover'}} 
-                />
-                <div className="scanner-laser"></div>
-            </div>
-            <div className="scanner-bottom">
-                <div className="capture-outer" onClick={handleCapture}><div className="capture-inner"></div></div>
-            </div>
-        </div>
-      )}
+    // ✅ 3. 예약 완료 함수 (시간 데이터 유지)
+    const handleBooking = () => {
+        setBookingStep(2);
+        setTimeout(() => {
+            setIsBookingOpen(false);
+            setBookingStep(1);
+        }, 2000);
+    };
 
-      {/* 5. 예약 모달 */}
-      {isBookingOpen && (
-        <div className="booking-modal-overlay">
-          <div className="booking-modal">
-            {bookingStep === 1 ? (
-              <>
-                <div className="modal-header">
-                  <h3>도슨트 예약하기</h3>
-                  <button onClick={() => setIsBookingOpen(false)}><X size={20} /></button>
-                </div>
-                <div className="modal-content">
-                  <div className="guide-summary">
-                    <span className="summary-emoji">👩‍🎨</span>
-                    <div><p className="summary-name">김사랑 도슨트</p><p className="summary-info">45,000원 / 회</p></div>
-                  </div>
-                  <div className="input-group">
-                    <label><Calendar size={16} /> 예약 날짜</label>
-                    <input type="date" className="custom-date-input" defaultValue="2026-05-20" />
-                  </div>
-                  <div className="input-group">
-                    <label><Users size={16} /> 인원 선택</label>
-                    <div className="person-selector">
-                      {[1, 2, 3].map((num) => (
-                        <div key={num} className={`person-chip ${personCount === num ? 'active' : ''}`} onClick={() => setPersonCount(num)}>
-                          {num === 3 ? '3명+' : `${num}명`}
+    return (
+        <div className="art-guide-container">
+            {isAnalyzing && (
+                <div className="analysis-loading-overlay">
+                    <div className="loading-content">
+                        <div className="ai-pulse-circle">
+                            <div className="pulse-ring"></div>
+                            <span className="ai-icon">🤖</span>
                         </div>
-                      ))}
+                        <h3 className="loading-title">아티가 작품을 분석 중입니다...</h3>
+                        <div className="loading-bar-bg">
+                            <div className="loading-bar-fill"></div>
+                        </div>
                     </div>
-                  </div>
                 </div>
-                <button className="booking-submit-btn" onClick={handleBooking}>결제 및 예약 확정</button>
-              </>
-            ) : (
-              <div className="booking-success">
-                <div className="success-icon-container">
-                  <CheckCircle size={65} color="#000" fill="#22c55e" strokeWidth={3} />
-                </div>
-                <h3 className="success-title">예약이 완료되었습니다!</h3>
-                <p className="success-desc">도슨트가 곧 확인 연락을 드릴 예정입니다.</p>
-              </div>
             )}
-          </div>
+
+            {!showResult ? (
+                <>
+                    <header className="art-header">
+                        <h1 className="art-title">전문 도슨트 서비스</h1>
+                        <p className="art-desc">전문 큐레이터부터 AI 가이드까지.</p>
+                    </header>
+                    <nav className="art-tab-nav">
+                        <button
+                            className={`art-tab-item ${activeTab === 'human' ? 'is-active' : ''}`}
+                            onClick={() => setActiveTab('human')}
+                        >
+                            인간 도슨트
+                        </button>
+                        <button
+                            className={`art-tab-item ${activeTab === 'ai' ? 'is-active' : ''}`}
+                            onClick={() => setActiveTab('ai')}
+                        >
+                            AI 가이드
+                        </button>
+                    </nav>
+                    <div className="art-list">
+                        {(activeTab === 'human'
+                            ? [
+                                {
+                                    id: 1,
+                                    name: '김사랑 도슨트',
+                                    subtitle: '현대미술, 미술사학', // ✅ 4. 설명 필드
+                                    price: '45,000원',
+                                    rating: 4.9,
+                                    emoji: '👩‍🎨',
+                                    isVerified: true, // ✅ 1. 배지
+                                    tags: ['전문가', '주말가능']
+                                },
+                                {
+                                    id: 2,
+                                    name: '최아트 도슨트',
+                                    subtitle: '조각미술, 설치미술', // ✅ 4. 설명 필드
+                                    price: '38,000원',
+                                    rating: 4.7,
+                                    emoji: '👨‍🎨',
+                                    isVerified: false, // ✅ 1. 배지
+                                    tags: ['인기', '평일가능']
+                                },
+                            ]
+                            : [
+                                {
+                                    id: 1,
+                                    name: '아티 (AI 가이드)',
+                                    subtitle: '실시간 작품 분석 및 해설',
+                                    price: '무료 (AI)',
+                                    rating: 4.8,
+                                    emoji: '🤖',
+                                    isVerified: false, // ✅ 1. 배지 없음
+                                    tags: ['실시간', '무료']
+                                },
+                            ]
+                        ).map((guide) => (
+                            <div key={guide.id} className={`art-card ${activeTab === 'ai' ? 'ai-special' : ''}`}>
+                                <div className="art-avatar">{guide.emoji}</div>
+                                <div className="art-info">
+                                    <div
+                                        className="art-name-row"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    >
+                                        <span className="art-name">{guide.name}</span>
+                                        {/* ✅ 1. 배지 조건부 렌더링 */}
+                                        {guide.isVerified && <VerifiedBadge />}
+                                        <span
+                                            className="art-rating"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '2px',
+                                                marginLeft: '6px',
+                                            }}
+                                        >
+                                            <Star size={12} fill="#ffcc00" color="#ffcc00" />
+                                            <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#ffcc00' }}>
+                                                {guide.rating}
+                                            </span>
+                                        </span>
+                                    </div>
+                                    {/* ✅ 4. 도슨트 설명 */}
+                                    <p
+                                        className="art-subtitle"
+                                        style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}
+                                    >
+                                        {guide.subtitle}
+                                    </p>
+                                    <div className="art-tags">
+                                        {guide.tags.map((tag) => (
+                                            <span key={tag} className="art-tag">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <p className="art-price">{guide.price}</p>
+                                </div>
+                                <button
+                                    className="art-btn"
+                                    onClick={() =>
+                                        activeTab === 'ai' ? setIsScannerOpen(true) : setIsBookingOpen(true)
+                                    }
+                                >
+                                    {activeTab === 'human' ? '예약하기' : '해설 시작'}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            ) : (
+                <div className="art-result-container">
+                    <header className="result-header">
+                        <button className="back-btn-inner" onClick={() => setShowResult(false)}>
+                            <ChevronLeft size={24} />
+                        </button>
+                        <span className="header-tag">🤖 AI 도슨트 리포트</span>
+                        <div style={{ width: 24 }}></div>
+                    </header>
+
+                    <div className="result-body">
+                        <div className="result-info-group">
+                            <h1 className="result-title">{scannedArt.title}</h1>
+                            <p className="result-artist">
+                                {scannedArt.artist}, {scannedArt.year}
+                            </p>
+                        </div>
+
+                        <div className="result-image-placeholder">
+                            <ImageIcon size={40} color="#ddd" />
+                            <span>분석 완료된 이미지입니다</span>
+                        </div>
+
+                        <div className="ai-speech-bubble">
+                            <div className="ai-label">🤖 아티의 한마디</div>
+                            <p>{scannedArt.description}</p>
+                        </div>
+
+                        {showPlayer && (
+                            <div className="audio-mini-player">
+                                <div className="mini-player-info">
+                                    <div className="mini-icon">🎵</div>
+                                    <div>
+                                        <div className="mini-title">{scannedArt.title}</div>
+                                        <div className="mini-status">AI 해설 재생 중</div>
+                                    </div>
+                                </div>
+                                <div className="mini-controls">
+                                    <button onClick={() => setIsPlaying(!isPlaying)}>
+                                        {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            audioElement?.pause();
+                                            setShowPlayer(false);
+                                        }}
+                                        style={{ marginLeft: '12px', opacity: 0.6 }}
+                                    >
+                                        <X size={18} color="white" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <footer className="result-footer-simple">
+                        <button
+                            className="footer-btn secondary"
+                            onClick={() => {
+                                setShowResult(false);
+                                setIsScannerOpen(true);
+                            }}
+                        >
+                            다시 스캔
+                        </button>
+                        <button className="footer-btn primary" onClick={handleAudioGuide}>
+                            <Volume2 size={18} /> {showPlayer ? '가이드 중단' : '오디오 가이드'}
+                        </button>
+                    </footer>
+                </div>
+            )}
+
+            {isScannerOpen && (
+                <div className="art-scanner-overlay">
+                    <div className="scanner-top">
+                        <button className="close-btn" onClick={() => setIsScannerOpen(false)}>
+                            <X size={28} />
+                        </button>
+                        <span>작품 스캔</span>
+                        <div style={{ width: 28 }}></div>
+                    </div>
+                    <div className="scanner-frame-box">
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        <div className="scanner-laser"></div>
+                    </div>
+                    <div className="scanner-bottom">
+                        <div className="capture-outer" onClick={handleCapture}>
+                            <div className="capture-inner"></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isBookingOpen && (
+                <div className="booking-modal-overlay">
+                    <div className="booking-modal">
+                        {bookingStep === 1 ? (
+                            <>
+                                <div className="modal-header">
+                                    <h3>도슨트 예약하기</h3>
+                                    <button onClick={() => setIsBookingOpen(false)}>
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                                <div className="modal-content">
+                                    <div className="guide-summary">
+                                        <span className="summary-emoji">👩‍🎨</span>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                <p className="summary-name">김사랑 도슨트</p>
+                                                {/* ✅ 배지 */}
+                                                <VerifiedBadge />
+                                            </div>
+                                            <p className="summary-tags">현대미술, 미술사학</p>
+                                            <p className="summary-info">45,000원 / 회</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="input-group">
+                                        <label>
+                                            <Calendar size={16} /> 예약 날짜
+                                        </label>
+                                        <input
+                                            type="date"
+                                            className="custom-date-input"
+                                            value={selectedDate}
+                                            onChange={(e) => setSelectedDate(e.target.value)}
+                                        />
+                                    </div>
+
+                                    {/* ✅ 2. 24시간제 시간 선택 UI */}
+                                    <div className="input-group">
+                                        <label>
+                                            <Clock size={16} /> 예약 시간
+                                        </label>
+                                        <input
+                                            type="time"
+                                            className="custom-time-input"
+                                            value={selectedTime}
+                                            onChange={(e) => setSelectedTime(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="input-group">
+                                        <label>
+                                            <Users size={16} /> 인원 선택
+                                        </label>
+                                        <div className="person-selector">
+                                            {[1, 2, 3, 4].map((num) => (
+                                                <div
+                                                    key={num}
+                                                    className={`person-chip ${personCount === num ? 'active' : ''}`}
+                                                    onClick={() => setPersonCount(num)}
+                                                >
+                                                    {num === 4 ? '4명+' : `${num}명`}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button className="booking-submit-btn" onClick={handleBooking}>
+                                    결제 및 예약 확정
+                                </button>
+                            </>
+                        ) : (
+                            <div className="booking-success">
+                                <div className="success-icon-container">
+                                    <CheckCircle size={65} color="#000" fill="#22c55e" strokeWidth={3} />
+                                </div>
+                                <h3 className="success-title">예약이 완료되었습니다!</h3>
+                                <br></br>
+                                {/* ✅ 3. 선택한 시간 표시 */}
+                                <p className="success-desc">
+                                    <strong>
+                                        {selectedDate} {selectedTime}
+                                    </strong>
+                                    <br></br><p></p>
+                                    예약이 확정되었습니다.
+                                    <br></br>
+                                    도슨트가 곧 확인 연락을 드릴 예정입니다.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default GuidePage;
