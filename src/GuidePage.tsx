@@ -94,65 +94,85 @@ const GuidePage = ({ initialTab }: any) => {
     }, [isScannerOpen]);
 
     const handleCapture = async () => {
-        if (!videoRef.current) return;
-        setIsAnalyzing(true);
+    if (!videoRef.current) return;
+    setIsAnalyzing(true);
 
-        const canvas = document.createElement('canvas');
-        canvas.width = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
-        canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
 
-        canvas.toBlob(async (blob) => {
-            if (!blob) return;
-            const formData = new FormData();
-            formData.append('image', blob, 'scan.jpg');
+    canvas.toBlob(async (blob) => {
+        if (!blob) return;
+        
+        // 1. FormData 생성 (백엔드 파라미터와 일치시켜야 함)
+        const formData = new FormData();
+        formData.append('file', blob, 'scan.jpg'); // 백엔드 @app.post에서 file: UploadFile로 받음
+        formData.append('lang', 'ko');             // 기본 언어 설정
 
-            try {
-                // 가짜 데이터 응답 시뮬레이션
-                setTimeout(() => {
-                    setScannedArt({
-                        title: '별이 빛나는 밤',
-                        artist: '빈센트 반 고흐',
-                        year: '1889',
-                        description:
-                            '고흐가 생레미의 정신병원에 입원했을 때 그린 작품입니다. 소용돌이치는 하늘과 밝은 달은 고흐의 감정 상태를 대변합니다.',
-                    });
-                    setIsAnalyzing(false);
-                    setIsScannerOpen(false);
-                    setShowResult(true);
-                }, 2000);
-            } catch (error) {
-                console.error('분석 실패:', error);
+        try {
+            // 2. 실제 백엔드 API 호출
+            const response = await fetch('http://localhost:8000/api/ai/docent', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (result.status === "success") {
+                // result.data는 [audio_url, script] 형태임 (ai_service.py 참고)
+                const [audioUrl, script] = result.data;
+
+                setScannedArt({
+                    title: '분석된 작품', // GPT가 스크립트 안에 제목을 넣어주므로 필요시 파싱 가능
+                    artist: 'AI 도슨트',
+                    description: script,
+                    audioPath: `http://localhost:8000/${audioUrl}` // 오디오 경로 저장
+                });
+                
                 setIsAnalyzing(false);
-                alert('분석에 실패했습니다.');
+                setIsScannerOpen(false);
+                setShowResult(true);
+            } else {
+                throw new Error("분석 실패");
             }
-        }, 'image/jpeg');
-    };
+        } catch (error) {
+            console.error('분석 실패:', error);
+            setIsAnalyzing(false);
+            alert('AI 도슨트 서버가 응답하지 않습니다.');
+        }
+    }, 'image/jpeg');
+};
 
-    const handleAudioGuide = async () => {
-        if (showPlayer) {
-            audioElement?.pause();
-            setShowPlayer(false);
+const handleAudioGuide = async () => {
+    if (showPlayer) {
+        audioElement?.pause();
+        setShowPlayer(false);
+        return;
+    }
+
+    try {
+        // handleCapture에서 저장해둔 audioPath를 사용합니다.
+        if (!scannedArt.audioPath) {
+            alert("재생할 오디오 파일이 없습니다.");
             return;
         }
 
-        try {
-            const mockAudioUrl = 'https://actions.google.com/sounds/v1/meta/soft_notification.ogg';
-            const audio = new Audio(mockAudioUrl);
-            audio.play();
-            setAudioElement(audio);
-            setShowPlayer(true);
-            setIsPlaying(true);
+        const audio = new Audio(scannedArt.audioPath);
+        audio.play();
+        setAudioElement(audio);
+        setShowPlayer(true);
+        setIsPlaying(true);
 
-            audio.onended = () => {
-                setShowPlayer(false);
-                setIsPlaying(false);
-            };
-        } catch (error) {
-            console.error('오디오 가이드 요청 실패:', error);
-            alert('오디오 가이드를 생성할 수 없습니다.');
-        }
-    };
+        audio.onended = () => {
+            setShowPlayer(false);
+            setIsPlaying(false);
+        };
+    } catch (error) {
+        console.error('오디오 재생 실패:', error);
+        alert('오디오를 재생할 수 없습니다.');
+    }
+};
 
     useEffect(() => {
         if (!audioElement) return;
