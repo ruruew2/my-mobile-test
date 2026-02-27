@@ -168,20 +168,27 @@ export default function App() {
     };
 
     // 1. 기존 전체 목록 (localhost DB 유지)
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            try {
-                const response = await axios.get(`${LOCAL_API_URL}/api/events`); 
-                if (response.data && response.data.status === "success") {
-                    setServerExhibitions(response.data.data || []);
-                }
-            } catch (error) { 
-                console.error("❌ 로컬 서버 연결 실패:", error); 
-                setServerExhibitions([]); 
+useEffect(() => {
+    const fetchInitialData = async () => {
+        try {
+            // 1. 현재 브라우저 주소가 localhost면 로컬 서버, 아니면 Vercel용 API 서버 사용
+            const API_BASE_URL = window.location.hostname === 'localhost' 
+                ? 'http://localhost:8000' 
+                : 'http://54.180.234.226:8000'; // ← 여기에 Vercel에서 쓰던 실제 서버 IP/도메인을 넣으세요.
+
+            const response = await axios.get(`${API_BASE_URL}/api/events`);
+            
+            if (response.data && response.data.status === "success") {
+                setServerExhibitions(response.data.data || []);
             }
-        };
-        if (step === 'main' && activeTab === 'home') fetchInitialData();
-    }, [step, activeTab]);
+        } catch (error) { 
+            console.error("❌ 데이터 로딩 실패:", error); 
+            setServerExhibitions([]); 
+        }
+    };
+    
+    if (step === 'main' && activeTab === 'home') fetchInitialData();
+}, [step, activeTab]);
 
     // 2. AI 추천 데이터 (외부 AI 서버 연결)
     const handlePreferenceComplete = async (selectedTags: string[]) => {
