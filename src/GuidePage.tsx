@@ -36,6 +36,14 @@ const GuidePage = ({ initialTab }: any) => {
 
     const [selectedTime, setSelectedTime] = useState<string>('14:00');
     const [selectedDate, setSelectedDate] = useState<string>('2026-05-20');
+    const [selectedLang, setSelectedLang] = useState<'ko' | 'en' | 'ja' | 'ch'>('ko');
+
+    const languages = [
+    { code: 'ko', label: '한국어', flag: '🇰🇷' },
+    { code: 'en', label: 'English', flag: '🇺🇸' },
+    { code: 'ja', label: '日本語', flag: '🇯🇵' },
+    { code: 'ch', label: '中文', flag: '🇨🇳' },
+];
 
     const [scannedArt, setScannedArt] = useState({
         title: '',
@@ -50,7 +58,7 @@ const GuidePage = ({ initialTab }: any) => {
         setIsAnalyzing(true);
         const formData = new FormData();
         formData.append('file', fileOrBlob, 'image.jpg'); 
-        formData.append('lang', 'ko');
+        formData.append('lang', selectedLang);
 
         try {
             const response = await fetch('http://54.180.234.226:8000/api/ai/docent', { 
@@ -171,6 +179,40 @@ const GuidePage = ({ initialTab }: any) => {
                             AI 가이드
                         </button>
                     </nav>
+
+                    {/* 🔥 여기에 언어 선택 칩 추가! (AI 가이드 선택 시에만 노출) */}
+        {activeTab === 'ai' && (
+            <div className="lang-selector-container" style={{ 
+                display: 'flex', 
+                gap: '8px', 
+                justifyContent: 'center', 
+                padding: '10px 0 20px 0' // 위아래 여백 조절
+            }}>
+                {languages.map((lang) => (
+                    <button
+                        key={lang.code}
+                        onClick={() => setSelectedLang(lang.code as any)}
+                        style={{
+                            padding: '6px 14px',
+                            borderRadius: '20px',
+                            border: selectedLang === lang.code ? '2px solid #7148fc' : '1px solid #eee',
+                            backgroundColor: selectedLang === lang.code ? '#f8f7ff' : '#fff',
+                            color: selectedLang === lang.code ? '#7148fc' : '#666',
+                            fontSize: '13px',
+                            fontWeight: selectedLang === lang.code ? '700' : '500',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        <span>{lang.flag}</span> {lang.label}
+                    </button>
+                ))}
+            </div>
+        )}
+        
                     <div className="art-list">
                         {(activeTab === 'human'
                             ? [
@@ -243,13 +285,28 @@ const GuidePage = ({ initialTab }: any) => {
                         </div>
 
                         <div className="ai-speech-bubble" style={{ backgroundColor: '#f8f7ff', padding: '20px', borderRadius: '16px', borderTopLeftRadius: '4px', lineHeight: '1.6' }}>
-                            <div className="ai-label" style={{ fontWeight: 'bold', color: '#7148fc', marginBottom: '8px', fontSize: '14px' }}>🤖 아티의 한마디</div>
+                            <div className="ai-label" style={{ fontWeight: 'bold', color: '#ffffffff', marginBottom: '8px', fontSize: '14px' }}>🤖 아티의 한마디</div>
                             <p style={{ margin: 0, wordBreak: 'keep-all', fontSize: '15px' }}>{scannedArt.description}</p>
                         </div>
                     </div>
 
                     {/* 하단 고정 조작 영역 */}
-                    <div className="result-fixed-bottom" style={{ position: 'fixed', bottom: '85px', left: '20px', right: '20px', display: 'flex', flexDirection: 'column', gap: '12px', zIndex: 100 }}>
+                    {/* 하단 고정 조작 영역 - 버튼 폭과 여백 수정 버전 */}
+<div className="result-fixed-bottom" style={{ 
+    position: 'fixed', 
+    bottom: '85px', 
+    left: '0', 
+    right: '0', 
+    display: 'flex', 
+    flexDirection: 'column', 
+    gap: '12px', 
+    zIndex: 100,
+    padding: '0 20px', // 좌우 여백을 주어 다른 컨텐츠와 정렬 맞춤
+    boxSizing: 'border-box', // 패딩이 너비에 포함되도록 설정
+    width: '100%',
+    maxWidth: '500px', // 앱 전체 최대폭이 있다면 그에 맞춰 제한 (없으면 제거 가능)
+    margin: '0 auto'   // 중앙 정렬
+}}>
                         {showPlayer && (
                             <div className="audio-inline-player" style={{ backgroundColor: '#1a1a1a', borderRadius: '16px', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -270,7 +327,7 @@ const GuidePage = ({ initialTab }: any) => {
                             </div>
                         )}
                         <div style={{ display: 'flex', gap: '10px' }}>
-                            <label className="footer-btn secondary" style={{ cursor: 'pointer', flex: 1, backgroundColor: '#eee', height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', fontWeight: '600' }}>
+                            <label className="footer-btn secondary" style={{ cursor: 'pointer', flex: 1, backgroundColor: '#eee', height: '22px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', fontWeight: '600' }}>
                                 다시 선택
                                 <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
                             </label>
