@@ -20,12 +20,18 @@ const MapPage = () => {
   const [isDragging, setIsDragging] = useState(false);
   const startY = useRef(0);
 
+  // --- [수정] App.tsx와 동일하게 API 주소 동적 설정 ---
+  const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000' 
+    : 'http://54.180.234.226:8000';
+
   // 1. 데이터 가져오기 및 지도 로드
   useEffect(() => {
     const loadDataAndMap = async () => {
       try {
-        console.log("1. 데이터 요청 시작...");
-        const response = await fetch('http://localhost:8000/api/events');
+        console.log("1. 데이터 요청 시작 (주소):", `${API_BASE_URL}/api/events`);
+        // fetch 주소 수정
+        const response = await fetch(`${API_BASE_URL}/api/events`);
         const result = await response.json();
         
         if (result.status === "success" || result.data) {
@@ -33,12 +39,13 @@ const MapPage = () => {
           console.log("2. 데이터 수신 완료:", realData.length, "개");
           setEvents(realData);
 
-          const { kakao } = window as any;
+          const { kakao } = window;
           if (kakao && kakao.maps) {
             console.log("3. 카카오맵 객체 확인, 지도 초기화 시작");
+            // API가 로드된 후 실행되도록 보장
             kakao.maps.load(() => initMap(realData));
           } else {
-            console.error("🚨 카카오맵 SDK가 로드되지 않았습니다. index.html을 확인하세요.");
+            console.error("🚨 카카오맵 SDK가 로드되지 않았습니다.");
           }
         }
       } catch (err) {
@@ -47,20 +54,16 @@ const MapPage = () => {
     };
 
     loadDataAndMap();
-  }, []);
+  }, [API_BASE_URL]); // URL 변경 시 재실행
 
   const initMap = (realEvents: any[]) => {
-    if (!mapContainerRef.current) {
-      console.error("🚨 지도 컨테이너(ref)를 찾을 수 없습니다.");
-      return;
-    }
+    if (!mapContainerRef.current) return;
 
-    const { kakao } = window as any;
+    const { kakao } = window;
     
-    // 지도 생성 옵션
     const options = {
       center: new kakao.maps.LatLng(37.5665, 126.978),
-      level: 8, // 조금 더 넓게 서울 전역이 보이도록 설정
+      level: 8,
     };
 
     const map = new kakao.maps.Map(mapContainerRef.current, options);
@@ -70,19 +73,15 @@ const MapPage = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const locPosition = new kakao.maps.LatLng(lat, lng);
+          const locPosition = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
           map.setCenter(locPosition);
-          console.log("📍 현위치 이동 완료");
         },
-        () => console.warn("현위치를 가져올 수 없어 기본 위치를 사용합니다.")
+        () => console.warn("현위치를 가져올 수 없습니다.")
       );
     }
 
     // 마커 표시
-    realEvents.forEach((evt, idx) => {
-      // 위도 경도가 문자열일 경우를 대비해 Number() 처리
+    realEvents.forEach((evt) => {
       const lat = Number(evt.lat);
       const lng = Number(evt.lng);
 
@@ -92,14 +91,11 @@ const MapPage = () => {
           position: new kakao.maps.LatLng(lat, lng),
           title: evt.title,
         });
-      } else {
-        // 데이터는 있는데 좌표가 이상할 경우 콘솔에 찍어봄
-        if (idx < 5) console.warn(`데이터 좌표 이상함 (index ${idx}):`, evt.lat, evt.lng);
       }
     });
   };
 
-  // 드래그 핸들러
+  // 드래그 핸들러 (기존과 동일)
   const handleStart = (e: any) => {
     setIsDragging(true);
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -122,8 +118,12 @@ const MapPage = () => {
 
   return (
     <div className="map-page-wrapper" onMouseMove={handleMove} onMouseUp={handleEnd} onMouseLeave={handleEnd}>
-      {/* 🚨 중요: 여기에 z-index가 없어도 CSS에서 절대위치 잡혀있어야 함 */}
-      <div ref={mapContainerRef} className="map-canvas" />
+      {/* 지도가 안 보일 경우를 위해 스타일 강제 지정 */}
+      <div 
+        ref={mapContainerRef} 
+        className="map-canvas" 
+        style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} 
+      />
 
       <div className="map-top-filter">
         <div className="filter-scroll-container">
@@ -146,7 +146,7 @@ const MapPage = () => {
         <div className="sheet-list-container">
           {events.map((evt, idx) => (
             <div key={idx} className="nearby-item">
-              <div className="item-thumb" style={{ background: `url(${evt.img_url}) center/cover`, backgroundColor: '#f0f0f0' }} />
+              <div className="item-thumb" style={{ background: `url(${evt.img_url || evt.image_url}) center/cover`, backgroundColor: '#f0f0f0' }} />
               <div className="item-info">
                 <h4 className="item-name">{evt.title}</h4>
                 <p className="item-location">{evt.place_name}</p>
