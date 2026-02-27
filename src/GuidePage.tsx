@@ -90,10 +90,10 @@ const sendToAIApi = async (fileOrBlob: Blob | File, previewUrl: string) => {
 
     try {
         console.log("서버로 분석 요청 전송 중...");
-        const response = await fetch('http://localhost:8000/api/ai/docent', {
-            method: 'POST',
-            body: formData, // JSON이 아니라 FormData를 그대로 보냄
-        });
+const response = await fetch('http://54.180.234.226:8000/api/ai/docent', { 
+    method: 'POST',
+    body: formData,
+});
 
         if (!response.ok) {
             throw new Error(`서버 응답 에러: ${response.status}`);
