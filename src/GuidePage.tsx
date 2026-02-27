@@ -1,9 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, CheckCircle, Image as ImageIcon, Camera } from 'lucide-react'; 
+import { Star, X, ChevronLeft, Volume2, Play, Pause, Calendar, Users, CheckCircle, Image as ImageIcon } from 'lucide-react'; 
 import axios from 'axios';
 import './GuidePage.css';
 
-// [필독] 모바일/PC 공통: 서버 연결을 위해 사이트 설정에서 '보안되지 않은 콘텐츠' 허용이 필요할 수 있습니다.
+/**
+ * [중요] PC 테스트 시 주의사항:
+ * 1. 브라우저 주소창 왼쪽 '자물쇠' 아이콘 클릭
+ * 2. '사이트 설정' 클릭
+ * 3. '보안되지 않은 콘텐츠(Insecure content)' -> [허용]으로 변경
+ * 4. 페이지 새로고침
+ */
 const API_BASE_URL = 'http://54.180.234.226:8000'; 
 
 const GuidePage = ({ initialTab }: any) => {
@@ -22,54 +28,44 @@ const GuidePage = ({ initialTab }: any) => {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null); // 모바일 카메라 호출용
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  // --- 1. API 통신 공통 로직 ---
-  const sendImageToApi = async (imageBlob: Blob) => {
-    setIsAnalyzing(true);
-    const formData = new FormData();
-    formData.append('image', imageBlob, 'scan.jpg');
-    formData.append('lang', 'ko');
-
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/ai/analyze-scan`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 20000 // 분석 시간이 걸릴 수 있으므로 20초 설정
-      });
-
-      if (response.data.status === "success") {
-        setScannedArt(response.data.data); 
-        setIsAnalyzing(false);
-        setIsScannerOpen(false);
-        setShowResult(true);
-      }
-    } catch (error: any) {
-      console.error("분석 실패:", error);
-      alert("서버 연결에 실패했습니다. AWS 보안 그룹(8000번 포트)과 브라우저의 '보안되지 않은 콘텐츠 허용' 설정을 확인해주세요.");
-      setIsAnalyzing(false);
-    }
-  };
-
-  // --- 2. 실시간 카메라 로직 (모바일/PC 겸용) ---
+  // --- 카메라 로직 (PC/모바일 공용 최적화) ---
   const startCamera = async () => {
     try {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
+
       const constraints = {
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { 
+          // ideal을 써야 PC 웹캠과 모바일 후면 카메라를 유연하게 잡습니다.
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
         audio: false
       };
+
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(mediaStream);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = () => videoRef.current?.play();
+        
+        // metadata 로드 후 재생 (iOS 및 PC 크롬 대응)
+        videoRef.current.onloadedmetadata = async () => {
+          try {
+            await videoRef.current?.play();
+          } catch (playError) {
+            console.error("자동 재생 실패:", playError);
+          }
+        };
       }
-    } catch (err) {
-      console.error("카메라 시작 실패:", err);
-      // 실시간 카메라 실패 시 파일 업로드로 유도
+    } catch (err: any) {
+      console.error("카메라 상세 에러:", err);
+      alert(`카메라를 켤 수 없습니다.\n원인: ${err.name}\n\n도움말:\n1. 카메라 권한 허용을 확인하세요.\n2. 다른 앱에서 카메라를 사용 중인지 확인하세요.`);
+      setIsScannerOpen(false);
     }
   };
 
@@ -81,41 +77,78 @@ const GuidePage = ({ initialTab }: any) => {
   };
 
   useEffect(() => {
-    if (isScannerOpen) startCamera();
-    else stopCamera();
+    if (isScannerOpen) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
     return () => stopCamera();
   }, [isScannerOpen]);
 
-  const handleCapture = () => {
-    if (!videoRef.current || !stream) return;
+  // --- API 분석 로직 ---
+  const handleCapture = async () => {
+    if (!videoRef.current || !stream || videoRef.current.videoWidth === 0) {
+      alert("카메라 준비가 완료되지 않았습니다.");
+      return;
+    }
+
+    setIsAnalyzing(true);
+
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth;
     canvas.height = videoRef.current.videoHeight;
-    canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
-    canvas.toBlob((blob) => {
-      if (blob) sendImageToApi(blob);
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      setIsAnalyzing(false);
+      return;
+    }
+
+    ctx.drawImage(videoRef.current, 0, 0);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        setIsAnalyzing(false);
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('image', blob, 'scan.jpg');
+      formData.append('lang', 'ko');
+
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/ai/analyze-scan`, formData, {
+          timeout: 15000 // 15초 타임아웃 설정
+        });
+        
+        if (response.data.status === "success") {
+          setScannedArt(response.data.data); 
+          setIsAnalyzing(false);
+          setIsScannerOpen(false);
+          setShowResult(true);
+        } else {
+          throw new Error("분석 결과가 올바르지 않습니다.");
+        }
+      } catch (error: any) {
+        console.error("분석 실패 상세:", error);
+        alert(`AWS 서버 연결 실패!\n\n해결방법:\n1. 브라우저 사이트 설정에서 '보안되지 않은 콘텐츠'를 [허용]했는지 확인하세요.\n2. AWS 서버(8000포트)가 정상 작동 중인지 확인하세요.`);
+        setIsAnalyzing(false);
+      }
     }, 'image/jpeg');
   };
 
-  // --- 3. 모바일 전용 사진 촬영/선택 로직 ---
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      sendImageToApi(file);
-    }
-  };
-
-  // --- 4. 오디오 및 기타 기능 ---
   const toggleAudio = () => {
     if (!scannedArt.audio_url) return;
+    
     if (!audioRef.current) {
       audioRef.current = new Audio(scannedArt.audio_url);
       audioRef.current.onended = () => setIsPlaying(false);
     }
+
     if (isPlaying) {
       audioRef.current.pause();
     } else {
-      audioRef.current.play().catch(() => alert("오디오 재생에 실패했습니다."));
+      audioRef.current.play().catch(e => alert("오디오 재생 실패: " + e.message));
       setShowPlayer(true);
     }
     setIsPlaying(!isPlaying);
@@ -123,21 +156,14 @@ const GuidePage = ({ initialTab }: any) => {
 
   const handleBooking = () => {
     setBookingStep(2);
-    setTimeout(() => { setIsBookingOpen(false); setBookingStep(1); }, 2000);
+    setTimeout(() => {
+      setIsBookingOpen(false);
+      setBookingStep(1);
+    }, 2000);
   };
 
   return (
     <div className="art-guide-container">
-      {/* 모바일 카메라/갤러리 호출용 숨겨진 input */}
-      <input 
-        type="file" 
-        accept="image/*" 
-        capture="environment" 
-        ref={fileInputRef} 
-        onChange={handleFileChange} 
-        style={{ display: 'none' }} 
-      />
-
       {/* 1. 분석 로딩 오버레이 */}
       {isAnalyzing && (
         <div className="analysis-loading-overlay">
@@ -146,7 +172,7 @@ const GuidePage = ({ initialTab }: any) => {
               <div className="pulse-ring"></div>
               <span className="ai-icon">🤖</span>
             </div>
-            <h3 className="loading-title">아티가 분석 중입니다...</h3>
+            <h3 className="loading-title">아티가 작품을 분석 중입니다...</h3>
             <div className="loading-bar-bg"><div className="loading-bar-fill"></div></div>
           </div>
         </div>
@@ -178,26 +204,18 @@ const GuidePage = ({ initialTab }: any) => {
                   <p className="art-job">{guide.job}</p>
                   <p className="art-price">{guide.price}</p>
                 </div>
-                <button 
-                  className="art-btn" 
-                  onClick={() => activeTab === 'ai' ? fileInputRef.current?.click() : setIsBookingOpen(true)}
-                >
-                  {activeTab === 'human' ? '예약하기' : '사진 찍어 분석'}
+                <button className="art-btn" onClick={() => activeTab === 'ai' ? setIsScannerOpen(true) : setIsBookingOpen(true)}>
+                  {activeTab === 'human' ? '예약하기' : '해설 시작'}
                 </button>
               </div>
             ))}
-            {activeTab === 'ai' && (
-              <p className="scanner-alt-link" onClick={() => setIsScannerOpen(true)}>
-                실시간 스캐너 모드 실행 {">"}
-              </p>
-            )}
           </div>
         </>
       ) : (
         /* 3. 분석 결과 화면 */
         <div className="art-result-container">
           <header className="result-header">
-            <button className="back-btn-inner" onClick={() => setShowResult(false)}><ChevronLeft size={24} /></button>
+            <button className="back-btn-inner" onClick={() => {setShowResult(false); if(audioRef.current) audioRef.current.pause(); setIsPlaying(false);}}><ChevronLeft size={24} /></button>
             <span className="header-tag">🤖 AI 도슨트 리포트</span>
             <div style={{ width: 24 }}></div>
           </header>
@@ -207,35 +225,63 @@ const GuidePage = ({ initialTab }: any) => {
               <h1 className="result-title">{scannedArt.title}</h1>
               <p className="result-artist">{scannedArt.artist}, {scannedArt.year}</p>
             </div>
+
             <div className="result-image-placeholder">
               <ImageIcon size={40} color="#ddd" />
-              <span>작품 분석 완료</span>
+              <span>분석 완료된 이미지입니다</span>
             </div>
+
             <div className="ai-speech-bubble">
               <div className="ai-label">🤖 아티의 한마디</div>
               <p>{scannedArt.description}</p>
             </div>
+
+            {showPlayer && (
+              <div className="audio-mini-player">
+                <div className="mini-player-info">
+                  <div className="mini-icon">🎵</div>
+                  <div>
+                    <div className="mini-title">{scannedArt.title}</div>
+                    <div className="mini-status">{isPlaying ? '재생 중' : '일시 정지'}</div>
+                  </div>
+                </div>
+                <div className="mini-controls">
+                  <button onClick={toggleAudio}>
+                    {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
+                  </button>
+                  <button onClick={() => setShowPlayer(false)} style={{marginLeft: '12px', opacity: 0.6}}>
+                    <X size={18} color="white" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <footer className="result-footer-simple">
-            <button className="footer-btn secondary" onClick={() => fileInputRef.current?.click()}>다시 촬영</button>
+            <button className="footer-btn secondary" onClick={() => {setShowResult(false); setIsScannerOpen(true);}}>다시 스캔</button>
             <button className="footer-btn primary" onClick={toggleAudio}>
-              <Volume2 size={18} /> {isPlaying ? '중단' : '오디오 가이드'}
+              <Volume2 size={18} /> {isPlaying ? '가이드 중단' : '오디오 가이드'}
             </button>
           </footer>
         </div>
       )}
 
-      {/* 4. 실시간 스캐너 오버레이 */}
+      {/* 4. 스캐너 오버레이 */}
       {isScannerOpen && (
         <div className="art-scanner-overlay">
             <div className="scanner-top">
                 <button className="close-btn" onClick={() => setIsScannerOpen(false)}><X size={28} /></button>
-                <span>실시간 작품 스캔</span>
+                <span>작품 스캔</span>
                 <div style={{width: 28}}></div>
             </div>
             <div className="scanner-frame-box">
-                <video ref={videoRef} autoPlay playsInline muted style={{ width: '100%', height: '100%', objectFit: 'cover'}} />
+                <video 
+                  ref={videoRef} 
+                  autoPlay 
+                  playsInline 
+                  muted 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover'}} 
+                />
                 <div className="scanner-laser"></div>
             </div>
             <div className="scanner-bottom">
@@ -244,21 +290,46 @@ const GuidePage = ({ initialTab }: any) => {
         </div>
       )}
 
-      {/* 5. 예약 모달 (기존 유지) */}
+      {/* 5. 예약 모달 */}
       {isBookingOpen && (
         <div className="booking-modal-overlay">
           <div className="booking-modal">
             {bookingStep === 1 ? (
               <>
-                <div className="modal-header"><h3>도슨트 예약</h3><button onClick={() => setIsBookingOpen(false)}><X size={20} /></button></div>
-                <div className="modal-content">
-                  <div className="guide-summary"><span className="summary-emoji">👩‍🎨</span><div><p className="summary-name">김사랑 도슨트</p></div></div>
-                  <div className="input-group"><label><Calendar size={16} /> 예약 날짜</label><input type="date" className="custom-date-input" defaultValue="2026-05-20" /></div>
+                <div className="modal-header">
+                  <h3>도슨트 예약하기</h3>
+                  <button onClick={() => setIsBookingOpen(false)}><X size={20} /></button>
                 </div>
-                <button className="booking-submit-btn" onClick={handleBooking}>예약 확정</button>
+                <div className="modal-content">
+                  <div className="guide-summary">
+                    <span className="summary-emoji">👩‍🎨</span>
+                    <div><p className="summary-name">김사랑 도슨트</p><p className="summary-info">45,000원 / 회</p></div>
+                  </div>
+                  <div className="input-group">
+                    <label><Calendar size={16} /> 예약 날짜</label>
+                    <input type="date" className="custom-date-input" defaultValue="2026-05-20" />
+                  </div>
+                  <div className="input-group">
+                    <label><Users size={16} /> 인원 선택</label>
+                    <div className="person-selector">
+                      {[1, 2, 3].map((num) => (
+                        <div key={num} className={`person-chip ${personCount === num ? 'active' : ''}`} onClick={() => setPersonCount(num)}>
+                          {num === 3 ? '3명+' : `${num}명`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <button className="booking-submit-btn" onClick={handleBooking}>결제 및 예약 확정</button>
               </>
             ) : (
-              <div className="booking-success"><CheckCircle size={65} color="#22c55e" /><h3 className="success-title">완료되었습니다!</h3></div>
+              <div className="booking-success">
+                <div className="success-icon-container">
+                  <CheckCircle size={65} color="#000" fill="#22c55e" strokeWidth={3} />
+                </div>
+                <h3 className="success-title">예약이 완료되었습니다!</h3>
+                <p className="success-desc">도슨트가 곧 확인 연락을 드릴 예정입니다.</p>
+              </div>
             )}
           </div>
         </div>

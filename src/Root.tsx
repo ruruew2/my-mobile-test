@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, Loader2, Sparkles, Search } from 'lucide-react';
 import './Root.css';
 
@@ -7,11 +7,30 @@ const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
   const [showAiMaker, setShowAiMaker] = useState(false);
   const [locationInput, setLocationInput] = useState('');
 
-  // ✅ 상세 데이터가 통합된 고정 코스 리스트
+  // 1. 각 코스 카드의 DOM 위치를 저장할 Ref 바구니
+  const courseRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // ✅ 핵심 로직: 외부(홈)에서 targetCourse가 전달되면 해당 카드로 자동 스크롤
+  useEffect(() => {
+    if (targetCourse) {
+      const targetElement = courseRefs.current[targetCourse];
+      
+      if (targetElement) {
+        // 부드럽게 스크롤 이동
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // 이동 후 처리 완료를 위해 null로 초기화 (중요: 반복 방지)
+        setTargetCourse(null); 
+      }
+    }
+  }, [targetCourse, setTargetCourse]);
+
+
+  // ✅ 기존 상세 데이터 (모든 코멘트/팁 포함)
   const fixedCourses = [
     {
       id: 1,
-      anchorId: 'course-seongsu-dmuseum',
+      anchorId: 'course-seongsu',
       badge: '2025.06.28~2026.09.20',
       title: '성수, 예술이 머무는 집',
       desc: '일상에 깊게 스며든 예술과 숲의 평온을 함께 누리는 시간입니다.',
@@ -117,21 +136,9 @@ const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
           desc: aiData.story.substring(0, 60) + "...",
           aiPlan: aiData,
           steps: [
-            { 
-              type: 'RESTAURANT', 
-              name: aiData.places.restaurant?.name || "근처 맛집", 
-              sub: aiData.places.restaurant?.address || "식사" 
-            },
-            { 
-              type: 'EXHIBITION', 
-              name: aiData.exhibition?.title || `${location} 전시`, 
-              sub: aiData.exhibition?.place_name || "관람" 
-            },
-            { 
-              type: 'CAFE', 
-              name: aiData.places.cafe?.name || "근처 카페", 
-              sub: aiData.places.cafe?.address || "디저트" 
-            }
+            { type: 'RESTAURANT', name: aiData.places.restaurant?.name || "근처 맛집", sub: aiData.places.restaurant?.address || "식사" },
+            { type: 'EXHIBITION', name: aiData.exhibition?.title || `${location} 전시`, sub: aiData.exhibition?.place_name || "관람" },
+            { type: 'CAFE', name: aiData.places.cafe?.name || "근처 카페", sub: aiData.places.cafe?.address || "디저트" }
           ]
         };
 
@@ -156,7 +163,12 @@ const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
 
       {/* 고정 코스 카드 렌더링 */}
       {fixedCourses.map((course) => (
-        <div key={course.id} className="course-card-main" style={{ marginBottom: '30px' }}>
+        <div 
+          key={course.id} 
+          ref={(el) => (courseRefs.current[course.anchorId] = el)} // Ref 연결
+          className="course-card-main" 
+          style={{ marginBottom: '30px', scrollMarginTop: '100px' }} // 스크롤 시 상단 여백 보정
+        >
           <div className="course-badge">{course.badge}</div>
           <h3 className="course-main-title">{course.title}</h3>
           <p className="course-main-desc">{course.desc}</p>
@@ -176,7 +188,7 @@ const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
         </div>
       ))}
 
-      {/* AI 설계 카드 */}
+      {/* AI 설계 카드 - Sparkles 오타 완전 수정 */}
       <div className="course-card-main ai-design-card" style={{ 
         border: '2px dashed #d1d1d1', 
         background: 'linear-gradient(to bottom right, #ffffff, #f0f7ff)',
@@ -184,7 +196,7 @@ const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
       }} onClick={() => setShowAiMaker(true)}>
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <div style={{ background: '#000', color: '#fff', width: '50px', height: '50px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 15px' }}>
-            <Sparkles size={24} />
+            <Sparkles size={24} /> 
           </div>
           <h3 style={{ fontSize: '18px', fontWeight: 'bold' }}>나만의 AI 코스 자동 설계</h3>
           <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>원하는 지역과 동행만 알려주세요.</p>
@@ -248,7 +260,6 @@ const RootPage = ({ targetCourse, setTargetCourse, onStart }: any) => {
   );
 };
 
-// 인라인 스타일 정의
 const modalOverlayStyle: React.CSSProperties = { position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, backdropFilter: 'blur(4px)' };
 const modalStyle: React.CSSProperties = { backgroundColor: '#fff', padding: '30px 20px', borderRadius: '24px', width: '85%', maxWidth: '360px' };
 const whoBtnStyle: React.CSSProperties = { padding: '15px', borderRadius: '16px', border: '1px solid #eee', background: '#f8f9fa', fontWeight: '500', cursor: 'pointer' };

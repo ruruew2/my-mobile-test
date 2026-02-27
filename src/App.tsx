@@ -323,7 +323,10 @@ export default function App() {
                                         <button className="view-all" onClick={() => setActiveTab('course')}>전체보기</button>
                                     </div>
                                     <div className="course-list">
-                                        <div className="course-card" onClick={() => setTargetCourse('course-seongsu')}>
+                                        <div className="course-card" onClick={() => { 
+            setTargetCourse('course-seongsu'); 
+            setActiveTab('course'); // 👈 이 줄을 추가! '코스' 탭으로 화면을 바꿔줍니다.
+        }}>
                                             <div className="course-content">
                                                 <span className="course-tag">2025.06.28~2026.09.20</span>
                                                 <h4>취향가옥 2: Art in Life</h4>
@@ -331,7 +334,10 @@ export default function App() {
                                             </div>
                                             <div className="course-icon"><Compass size={20} /></div>
                                         </div>
-                                        <div className="course-card" onClick={() => setTargetCourse('course-jongno')}>
+                                        <div className="course-card" onClick={() => { 
+            setTargetCourse('course-jongno'); 
+            setActiveTab('course'); // 👈 여기도 추가!
+        }}>
                                             <div className="course-content">
                                                 <span className="course-tag">2025.12.19~2026.6.7</span>
                                                 <h4>구의, 영감의 조각 산책</h4>
