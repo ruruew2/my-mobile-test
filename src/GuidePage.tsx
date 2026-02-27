@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Star,
     X,
@@ -11,6 +11,7 @@ import {
     CheckCircle,
     Image as ImageIcon,
     Clock,
+    Upload, // 업로드 아이콘 추가
 } from 'lucide-react';
 import './GuidePage.css';
 
@@ -23,7 +24,6 @@ const VerifiedBadge = () => (
 
 const GuidePage = ({ initialTab }: any) => {
     const [activeTab, setActiveTab] = useState<'human' | 'ai'>(initialTab || 'human');
-    const [isScannerOpen, setIsScannerOpen] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [showResult, setShowResult] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
@@ -43,120 +43,64 @@ const GuidePage = ({ initialTab }: any) => {
         year: '',
         description: '',
         audioPath: '',
-        imagePreview: '' // 이미지 미리보기 추가
+        imagePreview: ''
     });
 
-    const videoRef = useRef<HTMLVideoElement>(null);
-    const [stream, setStream] = useState<MediaStream | null>(null);
+    // 🚀 [수정] 카메라 관련 함수(startCamera, stopCamera 등) 모두 삭제
 
-    // 카메라 시작
-    const startCamera = async () => {
-        try {
-            const mediaStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' },
-                audio: false,
-            });
-            setStream(mediaStream);
-            if (videoRef.current) videoRef.current.srcObject = mediaStream;
-        } catch (err) {
-            console.error('카메라 접근 에러:', err);
-            alert('카메라 권한을 허용해주세요.');
-            setIsScannerOpen(false);
-        }
-    };
-
-    const stopCamera = () => {
-        if (stream) {
-            stream.getTracks().forEach((track) => track.stop());
-            setStream(null);
-        }
-    };
-
-    useEffect(() => {
-        if (isScannerOpen) startCamera();
-        else stopCamera();
-        return () => stopCamera();
-    }, [isScannerOpen]);
-
-    // 공통 분석 요청 함수
-const sendToAIApi = async (fileOrBlob: Blob | File, previewUrl: string) => {
-    setIsAnalyzing(true);
-    
-    // 1. FormData 구성
-    const formData = new FormData();
-    // 백엔드 main.py의 @app.post("/api/ai/docent") 에서 file: UploadFile 로 받으므로 키값을 'file'로 고정
-    formData.append('file', fileOrBlob, 'image.jpg'); 
-    formData.append('lang', 'ko');
-
-    try {
-        console.log("서버로 분석 요청 전송 중...");
-const response = await fetch('http://54.180.234.226:8000/api/ai/docent', { 
-    method: 'POST',
-    body: formData,
-});
-
-        if (!response.ok) {
-            throw new Error(`서버 응답 에러: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log("서버 응답 결과:", result);
-
-        if (result.status === "success" && result.data) {
-            const [audioUrl, script] = result.data;
-
-            setScannedArt({
-                title: '분석된 작품',
-                artist: 'AI 도슨트',
-                year: '2024',
-                description: script,
-                audioPath: `http://localhost:8000/${audioUrl}`,
-                imagePreview: previewUrl // 성공 시에만 미리보기 적용
-            });
-            
-            setIsAnalyzing(false);
-            setIsScannerOpen(false);
-            setShowResult(true);
-        } else {
-            throw new Error(result.message || "분석 결과가 올바르지 않습니다.");
-        }
-    } catch (error) {
-        console.error('분석 실패 상세:', error);
-        setIsAnalyzing(false);
-        alert('분석에 실패했습니다. 서버 연결 상태나 이미지 형식을 확인해주세요.');
-    }
-};
-
-    // 카메라 캡처 처리
-    const handleCapture = () => {
-        if (!videoRef.current) return;
-        const canvas = document.createElement('canvas');
-        canvas.width = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
-        canvas.getContext('2d')?.drawImage(videoRef.current, 0, 0);
+    // 공통 분석 요청 함수 (카메라 캡처 대신 파일을 직접 받음)
+    const sendToAIApi = async (fileOrBlob: Blob | File, previewUrl: string) => {
+        setIsAnalyzing(true);
         
-        canvas.toBlob((blob) => {
-            if (blob) {
-                const previewUrl = URL.createObjectURL(blob);
-                sendToAIApi(blob, previewUrl);
+        const formData = new FormData();
+        formData.append('file', fileOrBlob, 'image.jpg'); 
+        formData.append('lang', 'ko');
+
+        try {
+            // 🚨 백엔드 IP 주소 확인 필수
+            const response = await fetch('http://54.180.234.226:8000/api/ai/docent', { 
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) throw new Error(`서버 응답 에러: ${response.status}`);
+
+            const result = await response.json();
+
+            if (result.status === "success" && result.data) {
+                const [audioUrl, script] = result.data;
+
+                setScannedArt({
+                    title: '분석된 작품',
+                    artist: 'AI 도슨트',
+                    year: '2024',
+                    description: script,
+                    // 🚨 로컬 테스트가 아닌 서버 IP 주소를 사용해야 합니다.
+                    audioPath: `http://54.180.234.226:8000/${audioUrl}`,
+                    imagePreview: previewUrl
+                });
+                
+                setIsAnalyzing(false);
+                setShowResult(true);
+            } else {
+                throw new Error(result.message || "분석 실패");
             }
-        }, 'image/jpeg');
+        } catch (error) {
+            console.error('분석 실패 상세:', error);
+            setIsAnalyzing(false);
+            alert('분석에 실패했습니다. 사이트 설정에서 [보안되지 않은 콘텐츠] 허용 여부를 확인해 주세요.');
+        }
     };
 
-    // 사진 파일 업로드 처리
-const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    // [수정] 파일 업로드 처리
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
 
-    // 브라우저 메모리에 임시 미리보기 URL 생성
-    const previewUrl = URL.createObjectURL(file);
-    
-    // 분석 함수 호출
-    sendToAIApi(file, previewUrl);
-    
-    // 같은 파일을 다시 올릴 수 있도록 input 초기화
-    event.target.value = '';
-};
+        const previewUrl = URL.createObjectURL(file);
+        sendToAIApi(file, previewUrl);
+        event.target.value = ''; // 초기화
+    };
 
     const handleAudioGuide = async () => {
         if (showPlayer) {
@@ -195,6 +139,7 @@ const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
 
     return (
         <div className="art-guide-container">
+            {/* 로딩 오버레이는 그대로 유지 */}
             {isAnalyzing && (
                 <div className="analysis-loading-overlay">
                     <div className="loading-content">
@@ -251,14 +196,24 @@ const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
                                     </div>
                                     <p className="art-price">{guide.price}</p>
                                 </div>
-                                <button className="art-btn" onClick={() => activeTab === 'ai' ? setIsScannerOpen(true) : setIsBookingOpen(true)}>
-                                    {activeTab === 'human' ? '예약하기' : '해설 시작'}
-                                </button>
+                                
+                                {/* 🚀 [수정] AI 가이드일 때는 직접 파일 업로드 인풋을 트리거합니다. */}
+                                {activeTab === 'ai' ? (
+                                    <label className="art-btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                        <Upload size={16} /> 사진 업로드
+                                        <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+                                    </label>
+                                ) : (
+                                    <button className="art-btn" onClick={() => setIsBookingOpen(true)}>
+                                        예약하기
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
                 </>
             ) : (
+                /* 결과 화면 UI는 그대로 유지 */
                 <div className="art-result-container">
                     <header className="result-header">
                         <button className="back-btn-inner" onClick={() => setShowResult(false)}>
@@ -287,31 +242,64 @@ const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
                             <p>{scannedArt.description}</p>
                         </div>
 
-                        {showPlayer && (
-                            <div className="audio-mini-player">
-                                <div className="mini-player-info">
-                                    <div className="mini-icon">🎵</div>
-                                    <div>
-                                        <div className="mini-title">{scannedArt.title}</div>
-                                        <div className="mini-status">AI 해설 재생 중</div>
-                                    </div>
-                                </div>
-                                <div className="mini-controls">
-                                    <button onClick={() => setIsPlaying(!isPlaying)}>
-                                        {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
-                                    </button>
-                                    <button onClick={() => { audioElement?.pause(); setShowPlayer(false); }} style={{ marginLeft: '12px', opacity: 0.6 }}>
-                                        <X size={18} color="white" />
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+
+{showPlayer && (
+    <div 
+        className="audio-mini-player" 
+        style={{ 
+            position: 'fixed',
+            left: '16px',
+            right: '16px',
+            bottom: '110px', // 하단바 위로 충분히 올림 (이미지 기준 약 110px이 적당해 보입니다)
+            zIndex: 9999,
+            backgroundColor: 'rgba(26, 26, 26, 0.98)', // 배경색 진하게
+            borderRadius: '20px',
+            padding: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.1)' // 살짝 테두리 추가로 고급스럽게
+        }}
+    >
+        <div className="mini-player-info" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="mini-icon" style={{ fontSize: '24px' }}>🎵</div>
+            <div style={{ textAlign: 'left' }}>
+                <div className="mini-title" style={{ color: 'white', fontSize: '14px', fontWeight: '600', marginBottom: '2px' }}>
+                    {scannedArt.title || '분석된 작품'}
+                </div>
+                <div className="mini-status" style={{ color: '#007AFF', fontSize: '12px', fontWeight: '500' }}>
+                    AI 도슨트 해설 재생 중
+                </div>
+            </div>
+        </div>
+        
+        <div className="mini-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button 
+                onClick={() => setIsPlaying(!isPlaying)} 
+                style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer' }}
+            >
+                {isPlaying ? 
+                    <Pause size={28} fill="white" color="white" /> : 
+                    <Play size={28} fill="white" color="white" />
+                }
+            </button>
+            <button 
+                onClick={() => { audioElement?.pause(); setShowPlayer(false); }} 
+                style={{ background: 'none', border: 'none', padding: '4px', cursor: 'pointer', opacity: 0.5 }}
+            >
+                <X size={22} color="white" />
+            </button>
+        </div>
+    </div>
+)}
                     </div>
 
                     <footer className="result-footer-simple">
-                        <button className="footer-btn secondary" onClick={() => { setShowResult(false); setIsScannerOpen(true); }}>
-                            다시 스캔
-                        </button>
+                        <label className="footer-btn secondary" style={{ cursor: 'pointer', textAlign: 'center' }}>
+                            다시 선택
+                            <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+                        </label>
                         <button className="footer-btn primary" onClick={handleAudioGuide}>
                             <Volume2 size={18} /> {showPlayer ? '가이드 중단' : '오디오 가이드'}
                         </button>
@@ -319,35 +307,9 @@ const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
                 </div>
             )}
 
-            {isScannerOpen && (
-                <div className="art-scanner-overlay">
-                    <div className="scanner-top">
-                        <button className="close-btn" onClick={() => setIsScannerOpen(false)}>
-                            <X size={28} />
-                        </button>
-                        <span>작품 스캔</span>
-                        <div style={{ width: 28 }}></div>
-                    </div>
-                    <div className="scanner-frame-box">
-                        <video ref={videoRef} autoPlay playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <div className="scanner-laser"></div>
-                    </div>
-                    <div className="scanner-bottom">
-                        {/* ✅ 사진 업로드 버튼 추가 */}
-                        <label className="scanner-gallery-btn" style={{ cursor: 'pointer' }}>
-                            <ImageIcon size={28} color="white" />
-                            <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
-                        </label>
+            {/* 🚀 [수정] isScannerOpen 관련 오버레이 코드 전체 삭제 */}
 
-                        <div className="capture-outer" onClick={handleCapture}>
-                            <div className="capture-inner"></div>
-                        </div>
-                        
-                        <div style={{ width: 28 }}></div> {/* 레이아웃 밸런스용 */}
-                    </div>
-                </div>
-            )}
-
+            {/* 예약 모달 기능은 그대로 유지 */}
             {isBookingOpen && (
                 <div className="booking-modal-overlay">
                     <div className="booking-modal">
