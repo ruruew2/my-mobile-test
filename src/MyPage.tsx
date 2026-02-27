@@ -2,22 +2,18 @@ import React, { useState, useRef } from 'react';
 import { 
   Settings, Heart, BookOpen, CreditCard, Bell, 
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users,
-  Eye, EyeOff, Mic, MessageCircle // 👈 Mic, MessageCircle 추가
+  Eye, EyeOff, Mic, MessageCircle, Medal, Send, Trash2 
 } from 'lucide-react';
 
-// 외부 임포트 컴포넌트 (실제 환경에서는 해당 파일이 있어야 합니다)
-// import ReviewForm from './ReviewForm';
-// import SuccessModal from './SuccessModal_review';
-// import GiftShop from './GiftShop'; 
-
-// --- 가상의 하위 컴포넌트 (없을 경우를 대비해 간단히 메모) ---
-const ReviewForm = ({ exhibitionTitle, onComplete }) => (
+// --- 가상의 하위 컴포넌트 ---
+const ReviewForm = ({ exhibitionTitle, onComplete }: any) => (
   <div style={{ padding: '20px', border: '1px solid #eee', borderRadius: '12px' }}>
     <p><b>{exhibitionTitle}</b>에 대한 후기를 작성 중...</p>
     <button onClick={onComplete} style={{ width: '100%', padding: '12px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '8px' }}>작성 완료</button>
   </div>
 );
-const SuccessModal = ({ onClose }) => (
+
+const SuccessModal = ({ onClose }: any) => (
   <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
     <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '20px', textAlign: 'center' }}>
       <h3>🎉 후기 등록 완료!</h3>
@@ -43,8 +39,16 @@ interface FriendItem {
   memo: string;
 }
 
-// --- 2. 하위 공통 UI 컴포넌트 ---
+const BADGE_DETAILS = [
+  { id: 1, icon: '🎨', name: '현대미술 탐험가', condition: '현대미술 전시 3회 관람', isLocked: false },
+  { id: 2, icon: '🏛️', name: '박물관 매니아', condition: '국립 박물관 5회 방문', isLocked: true },
+  { id: 3, icon: '📸', name: '전시회 헌터', condition: '오픈 1주 이내 전시 방문', isLocked: true },
+  { id: 4, icon: '💎', name: '미니멀리스트', condition: '미니멀리즘 전시 2회 관람', isLocked: true },
+  { id: 5, icon: '🌿', name: '힐링 큐레이터', condition: '자연 테마 전시 3회 관람', isLocked: true },
+  { id: 6, icon: '🔍', name: '디테일러', condition: '관람 시간 2시간 이상 3회', isLocked: true },
+];
 
+// --- 2. 하위 공통 UI 컴포넌트 ---
 const MenuRow = ({ icon, label, onClick }: { icon: React.ReactNode, label: string, onClick: () => void }) => (
   <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderRadius: '12px', border: '1px solid #f5f5f5', backgroundColor: '#fff', marginBottom: '10px', cursor: 'pointer' }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -76,7 +80,7 @@ const ListCard = ({ icon, title, sub, extra, btnLabel, onBtnClick }: any) => (
   </div>
 );
 
-const StatCard = ({ val, label, onClick }: { val: string, label: string, onClick: () => void }) => (
+const StatCard = ({ val, label, onClick }: any) => (
   <div onClick={onClick} style={{ padding: '20px 10px', textAlign: 'center', borderRadius: '15px', border: '1px solid #f2f2f2', cursor: 'pointer', backgroundColor: '#fff' }}>
     <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{val}</div>
     <div style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{label}</div>
@@ -117,7 +121,6 @@ const InputGroup = ({ label, placeholder, type = "text", rightElement }: { label
 );
 
 // --- 3. 메인 MyPage 컴포넌트 ---
-
 const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProps) => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -126,6 +129,9 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
   const [selectedExhibition, setSelectedExhibition] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // 뱃지 상태 추가
+  const [selectedBadge, setSelectedBadge] = useState<any>(null);
 
   const [friendEmail, setFriendEmail] = useState('');
   const [managingFriend, setManagingFriend] = useState<FriendItem | null>(null);
@@ -135,7 +141,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
   ]);
 
   const [reviewItems, setReviewItems] = useState<string[]>([]); 
-
+  
   const [notifSettings, setNotifSettings] = useState(() => {
     const saved = localStorage.getItem('user_notif_settings');
     return saved ? JSON.parse(saved) : { recommend: true, payment: true, notice: true };
@@ -300,14 +306,64 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
             </div>
           </div>
         );
-
-      case 'profileEdit':
+case 'profileEdit':
         return (
           <div className="sub-view">
             <SubViewHeader title="개인정보 수정" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* 닉네임 수정 */}
               <InputGroup label="닉네임" placeholder="예술가 김아트" />
+              
+              {/* 한 줄 소개 수정 */}
               <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
+
+              {/* 🚀 대표 뱃지 설정 드롭다운 추가 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>대표 뱃지 설정</label>
+                <div style={{ position: 'relative' }}>
+                  <select 
+                    value={selectedBadge?.id || ""} 
+                    onChange={(e) => {
+                      const badgeId = parseInt(e.target.value);
+                      const badge = BADGE_DETAILS.find(b => b.id === badgeId);
+                      if (badge && !badge.isLocked) {
+                        setSelectedBadge(badge);
+                      } else if (badge?.isLocked) {
+                        alert("획득하지 못한 뱃지는 대표 뱃지로 설정할 수 없습니다.");
+                      }
+                    }}
+                    style={{ 
+                      width: '100%', 
+                      padding: '14px', 
+                      borderRadius: '10px', 
+                      border: '1px solid #eee', 
+                      outline: 'none', 
+                      fontSize: '14px',
+                      appearance: 'none', // 기본 화살표 숨김 (커스텀 디자인용)
+                      backgroundColor: '#fff',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="" disabled>대표 뱃지를 선택해주세요</option>
+                    {BADGE_DETAILS.map(badge => (
+                      <option key={badge.id} value={badge.id} disabled={badge.isLocked}>
+                        {badge.isLocked ? `🔒 ${badge.name} (잠김)` : `${badge.icon} ${badge.name}`}
+                      </option>
+                    ))}
+                  </select>
+                  {/* 드롭다운 화살표 아이콘 */}
+                  <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <ChevronRight size={18} color="#999" style={{ transform: 'rotate(90deg)' }} />
+                  </div>
+                </div>
+                {selectedBadge && (
+                  <p style={{ fontSize: '11px', color: '#007aff', marginTop: '2px' }}>
+                    ✨ 현재 <b>{selectedBadge.name}</b>가 대표 뱃지로 설정되어 있습니다.
+                  </p>
+                )}
+              </div>
+
+              {/* 비밀번호 변경 */}
               <InputGroup 
                 label="비밀번호 변경" 
                 placeholder="변경할 비밀번호를 입력하세요" 
@@ -318,9 +374,24 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
                   </div>
                 }
               /> 
+
+              {/* 저장 버튼 */}
               <button 
-                onClick={() => { alert('수정되었습니다.'); setViewState('main'); }}
-                style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: '#000', color: '#fff' }}
+                onClick={() => { 
+                  alert('개인정보와 대표 뱃지가 수정되었습니다.'); 
+                  setViewState('main'); 
+                }}
+                style={{ 
+                  width: '100%', 
+                  padding: '16px', 
+                  borderRadius: '12px', 
+                  border: 'none', 
+                  fontWeight: 'bold', 
+                  cursor: 'pointer', 
+                  backgroundColor: '#000', 
+                  color: '#fff',
+                  marginTop: '10px'
+                }}
               >
                 저장하기
               </button>
@@ -547,9 +618,50 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
         <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
         <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
       </div>
+
+      {/* 🚀 뱃지 섹션 추가 (메인 화면일 때만 표시) */}
+      {viewState === 'main' && (
+        <div style={{ marginBottom: '30px' }}>
+          <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>MY BADGES</h4>
+          <div style={{ display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
+            {BADGE_DETAILS.map(badge => (
+              <div 
+                key={badge.id} 
+                onClick={() => setSelectedBadge(badge)}
+                style={{ flexShrink: 0, width: '60px', textAlign: 'center', cursor: 'pointer' }}
+              >
+                <div style={{ 
+                  width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#f9f9f9', 
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', 
+                  marginBottom: '6px', border: '1px solid #eee',
+                  filter: badge.isLocked ? 'grayscale(1) opacity(0.5)' : 'none'
+                }}>
+                  {badge.isLocked ? '🔒' : badge.icon}
+                </div>
+                <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {badge.name}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <hr style={{ border: 'none', height: '1px', backgroundColor: '#f5f5f5', marginBottom: '30px' }} />
 
       {renderContent()}
+
+      {/* 뱃지 상세 팝업 */}
+      {selectedBadge && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div style={{ backgroundColor: '#fff', width: '280px', borderRadius: '25px', padding: '25px', textAlign: 'center' }}>
+            <div style={{ fontSize: '50px', marginBottom: '15px' }}>{selectedBadge.isLocked ? '🔒' : selectedBadge.icon}</div>
+            <h3 style={{ margin: '0 0 8px' }}>{selectedBadge.name}</h3>
+            <p style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>{selectedBadge.condition}</p>
+            <button onClick={() => setSelectedBadge(null)} style={{ width: '100%', padding: '12px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>확인</button>
+          </div>
+        </div>
+      )}
       
       {showModal && (
         <SuccessModal onClose={() => { setShowModal(false); setViewState('main'); }} />
