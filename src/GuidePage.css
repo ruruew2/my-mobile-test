@@ -812,7 +812,9 @@
     color: #444;
     margin-bottom: 10px;
 }
-.input-group input[type='date'] {
+/* 🔥 [수정됨] 날짜 및 시간 입력창 스타일 일관되게 적용 */
+.input-group input[type='date'],
+.input-group input[type='time'] {
     width: 100%;
     padding: 14px;
     border-radius: 14px;
@@ -822,6 +824,7 @@
     font-weight: 600;
     box-sizing: border-box;
     outline: none;
+    font-family: inherit; /* 폰트 일관성 */
 }
 
 /* 시간 선택 칩 스타일 */

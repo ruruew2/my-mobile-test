@@ -20,37 +20,53 @@
 /* 상단 필터 */
 /* 3. 상단 필터: 지도보다는 위, 바텀 시트보다는 아래 */
 .map-top-filter {
-    position: absolute; /* relative에서 absolute로 변경 (지도 위에 띄우기 위해) */
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 50; /* 지도(1)보다 높게 */
-    padding: 15px;
-    pointer-events: none; /* 필터 버튼 외 빈 영역은 지도 터치가 가능하게 함 */
+    position: fixed;    /* 화면에 박아버림 */
+    top: 70px;          /* ArtLog 헤더 바로 아래 */
+    left: 50%;          /* 화면 가로 중앙으로 보냄 */
+    transform: translateX(-50%); /* 정확한 중앙 정렬 */
+    width: 100%;        /* 전체 폭 사용 */
+    max-width: 500px;   /* 모바일 가로폭 제한 (필요시 조절) */
+    z-index: 9999;      /* 지도보다 무조건 위 */
+    padding: 10px 0;
+    pointer-events: none; /* 빈 공간 터치 통과 */
+    
 }
+
 
 .filter-scroll-container {
     display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;   /* 줄바꿈 절대 금지 */
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 10px;
+    padding: 0 15px;    
+    overflow-x: auto;    /* 가로 스크롤 활성화 */
     scrollbar-width: none;
+    pointer-events: auto; /* 버튼은 클릭 가능 */
+    -webkit-overflow-scrolling: touch;
+    padding: 0 40px;
 }
+
 .filter-scroll-container::-webkit-scrollbar {
     display: none;
 }
 
+/* 개별 칩: 크기가 줄어들지 않게 방어 */
+/* 개별 칩 스타일 */
 .map-chip {
-    padding: 8px 16px;
-    border-radius: 50px; /* 원상복구 했던 스타일 반영 */
-    border: none;
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 8px 18px;  /* 가로 패딩을 살짝 늘려 더 예쁘게 만듦 */
+    border-radius: 50px;
     background-color: white;
     color: black;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    white-space: nowrap;
-    cursor: pointer;
+    border: none;
+    
+    /* 그림자를 조금 더 부드럽게 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    
     font-weight: 600;
     font-size: 13px;
+    cursor: pointer;
     transition: all 0.2s;
 }
 
