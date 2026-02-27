@@ -6,7 +6,7 @@ import {
     CheckCircle2, ChevronRight, Gift, Loader2, Calendar
 } from 'lucide-react';
 
-// 컴포넌트 임포트
+// 컴포넌트 임포트 (파일 경로가 프로젝트 구조와 맞는지 확인하세요)
 import MyPage from './MyPage';
 import Exhibition from './ExhibitList';
 import RootPage from './Root';
@@ -22,12 +22,15 @@ import './Login.css';
 import './GuidePage.css';
 import './Wishlist.css';
 
-const API_BASE_URL = 'http://localhost:8000'; 
+// API 주소 분리
+const LOCAL_API_URL = 'http://localhost:8000'; // 기존 로컬 서버 (전체 목록용)
+const AI_API_URL = 'http://54.180.234.226:8000'; // 외부 서버 (AI 추천용)
 
 const handleExhibitClick = (exhibit: any) => {
     console.log("선택된 전시:", exhibit);
-}
+};
 
+// --- 컴포넌트: 취향 선택 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
     const [selected, setSelected] = useState<string[]>([]);
     const tags = [
@@ -73,6 +76,7 @@ const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => v
     );
 };
 
+// --- 컴포넌트: 전시 카드 ---
 const ExhibitCard = ({ title, location, tag, imgUrl, onLikeChange }: any) => {
     const [liked, setLiked] = useState(false);
     const displayTags = Array.isArray(tag) ? tag : [tag];
@@ -110,6 +114,7 @@ const ExhibitCard = ({ title, location, tag, imgUrl, onLikeChange }: any) => {
     );
 };
 
+// --- 컴포넌트: 가로 스크롤 캐러셀 ---
 const ExhibitCarousel = ({ children }: { children: React.ReactNode }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const [showLeftBtn, setShowLeftBtn] = useState(false);
@@ -130,6 +135,7 @@ const ExhibitCarousel = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
+// --- 메인 App 컴포넌트 ---
 export default function App() {
     const [step, setStep] = useState('login');
     const [activeTab, setActiveTab] = useState('home');
@@ -149,36 +155,50 @@ export default function App() {
         { id: 2, icon: <CheckCircle2 size={18} color="#4CAF50" />, title: '도슨트 예약 완료', desc: '예약이 확정되었습니다.', time: '2시간 전', isRead: false },
     ]);
 
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            try {
-                const response = await axios.get(`${API_BASE_URL}/api/events`); 
-                if (response.data.status === "success") setServerExhibitions(response.data.data);
-            } catch (error) { console.error("❌ 서버 연결 실패:", error); }
-        };
-        if (step === 'main') fetchInitialData();
-    }, [step]);
+    // 좋아요 상태 관리 함수
+    const handleLikeChange = (isLiked: boolean) => {
+        setLikedCount(prev => isLiked ? prev + 1 : Math.max(0, prev - 1));
+    };
 
+    // 로그아웃 함수
     const handleLogout = () => {
         setIsLoggedIn(false);
         setStep('login');
-        localStorage.removeItem('user_token');
+        setActiveTab('home');
     };
 
-    const handleLikeChange = (isLiked: boolean) => {
-        setLikedCount(prev => isLiked ? prev + 1 : (prev > 0 ? prev - 1 : 0));
-    };
+    // 1. 기존 전체 목록 (localhost DB 유지)
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                const response = await axios.get(`${LOCAL_API_URL}/api/events`); 
+                if (response.data && response.data.status === "success") {
+                    setServerExhibitions(response.data.data || []);
+                }
+            } catch (error) { 
+                console.error("❌ 로컬 서버 연결 실패:", error); 
+                setServerExhibitions([]); 
+            }
+        };
+        if (step === 'main' && activeTab === 'home') fetchInitialData();
+    }, [step, activeTab]);
 
+    // 2. AI 추천 데이터 (외부 AI 서버 연결)
     const handlePreferenceComplete = async (selectedTags: string[]) => {
         setIsLoading(true);
         try {
             const cleanTags = selectedTags.map(tag => tag.replace('#', ''));
-            const response = await axios.post(`${API_BASE_URL}/api/ai/recommend`, { tags: cleanTags });
-            if (response.data.status === "success") {
-                setRecommendedExhibitions(response.data.data);
+            
+            const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { 
+                tags: cleanTags 
+            });
+
+            if (response.data && response.data.status === "success") {
+                setRecommendedExhibitions(response.data.data || []);
             }
         } catch (error) { 
-            console.error("❌ AI 추천 요청 실패:", error); 
+            console.error("❌ AI 추천 서버 연결 실패:", error);
+            setRecommendedExhibitions([]);
         } finally {
             setTimeout(() => { 
                 setIsLoading(false); 
@@ -231,16 +251,10 @@ export default function App() {
                             justifyContent: 'space-between', 
                             alignItems: 'center', 
                             background: '#fff',
-                            position: 'relative', 
-                            height: '60px',
                             zIndex: 100 
                         }}>
                             <h1 onClick={() => setActiveTab('home')} style={{ 
-                                cursor: 'pointer', 
-                                margin: 0, 
-                                fontSize: '1.4rem', 
-                                fontWeight: 'bold',
-                                lineHeight: '1.2' 
+                                cursor: 'pointer', margin: 0, fontSize: '1.4rem', fontWeight: 'bold'
                             }}>
                                 ArtLog
                             </h1>
@@ -250,14 +264,8 @@ export default function App() {
                                     <Bell size={24} />
                                     {hasUnread && (
                                         <div style={{ 
-                                            position: 'absolute', 
-                                            top: -2, 
-                                            right: -2, 
-                                            width: 8, 
-                                            height: 8, 
-                                            background: '#FF3B30', 
-                                            borderRadius: '50%', 
-                                            border: '2px solid #fff' 
+                                            position: 'absolute', top: -2, right: -2, width: 8, height: 8, 
+                                            background: '#FF3B30', borderRadius: '50%', border: '2px solid #fff' 
                                         }} />
                                     )}
                                 </div>
@@ -269,7 +277,7 @@ export default function App() {
                     )}
 
                     <main className={isFullScreenMode ? "full-screen-content" : "main-content-scroll"}>
-                       {activeTab === 'home' && (
+                        {activeTab === 'home' && (
                         <>
                             <p className="subtitle">감각적인 예술 탐험을<br />함께하는 개인 맞춤 큐레이션</p>
                             
@@ -282,70 +290,55 @@ export default function App() {
                                 </button>
                             </section>
 
-                            {/* --- AI 취향 맞춤 추천 섹션 --- */}
-<section className="section" style={{ padding: '20px 0' }}>
-    <div className="section-header" style={{ padding: '0 20px', marginBottom: '16px' }}>
-        <div className="title-group">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Sparkles size={18} color="#7C4DFF" fill="#7C4DFF" />
-                <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>AI가 분석한 오늘의 추천</h3>
-            </div>
-            <span className="sub-title" style={{ fontSize: '0.7rem', color: '#999' }}>FOR YOUR CURATED TASTE</span>
-        </div>
-    </div>
-    
-    <div className="horizontal-scroll" style={{ display: 'flex', gap: '16px', padding: '0 20px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-        {recommendedExhibitions.length > 0 ? (
-            recommendedExhibitions.map((item, idx) => (
-                <div key={`ai-rec-${idx}`} className="pref-card" onClick={() => handleExhibitClick(item)} 
-                     style={{ minWidth: '180px', width: '180px', cursor: 'pointer' }}>
-                    
-                    {/* 이미지 영역: 상단에 뜨던 텍스트 제거함 */}
-                    <div className="pref-image-wrapper" style={{ height: '240px', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px', position: 'relative' }}>
-                        <img 
-                            src={item.image_url || "/api/placeholder/180/240"} 
-                            alt={item.title} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            onError={(e) => { e.currentTarget.src = "/api/placeholder/180/240" }}
-                        />
-                    </div>
+                            {/* --- 1. AI 취향 맞춤 추천 섹션 (외부 서버 데이터) --- */}
+                            <section className="section" style={{ padding: '20px 0' }}>
+                                <div className="section-header" style={{ padding: '0 20px', marginBottom: '16px' }}>
+                                    <div className="title-group">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <Sparkles size={18} color="#7C4DFF" fill="#7C4DFF" />
+                                            <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>AI가 분석한 오늘의 추천</h3>
+                                        </div>
+                                        <span className="sub-title" style={{ fontSize: '0.7rem', color: '#999' }}>FOR YOUR CURATED TASTE</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="horizontal-scroll" style={{ display: 'flex', gap: '16px', padding: '0 20px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+                                    {recommendedExhibitions.length > 0 ? (
+                                        recommendedExhibitions.map((item, idx) => (
+                                            <div key={`ai-rec-${idx}`} className="pref-card" onClick={() => handleExhibitClick(item)} 
+                                                 style={{ minWidth: '180px', width: '180px', cursor: 'pointer' }}>
+                                                
+                                                <div className="pref-image-wrapper" style={{ height: '240px', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px', position: 'relative' }}>
+                                                    <img 
+                                                        src={item.image_url || "/api/placeholder/180/240"} 
+                                                        alt={item.title} 
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        onError={(e) => { e.currentTarget.src = "/api/placeholder/180/240" }}
+                                                    />
+                                                </div>
 
-                    {/* 정보 영역: 태그를 제목 위(하단 영역)로 배치 */}
-                    <div className="pref-info">
-                        <div style={{ 
-                            display: 'inline-block', 
-                            padding: '2px 0', 
-                            marginBottom: '4px', 
-                            fontSize: '0.75rem', 
-                            color: '#7C4DFF', 
-                            fontWeight: '600' 
-                        }}>
-                            {Array.isArray(item.hashtag) ? item.hashtag.join(', ') : (item.hashtag || '추천 스타일')}
-                        </div>
-                        <h4 style={{ 
-                            fontSize: '0.95rem', 
-                            margin: '0 0 4px 0', 
-                            fontWeight: '600',
-                            whiteSpace: 'nowrap', 
-                            overflow: 'hidden', 
-                            textOverflow: 'ellipsis' 
-                        }}>
-                            {item.title}
-                        </h4>
-                        <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
-                            📍 {item.place_name || '장소 미정'}
-                        </p>
-                    </div>
-                </div>
-            ))
-        ) : (
-            <div style={{ width: '100%', textAlign: 'center', padding: '40px 0', background: '#f8f8f8', borderRadius: '12px', fontSize: '0.85rem', color: '#888' }}>
-                취향 분석 결과에 맞는 전시를 불러오고 있어요..
-            </div>
-        )}
-    </div>
-</section>
+                                                <div className="pref-info">
+                                                    <div style={{ display: 'inline-block', padding: '2px 0', marginBottom: '4px', fontSize: '0.75rem', color: '#7C4DFF', fontWeight: '600' }}>
+                                                        {Array.isArray(item.hashtag) ? item.hashtag.join(', ') : (item.hashtag || '추천 스타일')}
+                                                    </div>
+                                                    <h4 style={{ fontSize: '0.95rem', margin: '0 0 4px 0', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                        {item.title}
+                                                    </h4>
+                                                    <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
+                                                        📍 {item.place_name || '장소 미정'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div style={{ width: '100%', textAlign: 'center', padding: '40px 0', background: '#f8f8f8', borderRadius: '12px', fontSize: '0.85rem', color: '#888' }}>
+                                            취향 분석 결과에 맞는 전시를 불러오고 있어요..
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
 
+                            {/* --- 2. 지금 화제인 전시 (로컬 서버 데이터) --- */}
                             <section className="section">
                                 <div className="section-header">
                                     <h3>지금 화제인 전시</h3>
@@ -364,7 +357,7 @@ export default function App() {
                                             />
                                         ))
                                     ) : (
-                                        <div className="empty-state">전시 데이터를 불러오는 중입니다...</div>
+                                        <div className="empty-state" style={{ padding: '20px', color: '#999' }}>전시 데이터를 불러오는 중입니다...</div>
                                     )}
                                 </ExhibitCarousel>
                             </section>
@@ -433,22 +426,22 @@ export default function App() {
                                 </div>
                             </section>
                         </>
-                    )}
+                        )}
 
-                    {activeTab === 'exhibits' && <Exhibition onBack={() => setActiveTab('home')} onLikeChange={handleLikeChange} />}
-                    {activeTab === 'map' && <MapPage />}
-                    {activeTab === 'guide' && <GuidePage initialTab={guideSubTab} />}
-                    {activeTab === 'course' && (
-                        isNavigating ? (
-                            <CourseNavigation courseData={selectedCourseData} onClose={() => setIsNavigating(false)} />
-                        ) : (
-                            <RootPage targetCourse={targetCourse} setTargetCourse={setTargetCourse} onStart={(data: any) => { setSelectedCourseData(data); setIsNavigating(true); }} />
-                        )
-                    )}
-                    {activeTab === 'gift' && <Giftshop />}
-                    {activeTab === 'mypage' && (
-                        <MyPage isLoggedIn={isLoggedIn} likedCount={likedCount} setIsLoggedIn={setIsLoggedIn} onTabChange={(tab: string) => setActiveTab(tab)} onLogout={handleLogout} />
-                    )}
+                        {activeTab === 'exhibits' && <Exhibition onBack={() => setActiveTab('home')} onLikeChange={handleLikeChange} />}
+                        {activeTab === 'map' && <MapPage />}
+                        {activeTab === 'guide' && <GuidePage initialTab={guideSubTab} />}
+                        {activeTab === 'course' && (
+                            isNavigating ? (
+                                <CourseNavigation courseData={selectedCourseData} onClose={() => setIsNavigating(false)} />
+                            ) : (
+                                <RootPage targetCourse={targetCourse} setTargetCourse={setTargetCourse} onStart={(data: any) => { setSelectedCourseData(data); setIsNavigating(true); }} />
+                            )
+                        )}
+                        {activeTab === 'gift' && <Giftshop />}
+                        {activeTab === 'mypage' && (
+                            <MyPage isLoggedIn={isLoggedIn} likedCount={likedCount} setIsLoggedIn={setIsLoggedIn} onTabChange={(tab: string) => setActiveTab(tab)} onLogout={handleLogout} />
+                        )}
                     </main>
 
                     {!isFullScreenMode && (
