@@ -222,15 +222,23 @@
 }
 
 .scanner-bottom {
-    position: absolute;
-    bottom: 40px;
-    left: 0;
-    right: 0;
     display: flex;
-    justify-content: center;
+    justify-content: space-around; /* 또는 space-between + padding */
     align-items: center;
     width: 100%;
-    z-index: 100;
+    padding: 20px 40px;
+    position: absolute;
+    bottom: 30px;
+}
+
+.scanner-gallery-btn {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
 }
 
 .scanner-actions {
