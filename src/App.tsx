@@ -3,7 +3,7 @@ import axios from 'axios';
 import { BrowserRouter as Router } from 'react-router-dom';
 import {
     Home, Map, Mic, Compass, Bell, User, Heart, X, Sparkles,
-    CheckCircle2, ChevronRight, Gift, Loader2
+    CheckCircle2, ChevronRight, Gift, Loader2, Calendar
 } from 'lucide-react';
 
 // 컴포넌트 임포트
@@ -22,7 +22,10 @@ import './Login.css';
 import './GuidePage.css';
 import './Wishlist.css';
 
-const API_BASE_URL = '/api_proxy';
+const API_BASE_URL = 'http://localhost:8000'; // 프록시 대신 직접 주소 사용 (CORS 해결됐으니!)
+const handleExhibitClick = (exhibit: any) => {
+    console.log("선택된 전시:", exhibit);
+}
 
 // --- [컴포넌트 1] 취향 선택 화면 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
@@ -151,7 +154,7 @@ export default function App() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const response = await axios.get('http://localhost:8000/api/events'); 
+                const response = await axios.get(`${API_BASE_URL}/api/events`); 
                 if (response.data.status === "success") setServerExhibitions(response.data.data);
             } catch (error) { console.error("❌ 서버 연결 실패:", error); }
         };
@@ -200,8 +203,6 @@ export default function App() {
     };
 
     const hasUnread = notifications.some((n) => !n.isRead);
-
-    // 🌟 레이아웃 조건 (헤더/네비 숨김 여부)
     const isFullScreenMode = activeTab === 'exhibits' || isNavigating;
 
     return (
@@ -225,7 +226,6 @@ export default function App() {
                 <PreferenceSelection onComplete={handlePreferenceComplete} />
             ) : (
                 <div className="art-log-container">
-                    {/* 🌟 상단 헤더 (전시 둘러보기 중엔 숨김) */}
                     {!isFullScreenMode && (
                         <header className="main-header" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff' }}>
                             <h1 onClick={() => setActiveTab('home')} style={{ cursor: 'pointer', margin: 0, fontSize: '1.4rem' }}>ArtLog</h1>
@@ -245,48 +245,155 @@ export default function App() {
                     )}
 
                     <main className={isFullScreenMode ? "full-screen-content" : "main-content-scroll"}>
-                        {activeTab === 'home' && (
-                            <>
-                                <p className="subtitle">감각적인 예술 탐험을<br />함께하는 개인 맞춤 큐레이션</p>
-                                <section className="ai-banner">
-                                    <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
-                                    <h2 className="ai-title">" 오늘은 종로의 감성에 빠져볼까요? "</h2>
-                                    <p className="ai-desc">취향에 딱 맞는 전시와 코스를 준비했어요.</p>
-                                    <button className="cta-button" onClick={() => setActiveTab('exhibits')}>
-                                        추천 전시 보기 <ChevronRight size={20} className="cta-icon" />
-                                    </button>
-                                </section>
+                       {activeTab === 'home' && (
+    <>
+        <p className="subtitle">감각적인 예술 탐험을<br />함께하는 개인 맞춤 큐레이션</p>
+        
+        {/* --- AI 배너 --- */}
+        <section className="ai-banner">
+            <div className="ai-badge">✨ PERSONAL AI ASSISTANT</div>
+            <h2 className="ai-title">" 오늘은 종로의 감성에 빠져볼까요? "</h2>
+            <p className="ai-desc">취향에 딱 맞는 전시와 코스를 준비했어요.</p>
+            <button className="cta-button" onClick={() => setActiveTab('exhibits')}>
+                추천 전시 보기 <ChevronRight size={20} className="cta-icon" />
+            </button>
+        </section>
 
-                                {recommendedExhibitions.length > 0 && (
-                                    <section className="section">
-                                        <div className="section-header"><h3>당신을 위한 추천 전시</h3></div>
-                                        <ExhibitCarousel>
-                                            {recommendedExhibitions.map((item, idx) => (
-                                                <ExhibitCard key={`rec-${idx}`} tag={item.hashtag || '추천'} title={item.title} location={item.place_name} imgUrl={item.image_url} onLikeChange={handleLikeChange} />
-                                            ))}
-                                        </ExhibitCarousel>
-                                    </section>
-                                )}
+{/* --- AI 취향 맞춤 추천 섹션 (슬림 버전) --- */}
+<section className="section" style={{ padding: '20px 0' }}>
+    <div className="section-header" style={{ padding: '0 20px', marginBottom: '16px' }}>
+        <div className="title-group">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Sparkles size={18} color="#7C4DFF" fill="#7C4DFF" />
+                <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>AI가 분석한 오늘의 추천</h3>
+            </div>
+            <span className="sub-title" style={{ fontSize: '0.7rem', color: '#999' }}>FOR YOUR CURATED TASTE</span>
+        </div>
+    </div>
+    
+    <div className="horizontal-scroll" style={{ display: 'flex', gap: '12px', padding: '0 20px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {recommendedExhibitions.length > 0 ? (
+            recommendedExhibitions.map((item, idx) => (
+                <div key={`ai-rec-${idx}`} className="pref-card" onClick={() => handleExhibitClick(item)} 
+                     style={{ minWidth: '160px', width: '160px' }}> {/* 가로 크기 고정 */}
+                    <div className="pref-image-wrapper" style={{ height: '200px', borderRadius: '12px', overflow: 'hidden', marginBottom: '8px' }}>
+                        <img 
+                            src={item.image_url || "/api/placeholder/160/200"} 
+                            alt={item.title} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            onError={(e) => { e.currentTarget.src = "/api/placeholder/160/200" }}
+                        />
+                        <div className="pref-tag" style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(255,255,255,0.9)', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '600' }}>
+                            {Array.isArray(item.hashtag) ? item.hashtag[0] : (item.hashtag || '추천')}
+                        </div>
+                    </div>
+                    <div className="pref-info">
+                        <h4 style={{ fontSize: '0.9rem', margin: '4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</h4>
+                        <p style={{ fontSize: '0.75rem', color: '#666', margin: 0 }}>📍 {item.place_name || '장소 미정'}</p>
+                    </div>
+                </div>
+            ))
+        ) : (
+            <div className="empty-state" style={{ width: '100%', textAlign: 'center', padding: '40px 0', background: '#f8f8f8', borderRadius: '12px', fontSize: '0.85rem', color: '#888' }}>
+                취향 분석 결과에 맞는 전시를 불러오고 있어요..
+            </div>
+        )}
+    </div>
+</section>
 
-                                <section className="section">
-                                    <div className="section-header">
-                                        <h3>지금 화제인 전시</h3>
-                                        <button className="view-all" onClick={() => setActiveTab('exhibits')}>전체보기</button>
-                                    </div>
-                                    <ExhibitCarousel>
-                                        {serverExhibitions.length > 0 ? (
-                                            serverExhibitions.map((item, idx) => (
-                                                <ExhibitCard key={`serv-${idx}`} tag={item.hashtag || '전시'} title={item.title} location={item.place_name} imgUrl={item.image_url} onLikeChange={handleLikeChange} />
-                                            ))
-                                        ) : (
-                                            <div style={{ padding: '20px', color: '#999' }}>전시 데이터를 불러오는 중입니다...</div>
-                                        )}
-                                    </ExhibitCarousel>
-                                </section>
+        {/* --- 지금 화제인 전시 (캐러셀) --- */}
+        <section className="section">
+            <div className="section-header">
+                <h3>지금 화제인 전시</h3>
+                <button className="view-all" onClick={() => setActiveTab('exhibits')}>전체보기</button>
+            </div>
+            <ExhibitCarousel>
+                {serverExhibitions.length > 0 ? (
+                    serverExhibitions.map((item, idx) => (
+                        <ExhibitCard 
+                            key={`serv-${idx}`} 
+                            tag={item.hashtag || '전시'} 
+                            title={item.title} 
+                            location={item.place_name} 
+                            imgUrl={item.image_url} 
+                            onLikeChange={handleLikeChange} 
+                        />
+                    ))
+                ) : (
+                    <div className="empty-state">전시 데이터를 불러오는 중입니다...</div>
+                )}
+            </ExhibitCarousel>
+        </section>
 
-                                {/* 도슨트/코스 섹션 생략 (기존 구조 유지) */}
-                            </>
-                        )}
+        {/* --- [복구] 프리미엄 도슨트 섹션 --- */}
+        <section className="section">
+            <div className="section-header">
+                <div className="title-group">
+                    <h3>프리미엄 도슨트</h3>
+                    <span className="sub-title">EXPERT CURATION GUIDES</span>
+                </div>
+                <button className="view-all" onClick={() => navigateToGuide('human')}>전체보기</button>
+            </div>
+            <div className="docent-list">
+                {/* 아티 AI 가이드 */}
+                <div className="docent-card active-guide" onClick={() => navigateToGuide('ai')}>
+                    <div className="docent-profile ai-bot">🤖</div>
+                    <div className="docent-info">
+                        <div className="docent-name">아티 (AI 가이드) <span className="ai-tag">AI</span></div>
+                        <p className="docent-desc">추상화, 디지털 아트, 빠른 요약</p>
+                        <div className="docent-price">무료 (AI)</div>
+                    </div>
+                    <div className="docent-action">
+                        <div className="rating">⭐ 4.8 <span className="count">(1250)</span></div>
+                        <button className="action-btn black" onClick={(e) => { e.stopPropagation(); navigateToGuide('ai'); }}>해설 시작</button>
+                    </div>
+                </div>
+                {/* 김사랑 도슨트 */}
+                <div className="docent-card active-guide" onClick={() => navigateToGuide('human')}>
+                    <div className="docent-profile">👩‍🎨</div>
+                    <div className="docent-info">
+                        <div className="docent-name">김사랑 도슨트</div>
+                        <p className="docent-desc">현대미술, 미술사학</p>
+                        <div className="docent-price">45,000원</div>
+                    </div>
+                    <div className="docent-action">
+                        <div className="rating">⭐ 4.9 <span className="count">(320)</span></div>
+                        <button className="action-btn gray">예약하기</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {/* --- [복구] 추천 나들이 코스 섹션 --- */}
+        <section className="section">
+            <div className="section-header">
+                <div className="title-group">
+                    <h3>추천 나들이 코스</h3>
+                    <span className="sub-title">CURATED DAILY ROUTES</span>
+                </div>
+                <button className="view-all" onClick={() => setActiveTab('course')}>전체보기</button>
+            </div>
+            <div className="course-list">
+                <div className="course-card" onClick={() => { setTargetCourse('course-seongsu'); setActiveTab('course'); }}>
+                    <div className="course-content">
+                        <span className="course-tag">2025.06.28~2026.09.20</span>
+                        <h4>취향가옥 2: Art in Life, Life in Art 2</h4>
+                        <p>성수동의 감각적인 공간과 예술이 만나는 특별한 일상 코스</p>
+                    </div>
+                    <div className="course-icon"><Compass size={20} /></div>
+                </div>
+                <div className="course-card" onClick={() => { setTargetCourse('course-jongno'); setActiveTab('course'); }}>
+                    <div className="course-content">
+                        <span className="course-tag">2025.12.19~2026.06.07</span>
+                        <h4>구의, 영감의 조각을 줍는 산책</h4>
+                        <p>그라운드시소 이스트에서 시작해 에스프레소바로 마무리하는 영감 코스</p>
+                    </div>
+                    <div className="course-icon"><Compass size={20} /></div>
+                </div>
+            </div>
+        </section>
+    </>
+)}
 
                         {activeTab === 'exhibits' && <Exhibition onBack={() => setActiveTab('home')} onLikeChange={handleLikeChange} />}
                         {activeTab === 'map' && <MapPage />}
@@ -304,7 +411,6 @@ export default function App() {
                         )}
                     </main>
 
-                    {/* 🌟 하단 네비 (전시 둘러보기 중엔 숨김) */}
                     {!isFullScreenMode && (
                         <nav className="bottom-nav">
                             <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}><Home size={24} /><span>홈</span></div>
@@ -315,7 +421,6 @@ export default function App() {
                         </nav>
                     )}
 
-                    {/* 알림 모달 */}
                     {isNotifyOpen && (
                         <div className="modal-overlay" onClick={() => setIsNotifyOpen(false)}>
                             <div className="notification-modal" onClick={(e) => e.stopPropagation()}>
