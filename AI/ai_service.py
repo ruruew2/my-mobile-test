@@ -22,10 +22,11 @@ def recommend_exhibitions(user_tags, exhibition_list):
     return scored_list[:3]
 
 # 2. GPT-4o Vision 분석 + TTS 음성 생성
-def generate_multilingual_docent(image_path, lang="ko"):
+# [수정] image_path 대신 main.py에서 보낸 data_url을 직접 받습니다.
+def generate_multilingual_docent(image_data, lang="ko"):
     try:
-        with open(image_path, "rb") as image_file:
-            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+        # 🚨 [중요 수정] main.py에서 이미 "data:image/...;base64,..." 형태의 문자열을 보내주므로 
+        # 로컬 파일을 열 필요가 없습니다. (with open 구문 삭제)
 
         lang_map = {"ko": "Korean", "en": "English", "ja": "Japanese", "zh": "Chinese"}
         target_lang = lang_map.get(lang, "Korean")
@@ -38,21 +39,26 @@ def generate_multilingual_docent(image_path, lang="ko"):
                     "role": "user",
                     "content": [
                         {"type": "text", "text": "이 작품의 제목, 작가, 의미를 분석해서 300자 내외로 설명해줘. 특수문자는 빼줘."},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                        # 🚨 [중요 수정] 넘겨받은 image_data(Base64)를 그대로 사용합니다.
+                        {"type": "image_url", "image_url": {"url": image_data}}
                     ]
                 }
             ]
         )
+        
         script = response.choices[0].message.content.strip()
+        
+        # TTS 음성 생성
         audio_res = client.audio.speech.create(model="tts-1", voice="nova", input=script)
         
-        # 파일명 중복 방지를 위한 hash 사용
-        audio_filename = f"audio/docent_{hash(script)}.mp3"
+        # [수정] 파일명 생성 시 abs()를 사용하여 음수 에러 방지
+        audio_filename = f"audio/docent_{abs(hash(script))}.mp3"
         audio_res.write_to_file(audio_filename)
         
         return audio_filename, script
+
     except Exception as e:
-        print(f"❌ AI 서비스 에러: {e}")
+        print(f"❌ AI 서비스 에러 상세: {e}")
         return None, None
 
 # 3. 카카오 장소 검색 및 코스 생성

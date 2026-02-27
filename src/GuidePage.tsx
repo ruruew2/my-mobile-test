@@ -79,41 +79,53 @@ const GuidePage = ({ initialTab }: any) => {
     }, [isScannerOpen]);
 
     // 공통 분석 요청 함수
-    const sendToAIApi = async (blob: Blob, previewUrl: string) => {
-        setIsAnalyzing(true);
-        const formData = new FormData();
-        formData.append('file', blob, 'image.jpg');
-        formData.append('lang', 'ko');
+const sendToAIApi = async (fileOrBlob: Blob | File, previewUrl: string) => {
+    setIsAnalyzing(true);
+    
+    // 1. FormData 구성
+    const formData = new FormData();
+    // 백엔드 main.py의 @app.post("/api/ai/docent") 에서 file: UploadFile 로 받으므로 키값을 'file'로 고정
+    formData.append('file', fileOrBlob, 'image.jpg'); 
+    formData.append('lang', 'ko');
 
-        try {
-            const response = await fetch('http://localhost:8000/api/ai/docent', {
-                method: 'POST',
-                body: formData,
-            });
-            const result = await response.json();
+    try {
+        console.log("서버로 분석 요청 전송 중...");
+        const response = await fetch('http://localhost:8000/api/ai/docent', {
+            method: 'POST',
+            body: formData, // JSON이 아니라 FormData를 그대로 보냄
+        });
 
-            if (result.status === "success") {
-                const [audioUrl, script] = result.data;
-                setScannedArt({
-                    title: '분석된 작품',
-                    artist: 'AI 도슨트',
-                    year: '2024',
-                    description: script,
-                    audioPath: `http://localhost:8000/${audioUrl}`,
-                    imagePreview: previewUrl
-                });
-                setIsAnalyzing(false);
-                setIsScannerOpen(false);
-                setShowResult(true);
-            } else {
-                throw new Error("분석 실패");
-            }
-        } catch (error) {
-            console.error('분석 실패:', error);
-            setIsAnalyzing(false);
-            alert('AI 도슨트 서버 분석에 실패했습니다.');
+        if (!response.ok) {
+            throw new Error(`서버 응답 에러: ${response.status}`);
         }
-    };
+
+        const result = await response.json();
+        console.log("서버 응답 결과:", result);
+
+        if (result.status === "success" && result.data) {
+            const [audioUrl, script] = result.data;
+
+            setScannedArt({
+                title: '분석된 작품',
+                artist: 'AI 도슨트',
+                year: '2024',
+                description: script,
+                audioPath: `http://localhost:8000/${audioUrl}`,
+                imagePreview: previewUrl // 성공 시에만 미리보기 적용
+            });
+            
+            setIsAnalyzing(false);
+            setIsScannerOpen(false);
+            setShowResult(true);
+        } else {
+            throw new Error(result.message || "분석 결과가 올바르지 않습니다.");
+        }
+    } catch (error) {
+        console.error('분석 실패 상세:', error);
+        setIsAnalyzing(false);
+        alert('분석에 실패했습니다. 서버 연결 상태나 이미지 형식을 확인해주세요.');
+    }
+};
 
     // 카메라 캡처 처리
     const handleCapture = () => {
@@ -132,13 +144,19 @@ const GuidePage = ({ initialTab }: any) => {
     };
 
     // 사진 파일 업로드 처리
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-        const previewUrl = URL.createObjectURL(file);
-        sendToAIApi(file, previewUrl);
-    };
+    // 브라우저 메모리에 임시 미리보기 URL 생성
+    const previewUrl = URL.createObjectURL(file);
+    
+    // 분석 함수 호출
+    sendToAIApi(file, previewUrl);
+    
+    // 같은 파일을 다시 올릴 수 있도록 input 초기화
+    event.target.value = '';
+};
 
     const handleAudioGuide = async () => {
         if (showPlayer) {
