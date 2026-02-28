@@ -178,6 +178,8 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange }) => 
                                             e.preventDefault();
                                             e.stopPropagation();
                                             toggleLike(item.id);
+                                            console.log("실제 서버가 준 ID:", item.id); 
+console.log("실제 서버가 준 데이터 전체:", item);
                                         }}
                                     >
                                         <Heart

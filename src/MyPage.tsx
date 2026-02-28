@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Settings, Heart, BookOpen, CreditCard, Bell, 
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users,
@@ -130,9 +130,57 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  // 뱃지 상태 추가
-  const [selectedBadge, setSelectedBadge] = useState<any>(null);
+  // 찜한 전시 상세 정보 상태
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
 
+  // 1️⃣ 찜 데이터 불러오기 함수
+  const loadWishlist = async () => {
+    const savedIds = localStorage.getItem('wishlist');
+    const likedIds = savedIds ? JSON.parse(savedIds).map(String) : [];
+
+    if (likedIds.length === 0) {
+      setWishlistItems([]);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/api/events');
+      const result = await response.json();
+      const allEvents = result.data || (Array.isArray(result) ? result : []);
+
+      const filtered = allEvents.filter((evt: any, index: number) => {
+        const sId = String(evt.id || "");
+        const sEventId = String(evt.event_id || "");
+        const sIndexId = String(index + 1);
+        return likedIds.includes(sId) || likedIds.includes(sEventId) || likedIds.includes(sIndexId);
+      });
+
+      setWishlistItems(filtered);
+    } catch (err) {
+      console.error("로딩 실패", err);
+    }
+  };
+
+  // 2️⃣ 찜 해제 함수 (e 파라미터 추가해서 에러 해결!)
+  const handleRemoveWishlist = (e: React.MouseEvent, id: any) => {
+    e.stopPropagation();
+    const savedIds = localStorage.getItem('wishlist');
+    if (!savedIds) return;
+
+    const likedIds: any[] = JSON.parse(savedIds);
+    const updatedIds = likedIds.filter(itemId => String(itemId) !== String(id));
+    
+    localStorage.setItem('wishlist', JSON.stringify(updatedIds));
+    loadWishlist(); // 즉시 리로딩
+  };
+
+  useEffect(() => {
+    loadWishlist();
+    window.addEventListener('storage', loadWishlist);
+    return () => window.removeEventListener('storage', loadWishlist);
+  }, []);
+  
+  const [selectedBadge, setSelectedBadge] = useState<any>(null);
   const [friendEmail, setFriendEmail] = useState('');
   const [managingFriend, setManagingFriend] = useState<FriendItem | null>(null);
   const [friends, setFriends] = useState<FriendItem[]>([
@@ -229,18 +277,71 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
         return (
           <div className="sub-view">
             <SubViewHeader title="보고싶은 전시" />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {[1, 2].map(i => (
-                <div key={i} style={{ borderRadius: '15px', overflow: 'hidden', border: '1px solid #eee', cursor: 'pointer' }}>
-                  <div style={{ width: '100%', height: '120px', backgroundColor: '#fff0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Heart size={24} color="#ff4d4d" fill="#ff4d4d" />
+            {wishlistItems.length > 0 ? (
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '15px',
+                padding: '10px 0' 
+              }}>
+                {wishlistItems.map((item) => (
+                  <div key={item.id || item.event_id} style={{ 
+                    borderRadius: '15px', 
+                    overflow: 'hidden', 
+                    border: '1px solid #eee', 
+                    backgroundColor: '#fff',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    position: 'relative'
+                  }}>
+                    <div style={{ 
+                      width: '100%', 
+                      height: '140px', 
+                      backgroundImage: `url(${item.image_url || item.main_img || item.img_url})`,
+                      backgroundSize: 'cover', 
+                      backgroundPosition: 'center',
+                      position: 'relative'
+                    }}>
+                      <div 
+                        onClick={(e) => handleRemoveWishlist(e, item.id || item.event_id)} 
+                        style={{ 
+                          position: 'absolute', 
+                          top: '8px', 
+                          right: '8px', 
+                          backgroundColor: 'rgba(255,255,255,0.9)', 
+                          borderRadius: '50%', 
+                          padding: '4px',
+                          display: 'flex',
+                          cursor: 'pointer',
+                          zIndex: 10
+                        }}
+                      >
+                        <Heart size={16} color="#ff4d4d" fill="#ff4d4d" />
+                      </div>
+                    </div>
+                    <div style={{ padding: '12px' }}>
+                      <p style={{ 
+                        margin: 0, 
+                        fontSize: '13px', 
+                        fontWeight: 'bold', 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis' 
+                      }}>
+                        {item.title}
+                      </p>
+                      <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#999' }}>
+                        {item.place_name || item.location}
+                      </p>
+                    </div>
                   </div>
-                  <div style={{ padding: '12px' }}>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>찜한 전시 {i}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#bbb' }}>
+                <Heart size={48} color="#eee" style={{ marginBottom: '15px' }} />
+                <p style={{ fontSize: '14px' }}>아직 보고 싶은 전시가 없어요.</p>
+              </div>
+            )}
           </div>
         );
 
@@ -306,18 +407,14 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
             </div>
           </div>
         );
-case 'profileEdit':
+
+      case 'profileEdit':
         return (
           <div className="sub-view">
             <SubViewHeader title="개인정보 수정" />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* 닉네임 수정 */}
               <InputGroup label="닉네임" placeholder="예술가 김아트" />
-              
-              {/* 한 줄 소개 수정 */}
               <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
-
-              {/* 🚀 대표 뱃지 설정 드롭다운 추가 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>대표 뱃지 설정</label>
                 <div style={{ position: 'relative' }}>
@@ -339,7 +436,7 @@ case 'profileEdit':
                       border: '1px solid #eee', 
                       outline: 'none', 
                       fontSize: '14px',
-                      appearance: 'none', // 기본 화살표 숨김 (커스텀 디자인용)
+                      appearance: 'none',
                       backgroundColor: '#fff',
                       cursor: 'pointer'
                     }}
@@ -351,7 +448,6 @@ case 'profileEdit':
                       </option>
                     ))}
                   </select>
-                  {/* 드롭다운 화살표 아이콘 */}
                   <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
                     <ChevronRight size={18} color="#999" style={{ transform: 'rotate(90deg)' }} />
                   </div>
@@ -362,8 +458,6 @@ case 'profileEdit':
                   </p>
                 )}
               </div>
-
-              {/* 비밀번호 변경 */}
               <InputGroup 
                 label="비밀번호 변경" 
                 placeholder="변경할 비밀번호를 입력하세요" 
@@ -374,24 +468,12 @@ case 'profileEdit':
                   </div>
                 }
               /> 
-
-              {/* 저장 버튼 */}
               <button 
                 onClick={() => { 
                   alert('개인정보와 대표 뱃지가 수정되었습니다.'); 
                   setViewState('main'); 
                 }}
-                style={{ 
-                  width: '100%', 
-                  padding: '16px', 
-                  borderRadius: '12px', 
-                  border: 'none', 
-                  fontWeight: 'bold', 
-                  cursor: 'pointer', 
-                  backgroundColor: '#000', 
-                  color: '#fff',
-                  marginTop: '10px'
-                }}
+                style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: '#000', color: '#fff', marginTop: '10px' }}
               >
                 저장하기
               </button>
@@ -614,12 +696,15 @@ case 'profileEdit':
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
-        <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
-        <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
+        <StatCard val={isLoggedIn ? "0" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
+        <StatCard 
+          val={isLoggedIn ? wishlistItems.length.toString() : "-"} 
+          label="찜한 전시" 
+          onClick={() => setViewState('likes')} 
+        />
         <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
       </div>
 
-      {/* 🚀 뱃지 섹션 추가 (메인 화면일 때만 표시) */}
       {viewState === 'main' && (
         <div style={{ marginBottom: '30px' }}>
           <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>MY BADGES</h4>
@@ -651,7 +736,6 @@ case 'profileEdit':
 
       {renderContent()}
 
-      {/* 뱃지 상세 팝업 */}
       {selectedBadge && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
           <div style={{ backgroundColor: '#fff', width: '280px', borderRadius: '25px', padding: '25px', textAlign: 'center' }}>
