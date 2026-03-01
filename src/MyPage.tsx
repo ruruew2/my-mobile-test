@@ -517,18 +517,24 @@ case 'reviews':
           </div>
         );
 
-case 'writeReview': // 👈 "후기 작성하기" 버튼을 누르면 이리로 옵니다!
-        return (
-          <div className="sub-view">
-            <SubViewHeader title="후기 남기기" backTo="reviews" />
-            <ReviewForm 
-              exhibitionTitle={selectedExhibition} 
-              onComplete={() => { 
-                setShowModal(true); 
-              }} 
-            />
-          </div>
-        );
+case 'writeReview':
+  return (
+    <div className="sub-view">
+      {/* backTo="reviews"가 잘 작동하려면 setViewState('reviews') 기능이 SubViewHeader에 있어야 합니다 */}
+      <SubViewHeader title="후기 남기기" /> 
+      <ReviewForm 
+        // selectedExhibition이 없으면 '선택된 전시'라고 나오게 방어막 설치
+        exhibitionTitle={selectedExhibition || "선택된 전시"} 
+        onComplete={() => { 
+          // 완료 후 메인이나 목록으로 돌아가게 설정
+          alert('후기가 등록되었습니다!');
+          setViewState('main'); 
+        }} 
+      />
+    </div>
+  );
+
+        
       case 'notifSetting':
         return (
           <div className="sub-view">
