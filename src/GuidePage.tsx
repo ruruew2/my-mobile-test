@@ -155,10 +155,10 @@ const GuidePage = ({ initialTab }: any) => {
                             <span style={{ fontSize: '60px' }}>🤖</span>
                         </div>
                         <h3 style={{ marginTop: '24px', fontSize: '1.2rem', fontWeight: '700', color: '#222' }}>
-                            아티가 작품을 분석 중입니다...
+                            아티가 열심히 작품을 분석 중 입니다...✒️ <br></br>조금만 기다려 주세요! 
                         </h3>
                         <div className="progress-track" style={{ width: '200px', height: '6px', backgroundColor: '#f0f0f0', borderRadius: '10px', marginTop: '30px', overflow: 'hidden', position: 'relative', margin: '30px auto 0' }}>
-                            <div className="progress-fill" style={{ position: 'absolute', height: '100%', backgroundColor: '#7148fc', borderRadius: '10px' }}></div>
+                            <div className="progress-fill" style={{ position: 'absolute', height: '100%',  backgroundColor: '#7148fc', borderRadius: '10px' }}></div>
                         </div>
                     </div>
                 </div>

@@ -306,16 +306,49 @@
 }
 
 
-/* 1. 로딩바 진행 애니메이션 */
+
+
+
+
+/* 진행바 전체 트랙 */
 .progress-track {
   width: 200px;
   height: 6px;
   background-color: #f0f0f0;
   border-radius: 10px;
-  margin-top: 30px;
+  margin: 30px auto 0;
   overflow: hidden;
   position: relative;
 }
+
+/* 실제로 차오르는 게이지 */
+.progress-fill {
+  position: absolute;
+  height: 100%;
+  width: 0%; /* 시작은 0% */
+  background: linear-gradient(90deg, #7148fc, #b099ff); /* 예쁜 보라색 그라데이션 */
+  border-radius: 10px;
+  
+  /* 3초 동안 0에서 100%까지 차오르는 애니메이션 (무한 반복) */
+  animation: progress-loading 3s ease-in-out infinite;
+  
+  /* 은은한 광택 효과 추가 */
+  box-shadow: 0 0 10px rgba(113, 72, 252, 0.4);
+}
+
+@keyframes progress-loading {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 70%; /* 중간에 살짝 느려지는 느낌 */
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+
 
 
 .ai-pulse-circle {
@@ -412,51 +445,74 @@
   100% { left: 100%; }
 }
 
-/* 2. 아이콘 두근거리는 애니메이션 */
+
+/* 1. 부모: 아이콘 자체가 숨쉬듯 커졌다 작아졌다 + 보라색 광채 */
 .ai-avatar-pulse {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100px;
+  height: 100px;
+  /* 보라색 은은한 네온 효과 */
+  filter: drop-shadow(0 0 10px rgba(113, 72, 252, 0.3));
+  animation: ai-breathing 2s ease-in-out infinite alternate;
 }
 
+/* 2. 첫 번째 파동: 선명하고 빠르게 퍼짐 */
+.ai-avatar-pulse::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  border: 2px solid rgba(113, 72, 252, 0.8);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: ripple-1 2.5s infinite ease-out;
+}
+
+/* 3. 두 번째 파동: 더 넓고 흐릿하게 (몽환적인 느낌) */
 .ai-avatar-pulse::after {
   content: '';
   position: absolute;
-  width: 80px;
-  height: 80px;
-  border: 2px solid #7148fc;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  /* 선을 조금 더 두껍고 흐리게 */
+  border: 4px solid rgba(113, 72, 252, 0.3);
+  filter: blur(2px);
   border-radius: 50%;
-  animation: circle-pulse 2s infinite;
+  transform: translate(-50%, -50%);
+  /* 첫 번째 원보다 1초 늦게 출발 */
+  animation: ripple-2 2.5s infinite ease-out;
+  animation-delay: 1s;
 }
 
-@keyframes circle-pulse {
-  0% { transform: scale(0.8); opacity: 0.8; }
-  100% { transform: scale(1.6); opacity: 0; }
+/* --- 애니메이션 정의 --- */
+
+/* 아이콘 숨쉬기 (네온 광채 조절) */
+@keyframes ai-breathing {
+  0% { transform: scale(0.95); filter: drop-shadow(0 0 5px rgba(113, 72, 252, 0.2)); }
+  100% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(113, 72, 252, 0.6)); }
+}
+
+/* 첫 번째 파동 (선명함) */
+@keyframes ripple-1 {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.3); opacity: 0; }
+}
+
+/* 두 번째 파동 (더 크고 부드러움) */
+@keyframes ripple-2 {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(3.0); opacity: 0; }
 }
 
 
-.progress-fill {
-  width: 40%;
-  height: 100%;
-  background-color: #7148fc; /* 앱의 메인 테마 색상으로 변경 가능 */
-  border-radius: 10px;
-  animation: slide-progress 1.5s infinite ease-in-out;
-}
 
-@keyframes loading-progress {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(400%); }
-}
-
-@keyframes loading-fill {
-    0% {
-        width: 0%;
-    }
-    100% {
-        width: 100%;
-    }
-}
 
 /* --- 결과 페이지 스타일 --- */
 .art-result-page {

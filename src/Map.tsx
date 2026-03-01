@@ -211,21 +211,15 @@ const MapPage = () => {
         <>
           <div className="map-top-filter">
             <form className="map-search-bar" onSubmit={handleSearch}>
-              <Search size={18} color="#888" />
+              <Search size={24} color="#888" />
               <input 
-                placeholder="동네나 장소를 검색해보세요" 
+                placeholder="지역이나 장소를 검색해보세요" 
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
               />
             </form>
 
-            <div className="filter-scroll-container">
-              {filters.map((f) => (
-                <button key={f} onClick={() => setActiveFilter(f)} className={`map-chip ${activeFilter === f ? 'active' : ''}`}>
-                  {f}
-                </button>
-              ))}
-            </div>
+
           </div>
 
           {/* ⭐ GPS 내 위치 버튼 */}
@@ -238,7 +232,7 @@ const MapPage = () => {
       <div className={`map-bottom-sheet ${isDragging ? 'dragging' : ''}`} style={{ transform: `translateY(${translateY}px)` }}>
         <div className="sheet-handle-wrapper" onTouchStart={handleStart} onTouchMove={handleMove} onTouchEnd={handleEnd} onMouseDown={handleStart}><div className="sheet-handle" /></div>
         <div className="sheet-header">
-          <h3 className="sheet-title">{activeFilter === '전체' ? '이 지역 주변 전시' : `${activeFilter} 추천`} <span className="count">{nearbyEvents.length}</span></h3>
+          <h3 className="sheet-title">{activeFilter === '전체' ? '이 지역 주변 전시 및 공연' : `${activeFilter} 추천`} <span className="count">{nearbyEvents.length}</span></h3>
           <p className="sheet-subtitle">지도 중심 5km 이내 정보입니다.</p>
         </div>
         <div className="sheet-list-container">
@@ -253,7 +247,7 @@ const MapPage = () => {
               </div>
             ))
           ) : (
-             <div className="no-data-msg">주변에 전시가 없어요. 다른 지역으로 가볼까요? 🚀</div>
+             <div className="no-data-msg">　　주변에 진행중인 전시가 없어요. 다른 지역으로 가볼까요? 🚀</div>
           )}
         </div>
       </div>
@@ -285,9 +279,6 @@ const MapPage = () => {
                 <p className="description-text">{selectedExhibit.description || '상세 정보가 업데이트될 예정입니다.'}</p>
               </div>
             </div>
-          </div>
-          <div className="detail-footer">
-             <button className="reserve-btn">티켓 예매하기</button>
           </div>
         </div>
       )}
