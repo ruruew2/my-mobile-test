@@ -18,6 +18,7 @@ import {
     Calendar,
 } from 'lucide-react';
 
+
 // 컴포넌트 임포트
 import MyPage from './MyPage';
 import Exhibition from './ExhibitList';
@@ -29,6 +30,7 @@ import GuidePage from './GuidePage';
 import CourseNavigation from './CourseNavigation';
 import ReservationPage from './ReservationPage'; // ⭐ 꼭 파일이 있는지 확인!
 import Banner from './Banner'; // ⭐ 광고 배너 추가
+import Report from './report';
 
 // 스타일 임포트
 import './ArtLog.css';
@@ -39,6 +41,7 @@ import './Wishlist.css';
 // API 주소
 const LOCAL_API_URL = 'http://localhost:8000';
 const AI_API_URL = 'http://54.180.234.226:8000';
+
 
 // --- 컴포넌트: 취향 선택 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
@@ -189,6 +192,15 @@ export default function App() {
     const [guideSubTab, setGuideSubTab] = useState<'human' | 'ai'>('human');
     const [likedCount, setLikedCount] = useState(0);
 
+    const [viewState, setViewState] = useState<'main' | 'map' | 'guide' | 'exhibit' | 'my' | 'login' | 'gift' | 'reserve' | 'course'>('main');
+    const [showNoti, setShowNoti] = useState(false);
+
+    // 기존 state들 근처에 추가
+    const [aiRecommendations, setAiRecommendations] = useState<any[]>([]); // 추천 결과 저장용
+    const [isAiLoading, setIsAiLoading] = useState(false); // 로딩 스피너용
+
+    
+
     // 예매 관련 상태 추가
     const [selectedExhibit, setSelectedExhibit] = useState<any>(null);
 
@@ -212,6 +224,12 @@ export default function App() {
             isRead: false,
         },
     ]);
+
+// 3. AI 분석 완료 후 실행될 콜백 함수
+    const handleAiFinish = (data: any[]) => {
+        setRecommendedExhibitions(data); // 받은 데이터를 상태에 저장
+        setViewState('main');            // 메인으로 이동
+    };
 
     const handleLikeChange = (isLiked: boolean) => {
         setLikedCount((prev) => (isLiked ? prev + 1 : Math.max(0, prev - 1)));
@@ -239,23 +257,29 @@ export default function App() {
     }, [step, activeTab]);
 
     // 2. AI 추천 로드
-    const handlePreferenceComplete = async (selectedTags: string[]) => {
-        setIsLoading(true);
-        try {
-            const cleanTags = selectedTags.map((tag) => tag.replace('#', ''));
-            const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { tags: cleanTags });
-            if (response.data && response.data.status === 'success') {
-                setRecommendedExhibitions(response.data.data || []);
-            }
-        } catch (error) {
-            console.error('❌ [AI추천] 에러:', error.message);
-        } finally {
-            setTimeout(() => {
-                setIsLoading(false);
-                setStep('main');
-            }, 1000);
+const handlePreferenceComplete = async (selectedTags: string[]) => {
+    setIsAiLoading(true); // 로딩 시작
+    try {
+        // 1. AI 서버(DB 연동된 곳)로 사용자가 선택한 태그 전송
+        const response = await axios.post(`${AI_API_URL}/recommend`, { 
+            tags: selectedTags // 선택된 ['#몽환적인', '#화려한'] 등이 전달됨
+        });
+
+        // 2. 서버에서 DB 데이터를 성공적으로 가져왔다면
+        if (response.data && Array.isArray(response.data)) {
+            setAiRecommendations(response.data); // 데이터 상태 저장
+            setStep('main'); // 다시 홈 화면으로 복귀
+        } else {
+            alert("추천 데이터를 가져오지 못했습니다.");
+            setStep('main');
         }
-    };
+    } catch (error) {
+        console.error("DB 연결 및 AI 추천 실패:", error);
+        setStep('main');
+    } finally {
+        setIsAiLoading(false);
+    }
+};
 
     const navigateToGuide = (subType: 'human' | 'ai') => {
         setGuideSubTab(subType);
@@ -380,112 +404,72 @@ export default function App() {
                                     </button>
                                 </section>
 
-                                <section className="section" style={{ padding: '20px 0' }}>
-                                    <div className="section-header" style={{ padding: '0 20px', marginBottom: '16px' }}>
-                                        <div className="title-group">
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                <Sparkles size={18} color="#7C4DFF" fill="#7C4DFF" />
-                                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>
-                                                    AI가 분석한 오늘의 추천
-                                                </h3>
-                                            </div>
-                                            <span className="sub-title" style={{ fontSize: '0.7rem', color: '#999' }}>
-                                                FOR YOUR CURATED TASTE
-                                            </span>
-                                        </div>
-                                    </div>
+<section className="section" style={{ padding: '20px 0' }}>
+  <div className="section-header" style={{ padding: '0 20px', marginBottom: '16px' }}>
+    <div className="title-group">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Sparkles size={18} color="#7C4DFF" fill="#7C4DFF" />
+        <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>AI가 분석한 오늘의 추천</h3>
+      </div>
+      <span className="sub-title" style={{ fontSize: '0.7rem', color: '#999' }}>FOR YOUR CURATED TASTE</span>
+    </div>
+  </div>
 
-                                    <div
-                                        className="horizontal-scroll"
-                                        style={{
-                                            display: 'flex',
-                                            gap: '16px',
-                                            padding: '0 20px',
-                                            overflowX: 'auto',
-                                            scrollbarWidth: 'none',
-                                        }}
-                                    >
-                                        {recommendedExhibitions.length > 0 ? (
-                                            recommendedExhibitions.map((item, idx) => (
-                                                <div
-                                                    key={`ai-rec-${idx}`}
-                                                    className="pref-card"
-                                                    onClick={() => {
-                                                        setSelectedExhibit(item);
-                                                        setActiveTab('reserve');
-                                                    }}
-                                                    style={{ minWidth: '180px', width: '180px', cursor: 'pointer' }}
-                                                >
-                                                    <div
-                                                        className="pref-image-wrapper"
-                                                        style={{
-                                                            height: '240px',
-                                                            borderRadius: '12px',
-                                                            overflow: 'hidden',
-                                                            marginBottom: '12px',
-                                                            position: 'relative',
-                                                        }}
-                                                    >
-                                                        <img
-                                                            src={item.image_url || '/api/placeholder/180/240'}
-                                                            alt={item.title}
-                                                            style={{
-                                                                width: '100%',
-                                                                height: '100%',
-                                                                objectFit: 'cover',
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="pref-info">
-                                                        <div
-                                                            style={{
-                                                                display: 'inline-block',
-                                                                padding: '2px 0',
-                                                                marginBottom: '4px',
-                                                                fontSize: '0.75rem',
-                                                                color: '#7C4DFF',
-                                                                fontWeight: '600',
-                                                            }}
-                                                        >
-                                                            {Array.isArray(item.hashtag)
-                                                                ? item.hashtag.join(', ')
-                                                                : item.hashtag || '추천 스타일'}
-                                                        </div>
-                                                        <h4
-                                                            style={{
-                                                                fontSize: '0.95rem',
-                                                                margin: '0 0 4px 0',
-                                                                fontWeight: '600',
-                                                                whiteSpace: 'nowrap',
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                            }}
-                                                        >
-                                                            {item.title}
-                                                        </h4>
-                                                        <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
-                                                            📍 {item.place_name || '장소 미정'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div
-                                                style={{
-                                                    width: '100%',
-                                                    textAlign: 'center',
-                                                    padding: '40px 0',
-                                                    background: '#f8f8f8',
-                                                    borderRadius: '12px',
-                                                    fontSize: '0.85rem',
-                                                    color: '#888',
-                                                }}
-                                            >
-                                                취향 분석 결과에 맞는 전시를 불러오고 있어요..
-                                            </div>
-                                        )}
-                                    </div>
-                                </section>
+  <div className="horizontal-scroll" style={{ display: 'flex', gap: '16px', padding: '0 20px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+    {/* Case 1: step이 'preference'일 때 -> 이 칸 안에서 태그 선택창 띄우기 */}
+    {step === 'preference' ? (
+      <div style={{ width: '100%', minHeight: '300px' }}>
+        <PreferenceSelection onComplete={handlePreferenceComplete} />
+      </div>
+    ) : (
+      /* Case 2: 추천 데이터가 있을 때 -> 결과 리스트 출력 */
+      recommendedExhibitions && recommendedExhibitions.length > 0 ? (
+        recommendedExhibitions.map((item, idx) => (
+          <div
+            key={`ai-rec-${idx}`}
+            className="pref-card"
+            onClick={() => {
+              setSelectedExhibit(item);
+              setActiveTab('reserve'); // 예약으로 넘어가는건 그대로 유지
+            }}
+            style={{ minWidth: '180px', width: '180px', cursor: 'pointer' }}
+          >
+            <div className="pref-image-wrapper" style={{ height: '240px', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px', backgroundColor: '#f0f0f0' }}>
+              <img src={item.image_url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+            <div className="pref-info">
+              <div style={{ fontSize: '0.75rem', color: '#7C4DFF', fontWeight: '600', marginBottom: '4px' }}>
+                {item.hashtag || '#추천스타일'}
+              </div>
+              <h4 style={{ fontSize: '0.95rem', margin: '0 0 4px 0', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {item.title}
+              </h4>
+              <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>📍 {item.place_name}</p>
+            </div>
+          </div>
+        ))
+      ) : (
+        /* Case 3: 데이터도 없고 선택 전일 때 -> 안내 박스 */
+        <div 
+          onClick={() => setStep('preference')} // 👈 setActiveTab이 아니라 setStep만!
+          style={{
+            width: '100%',
+            padding: '40px 20px',
+            border: '1px dashed #7C4DFF',
+            borderRadius: '16px',
+            backgroundColor: '#F9F7FF',
+            textAlign: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          <Sparkles size={24} color="#7C4DFF" style={{ marginBottom: '8px' }} />
+          <p style={{ fontSize: '0.9rem', fontWeight: '600', color: '#333', margin: '4px 0' }}>아직 분석된 취향이 없어요!</p>
+          <p style={{ fontSize: '0.8rem', color: '#7C4DFF' }}>취향을 선택하고 맞춤 전시 추천받기 →</p>
+        </div>
+      )
+    )}
+  </div>
+</section>
 
                                 <section className="section">
                                     <div className="section-header">
