@@ -18,7 +18,6 @@ import {
     Calendar,
 } from 'lucide-react';
 
-
 // 컴포넌트 임포트
 import MyPage from './MyPage';
 import Exhibition from './ExhibitList';
@@ -30,7 +29,6 @@ import GuidePage from './GuidePage';
 import CourseNavigation from './CourseNavigation';
 import ReservationPage from './ReservationPage'; // ⭐ 꼭 파일이 있는지 확인!
 import Banner from './Banner'; // ⭐ 광고 배너 추가
-import Report from './report';
 
 // 스타일 임포트
 import './ArtLog.css';
@@ -42,29 +40,28 @@ import './Wishlist.css';
 const LOCAL_API_URL = 'http://localhost:8000';
 const AI_API_URL = 'http://54.180.234.226:8000';
 
-
 // --- 컴포넌트: 취향 선택 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
     const [selected, setSelected] = useState<string[]>([]);
     const tags = [
-        '화려한',
-        '몽환적인',
-        '생생한',
-        '정갈한',
-        '트렌디한',
-        '톡톡튀는',
-        '우아한',
-        '은은한',
-        '과감한',
-        '능동적인',
-        '웅장한',
-        '깊이있는',
-        '고전적인',
-        '자유로운',
-        '압도적인',
-        '입체적인',
-        '다채로운',
-        '섬세한',
+        '#화려한',
+        '#몽환적인',
+        '#생생한',
+        '#정갈한',
+        '#트렌디한',
+        '#톡톡튀는',
+        '#우아한',
+        '#은은한',
+        '#과감한',
+        '#능동적인',
+        '#웅장한',
+        '#깊이있는',
+        '#고전적인',
+        '#자유로운',
+        '#압도적인',
+        '#입체적인',
+        '#다채로운',
+        '#섬세한',
     ];
 
     const toggleTag = (tag: string) => {
@@ -181,9 +178,7 @@ const ExhibitCarousel = ({ children }: { children: React.ReactNode }) => {
 
 // --- 메인 App 컴포넌트 ---
 export default function App() {
-    
     const [step, setStep] = useState('login');
-    const [aiStep, setAiStep] = useState('idle');
     const [activeTab, setActiveTab] = useState('home');
     const [isNotifyOpen, setIsNotifyOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -193,15 +188,6 @@ export default function App() {
     const [selectedCourseData, setSelectedCourseData] = useState<any>(null);
     const [guideSubTab, setGuideSubTab] = useState<'human' | 'ai'>('human');
     const [likedCount, setLikedCount] = useState(0);
-
-    const [viewState, setViewState] = useState<'main' | 'map' | 'guide' | 'exhibit' | 'my' | 'login' | 'gift' | 'reserve' | 'course'>('main');
-    const [showNoti, setShowNoti] = useState(false);
-
-    // 기존 state들 근처에 추가
-    const [aiRecommendations, setAiRecommendations] = useState<any[]>([]); // 추천 결과 저장용
-    const [isAiLoading, setIsAiLoading] = useState(false); // 로딩 스피너용
-
-    
 
     // 예매 관련 상태 추가
     const [selectedExhibit, setSelectedExhibit] = useState<any>(null);
@@ -226,12 +212,6 @@ export default function App() {
             isRead: false,
         },
     ]);
-
-// 3. AI 분석 완료 후 실행될 콜백 함수
-    const handleAiFinish = (data: any[]) => {
-        setRecommendedExhibitions(data); // 받은 데이터를 상태에 저장
-        setViewState('main');            // 메인으로 이동
-    };
 
     const handleLikeChange = (isLiked: boolean) => {
         setLikedCount((prev) => (isLiked ? prev + 1 : Math.max(0, prev - 1)));
@@ -258,20 +238,35 @@ export default function App() {
         if (step === 'main' && activeTab === 'home') fetchInitialData();
     }, [step, activeTab]);
 
+    // 2. AI 추천 로드
+// App.tsx 내의 handlePreferenceComplete 함수 수정
+const handlePreferenceComplete = async (selectedTags: string[]) => {
+    setIsLoading(true);
+    try {
+        const cleanTags = selectedTags.map(tag => tag.replace('#', ''));
+        const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { 
+            tags: cleanTags 
+        });
 
-// 2. AI 추천 데이터 수신 및 화면 전환
-const handlePreferenceComplete = (data: any) => {
-    // 서버 응답 구조에 따라 배열 추출
-    const recData = data.recommendations || data;
-    
-    if (recData && recData.length > 0) {
-        setRecommendedExhibitions(recData); // 받아온 데이터 저장
+        if (response.data && response.data.status === "success") {
+            const allResults = response.data.data; // 서버가 준 10개 (혹은 전체)
+            
+            // 🎲 랜덤하게 섞기
+            const shuffled = [...allResults].sort(() => Math.random() - 0.5);
+            
+            // 🎯 그중 앞의 3개만 선택해서 보여주기
+            const finalThree = shuffled.slice(0, 3);
+            
+            setRecommendedExhibitions(finalThree);
+        }
+    } catch (error) {
+        console.error('에러:', error);
+    } finally {
+        setTimeout(() => {
+            setIsLoading(false);
+            setStep('main');
+        }, 800);
     }
-    
-    // 분석이 끝났으니 섹션 단계를 'idle'(또는 'main')로 돌려서 리스트가 보이게 함
-    setAiStep('idle'); 
-    // 만약 전체 화면 step을 사용 중이라면
-    setStep('main');
 };
 
     const navigateToGuide = (subType: 'human' | 'ai') => {
@@ -317,17 +312,18 @@ const handlePreferenceComplete = (data: any) => {
                 </div>
             )}
 
-            {step === 'login' ? (
-                <LoginPage
-                    onLoginSuccess={() => {
-                        setIsLoggedIn(true);
-                        setStep('preference');
-                    }}
-                />
-            ) : step === 'preference' ? (
-                <PreferenceSelection onComplete={handlePreferenceComplete} />
-            ) : (
-                <div className="art-log-container">
+{step === 'login' ? (
+    <LoginPage
+        onLoginSuccess={() => {
+            setIsLoggedIn(true);
+            setStep('preference');
+        }}
+    />
+) : step === 'preference' ? (
+    <PreferenceSelection onComplete={handlePreferenceComplete} />
+) : (
+    <div className="art-log-container">
+        
                     {!isFullScreenMode && (
                         <header
                             className="main-header"
@@ -345,11 +341,11 @@ const handlePreferenceComplete = (data: any) => {
                                 style={{
                                     cursor: 'pointer',
                                     margin: 0,
-                                    fontSize: '1.7rem',
+                                    fontSize: '1.4rem',
                                     fontWeight: 'bold',
                                 }}
                             >
-                                Art-Log
+                                ArtLog
                             </h1>
                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                 <div
@@ -397,81 +393,81 @@ const handlePreferenceComplete = (data: any) => {
                                     </button>
                                 </section>
 
-<section className="section" style={{ padding: '20px 0' }}>
-  <div className="section-header" style={{ padding: '0 20px', marginBottom: '16px' }}>
-    <div className="title-group">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <Sparkles size={18} color="#7C4DFF" fill="#7C4DFF" />
-        <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>AI가 분석한 오늘의 추천</h3>
-      </div>
-      <span className="sub-title" style={{ fontSize: '0.7rem', color: '#999' }}>FOR YOUR CURATED TASTE</span>
-    </div>
-  </div>
+                                <section className="section" style={{ padding: '20px 0' }}>
+                                    <div className="section-header" style={{ padding: '0 20px', marginBottom: '16px' }}>
+                                        <div className="title-group">
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <Sparkles size={18} color="#7C4DFF" fill="#7C4DFF" />
+                                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>
+                                                    AI가 분석한 오늘의 추천
+                                                </h3>
+                                            </div>
+                                            <span className="sub-title" style={{ fontSize: '0.7rem', color: '#999' }}>
+                                                FOR YOUR CURATED TASTE
+                                            </span>
+                                        </div>
+                                    </div>
 
-  <div className="horizontal-scroll" style={{ display: 'flex', gap: '16px', padding: '0 20px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-    {/* Case 1: step이 'preference'일 때 -> 이 칸 안에서 태그 선택창 띄우기 */}
-{step === 'preference' ? (
-        <div style={{ width: '100%' }}>
-    <CourseNavigation 
-        onComplete={(data) => {
-        // report.tsx에서 준 data 안에서 리스트 추출
-        // data 자체가 배열이면 data를 쓰고, 객체면 data.recommendations를 씀
-        const recData = Array.isArray(data) ? data : (data.recommendations || []);
-        
-        setRecommendedExhibitions(recData); // App.tsx 상태에 저장
-        setStep('main'); // 완료 후 다시 메인 리스트 화면으로 전환
-    }} 
-    />
-</div>
-) : (
-      /* Case 2: 추천 데이터가 있을 때 -> 결과 리스트 출력 */
-      recommendedExhibitions && recommendedExhibitions.length > 0 ? (
-        recommendedExhibitions.map((item, idx) => (
-          <div
+                                    <div
+                                        className="horizontal-scroll"
+                                        style={{
+                                            display: 'flex',
+                                            gap: '16px',
+                                            padding: '0 20px',
+                                            overflowX: 'auto',
+                                            scrollbarWidth: 'none',
+                                        }}
+                                    >
+                                        {recommendedExhibitions && recommendedExhibitions.length > 0 ? (
+    recommendedExhibitions.map((item, idx) => (
+        <div
             key={`ai-rec-${idx}`}
             className="pref-card"
             onClick={() => {
-              setSelectedExhibit(item);
-              setActiveTab('reserve'); // 예약으로 넘어가는건 그대로 유지
+                setSelectedExhibit(item);
+                setActiveTab('reserve');
             }}
             style={{ minWidth: '180px', width: '180px', cursor: 'pointer' }}
-          >
-            <div className="pref-image-wrapper" style={{ height: '240px', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px', backgroundColor: '#f0f0f0' }}>
-              <img src={item.image_url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
-            <div className="pref-info">
-              <div style={{ fontSize: '0.75rem', color: '#7C4DFF', fontWeight: '600', marginBottom: '4px' }}>
-                {item.hashtag || '#추천스타일'}
-              </div>
-              <h4 style={{ fontSize: '0.95rem', margin: '0 0 4px 0', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {item.title}
-              </h4>
-              <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>📍 {item.place_name}</p>
-            </div>
-          </div>
-        ))
-      ) : (
-        /* Case 3: 데이터도 없고 선택 전일 때 -> 안내 박스 */
-        <div 
-          onClick={() => setStep('preference')} // 👈 setActiveTab이 아니라 setStep만!
-          style={{
-            width: '100%',
-            padding: '40px 20px',
-            border: '1px dashed #7C4DFF',
-            borderRadius: '16px',
-            backgroundColor: '#F9F7FF',
-            textAlign: 'center',
-            cursor: 'pointer'
-          }}
         >
-          <Sparkles size={24} color="#7C4DFF" style={{ marginBottom: '8px' }} />
-          <p style={{ fontSize: '0.9rem', fontWeight: '600', color: '#333', margin: '4px 0' }}>아직 분석된 취향이 없어요!</p>
-          <p style={{ fontSize: '0.8rem', color: '#7C4DFF' }}>취향을 선택하고 맞춤 전시 추천받기 →</p>
-        </div>
-      )
-    )}
-  </div>
-</section>
+                <div className="pref-image-wrapper" style={{ height: '240px', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px', backgroundColor: '#f0f0f0' }}>
+                <img 
+                    src={item.image_url || 'https://via.placeholder.com/180x240?text=No+Image'} 
+                    alt={item.title} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                    onError={(e) => { e.currentTarget.src = 'https://via.placeholder.com/180x240?text=No+Image'; }}
+                />
+            </div>
+                                                    <div className="pref-info">
+                <div style={{ fontSize: '0.75rem', color: '#7C4DFF', fontWeight: '600', marginBottom: '4px' }}>
+                    {/* hashtag가 문자열로 오면 #을 붙여서 표시 */}
+                    {item.hashtag ? `#${item.hashtag.split(',')[0]}` : '#추천전시'}
+                </div>
+                <h4 style={{ fontSize: '0.95rem', margin: '0 0 4px 0', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {item.title}
+                </h4>
+                <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
+                    📍 {item.place_name || '장소 정보 없음'}
+                </p>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div
+                                                style={{
+                                                    width: '100%',
+                                                    textAlign: 'center',
+                                                    padding: '40px 0',
+                                                    background: '#f8f8f8',
+                                                    borderRadius: '12px',
+                                                    fontSize: '0.85rem',
+                                                    color: '#888',
+                                                }}
+                                            >
+                                                취향 분석 결과에 맞는 전시를 불러오고 있어요..
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
 
                                 <section className="section">
                                     <div className="section-header">
