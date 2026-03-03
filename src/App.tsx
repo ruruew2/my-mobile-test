@@ -47,24 +47,24 @@ const AI_API_URL = 'http://54.180.234.226:8000';
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
     const [selected, setSelected] = useState<string[]>([]);
     const tags = [
-        '#화려한',
-        '#몽환적인',
-        '#생생한',
-        '#정갈한',
-        '#트렌디한',
-        '#톡톡튀는',
-        '#우아한',
-        '#은은한',
-        '#과감한',
-        '#능동적인',
-        '#웅장한',
-        '#깊이있는',
-        '#고전적인',
-        '#자유로운',
-        '#압도적인',
-        '#입체적인',
-        '#다채로운',
-        '#섬세한',
+        '화려한',
+        '몽환적인',
+        '생생한',
+        '정갈한',
+        '트렌디한',
+        '톡톡튀는',
+        '우아한',
+        '은은한',
+        '과감한',
+        '능동적인',
+        '웅장한',
+        '깊이있는',
+        '고전적인',
+        '자유로운',
+        '압도적인',
+        '입체적인',
+        '다채로운',
+        '섬세한',
     ];
 
     const toggleTag = (tag: string) => {
@@ -181,7 +181,9 @@ const ExhibitCarousel = ({ children }: { children: React.ReactNode }) => {
 
 // --- 메인 App 컴포넌트 ---
 export default function App() {
+    
     const [step, setStep] = useState('login');
+    const [aiStep, setAiStep] = useState('idle');
     const [activeTab, setActiveTab] = useState('home');
     const [isNotifyOpen, setIsNotifyOpen] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -256,29 +258,20 @@ export default function App() {
         if (step === 'main' && activeTab === 'home') fetchInitialData();
     }, [step, activeTab]);
 
-    // 2. AI 추천 로드
-const handlePreferenceComplete = async (selectedTags: string[]) => {
-    setIsAiLoading(true); // 로딩 시작
-    try {
-        // 1. AI 서버(DB 연동된 곳)로 사용자가 선택한 태그 전송
-        const response = await axios.post(`${AI_API_URL}/recommend`, { 
-            tags: selectedTags // 선택된 ['#몽환적인', '#화려한'] 등이 전달됨
-        });
 
-        // 2. 서버에서 DB 데이터를 성공적으로 가져왔다면
-        if (response.data && Array.isArray(response.data)) {
-            setAiRecommendations(response.data); // 데이터 상태 저장
-            setStep('main'); // 다시 홈 화면으로 복귀
-        } else {
-            alert("추천 데이터를 가져오지 못했습니다.");
-            setStep('main');
-        }
-    } catch (error) {
-        console.error("DB 연결 및 AI 추천 실패:", error);
-        setStep('main');
-    } finally {
-        setIsAiLoading(false);
+// 2. AI 추천 데이터 수신 및 화면 전환
+const handlePreferenceComplete = (data: any) => {
+    // 서버 응답 구조에 따라 배열 추출
+    const recData = data.recommendations || data;
+    
+    if (recData && recData.length > 0) {
+        setRecommendedExhibitions(recData); // 받아온 데이터 저장
     }
+    
+    // 분석이 끝났으니 섹션 단계를 'idle'(또는 'main')로 돌려서 리스트가 보이게 함
+    setAiStep('idle'); 
+    // 만약 전체 화면 step을 사용 중이라면
+    setStep('main');
 };
 
     const navigateToGuide = (subType: 'human' | 'ai') => {
@@ -417,11 +410,20 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
 
   <div className="horizontal-scroll" style={{ display: 'flex', gap: '16px', padding: '0 20px', overflowX: 'auto', scrollbarWidth: 'none' }}>
     {/* Case 1: step이 'preference'일 때 -> 이 칸 안에서 태그 선택창 띄우기 */}
-    {step === 'preference' ? (
-      <div style={{ width: '100%', minHeight: '300px' }}>
-        <PreferenceSelection onComplete={handlePreferenceComplete} />
-      </div>
-    ) : (
+{step === 'preference' ? (
+        <div style={{ width: '100%' }}>
+    <CourseNavigation 
+        onComplete={(data) => {
+        // report.tsx에서 준 data 안에서 리스트 추출
+        // data 자체가 배열이면 data를 쓰고, 객체면 data.recommendations를 씀
+        const recData = Array.isArray(data) ? data : (data.recommendations || []);
+        
+        setRecommendedExhibitions(recData); // App.tsx 상태에 저장
+        setStep('main'); // 완료 후 다시 메인 리스트 화면으로 전환
+    }} 
+    />
+</div>
+) : (
       /* Case 2: 추천 데이터가 있을 때 -> 결과 리스트 출력 */
       recommendedExhibitions && recommendedExhibitions.length > 0 ? (
         recommendedExhibitions.map((item, idx) => (

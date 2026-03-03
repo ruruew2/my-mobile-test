@@ -8,43 +8,43 @@ const CourseNavigation = ({ onComplete }: { onComplete: (data: any[]) => void })
     const [isLoading, setIsLoading] = useState(false);
 
         const tags = [
-        '#화려한',
-        '#몽환적인',
-        '#생생한',
-        '#정갈한',
-        '#트렌디한',
-        '#톡톡튀는',
-        '#우아한',
-        '#은은한',
-        '#과감한',
-        '#능동적인',
-        '#웅장한',
-        '#깊이있는',
-        '#고전적인',
-        '#자유로운',
-        '#압도적인',
-        '#입체적인',
-        '#다채로운',
-        '#섬세한',
+        '화려한',
+        '몽환적인',
+        '생생한',
+        '정갈한',
+        '트렌디한',
+        '톡톡튀는',
+        '우아한',
+        '은은한',
+        '과감한',
+        '능동적인',
+        '웅장한',
+        '깊이있는',
+        '고전적인',
+        '자유로운',
+        '압도적인',
+        '입체적인',
+        '다채로운',
+        '섬세한',
     ];
 
     const handleComplete = async () => {
         setIsLoading(true); // 로딩 시작
         try {
             const user = JSON.parse(localStorage.getItem('artLogUser') || '{}');
-            const response = await fetch(`${AI_API_URL}/api/recommend`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tags: selected, userId: user.loginId || 'guest' })
-            });
+const response = await fetch(`${AI_API_URL}/api/ai/recommend`, { // 여기 /api 가 있는지 확인!
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tags: selected, userId: user.loginId || 'guest' })
+});
 
-            if (response.ok) {
-                const data = await response.json();
-                // 1.5초 후 부모(App)에게 데이터 전달
-                setTimeout(() => {
-                    onComplete(data.recommendations || []);
-                }, 1500);
-            }
+
+if (response.ok) {
+    const data = await response.json();
+    // 부모의 handlePreferenceComplete 실행 (데이터 통째로 전달)
+    onComplete(data); 
+}
+
         } catch (error) {
             console.error("AI 추천 오류:", error);
             onComplete([]); // 에러 시 빈 배열 전달
