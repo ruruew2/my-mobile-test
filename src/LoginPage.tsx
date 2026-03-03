@@ -13,12 +13,35 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void
     const [showPw, setShowPw] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
+    // 1. 자동 로그인 체크 (fetchMyInfo 로직 활용)
     useEffect(() => {
-        const savedUser = localStorage.getItem('artLogUser');
-        const savedToken = localStorage.getItem('accessToken');
-        if (savedUser || savedToken) {
-            onLoginSuccess();
-        }
+        const checkAutoLogin = async () => {
+            const savedToken = localStorage.getItem('accessToken');
+            if (savedToken) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/me`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${savedToken}`, // 🔥 핵심: 신분증 제출
+                        },
+                    });
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        localStorage.setItem('artLogUser', JSON.stringify(userData));
+                        onLoginSuccess();
+                    } else {
+                        // 토큰이 유효하지 않으면 삭제
+                        localStorage.removeItem('accessToken');
+                        localStorage.removeItem('artLogUser');
+                    }
+                } catch (err) {
+                    console.error("자동 로그인 확인 중 오류:", err);
+                }
+            }
+        };
+        checkAutoLogin();
     }, [onLoginSuccess]);
 
     const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,42 +59,58 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void
         else if (mode === 'findPw') handleFindPw();
     };
 
-    // 1️⃣ [로그인]
+    // 2. 로그인 함수 (fetchMyInfo 로직 내장)
     const handleLogin = async () => {
         if (!form.id || !form.pw) return alert("아이디와 비밀번호를 입력해주세요.");
+        
         setIsLoading(true);
-    try {
-        const signupData = {
-            loginId: form.id,       // login_id와 매칭
-            email: form.email,      // email과 매칭
-            password: form.pw,      // 보통 DTO에서는 password로 받음
-            nickname: form.nick || form.id,
-            role: "USER"            // 엔티티가 nullable=false라 필수일 확률 높음
-        };
+        try {
+            const loginData = {
+                email: form.id, 
+                password: form.pw
+            };
 
-        const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(signupData)
-        });
+            // [A] 로그인 요청 (토큰 받기)
+            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(loginData)
+            });
 
-        if (response.ok) {
-            alert("회원가입 성공!");
-            setMode('login');
-        } else {
-            // 상세 에러 확인을 위해 아래 코드를 추가하세요
-            const errorText = await response.text(); 
-            console.log("서버 응답 내용:", errorText);
-            throw new Error(`가입 실패: ${response.status}`);
+            if (response.ok) {
+                const token = await response.text(); // 서버에서 토큰 문자열을 줌
+                
+                if (token) {
+                    localStorage.setItem('accessToken', token);
+
+                    // [B] 🔥 내 정보 가져오기 (fetchMyInfo 로직 실행)
+                    const userResponse = await fetch(`${API_BASE_URL}/api/me`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` // 방금 받은 토큰 사용
+                        }
+                    });
+
+                    if (userResponse.ok) {
+                        const userData = await userResponse.json();
+                        localStorage.setItem('artLogUser', JSON.stringify(userData));
+                        alert("로그인 성공!");
+                        onLoginSuccess(); 
+                    } else {
+                        alert("인증 실패 또는 토큰이 유효하지 않습니다.");
+                    }
+                }
+            } else {
+                alert("아이디 또는 비밀번호가 일치하지 않습니다.");
+            }
+        } catch (err: any) {
+            alert("서버 통신 오류가 발생했습니다.");
+        } finally {
+            setIsLoading(false);
         }
-    } catch (err: any) {
-        alert(err.message);
-    } finally {
-        setIsLoading(false);
-    }
-};
+    };
 
-    // 2️⃣ [아이디 중복 확인]
     const checkDuplicateId = async () => {
         if (!form.id) return alert('아이디를 입력해주세요.');
         try {
@@ -91,42 +130,38 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void
         }
     };
 
-    // 3️⃣ [회원가입 제출] - 엔티티 구조 반영
-const handleSignupSubmit = async () => {
-  setIsLoading(true);
-  try {
-    const signupData = {
-      loginId: form.id.trim(),
-      email: form.email.trim(),
-      password: form.pw,
-      passwordConfirm: form.confirmPw,
-      nickname: (form.nick || form.id).trim(), // 닉네임 없으면 아이디라도 강제로 넣음
-      role: "USER" // 👈 백엔드 엔티티 필수값일 확률 매우 높음
+    const handleSignupSubmit = async () => {
+        setIsLoading(true);
+        try {
+            const signupData = {
+                loginId: form.id.trim(),
+                email: form.email.trim(),
+                password: form.pw,
+                passwordConfirm: form.confirmPw,
+                nickname: (form.nick || form.id).trim(),
+                role: "USER"
+            };
+
+            const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(signupData)
+            });
+
+            if (!response.ok) {
+                const errorJson = await response.json();
+                throw new Error(errorJson.message || "회원가입 실패");
+            }
+
+            alert('회원가입 성공!');
+            setMode('login');
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(signupData)
-    });
-
-    if (!response.ok) {
-      // 💡 여기서 Object의 정체를 밝혀냅니다.
-      const errorJson = await response.json();
-      console.dir(errorJson); // 👈 console.log 대신 dir을 쓰면 내용을 다 펼쳐볼 수 있어요!
-      throw new Error(errorJson.message || "서버 내부 에러 (DB 중복 확인 필요)");
-    }
-
-    alert('회원가입 성공!');
-    setMode('login');
-  } catch (err: any) {
-    alert(err.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-    // 4️⃣ [비밀번호 찾기] - 중복 코드 수정 완료
     const handleFindPw = async () => {
         if (!form.id || !form.email) return alert('정보를 모두 입력해주세요.');
         setIsLoading(true);
@@ -180,7 +215,7 @@ const handleSignupSubmit = async () => {
                 <form className="input-group" onSubmit={handleSubmit}>
                     {mode === 'login' && (
                         <>
-                            <input name="id" placeholder="이메일 또는 아이디" className="login-input" onChange={onChange} value={form.id} />
+                            <input name="id" placeholder="이메일을 입력해주세요" className="login-input" onChange={onChange} value={form.id} />
                             <div className="input-wrapper">
                                 <input name="pw" type={showPw ? 'text' : 'password'} placeholder="비밀번호" className="login-input" onChange={onChange} value={form.pw} />
                                 <button type="button" className="pw-toggle-btn" onClick={() => setShowPw(!showPw)}>

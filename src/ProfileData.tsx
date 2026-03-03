@@ -1,6 +1,6 @@
 // 유저 정보를 저장하는 독립된 객체입니다.
 export const dummyUser = {
-  nickname: "예술가 김아트",
+  nickname: "abcdef",
   bio: "미니멀리즘과 현대미술을 사랑하는 탐험가",
   profileImage: null,
   stats: {
@@ -9,3 +9,4 @@ export const dummyUser = {
     reviews: 0
   }
 };
+

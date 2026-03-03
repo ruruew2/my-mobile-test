@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { dummyUser } from './ProfileData';
 
+const API_BASE_URL = 'http://54.180.234.226:8080'; // 👈 실제 백엔드 IP 주소
 
 // 닉네임 미선택시 자동 랜덤 닉네임
 const getRandomNickname = () => {
@@ -288,37 +289,53 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
   const [selectedExhibition, setSelectedExhibition] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [userInfo, setUserInfo] = useState<any>(null); // 👈 실제 유저 정보를 담을 곳
+  const [isLoading, setIsLoading] = useState(false);
   
   // 찜한 전시 상세 정보 상태
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
 
   // 1️⃣ 찜 데이터 불러오기 함수
-  const loadWishlist = async () => {
-    const savedIds = localStorage.getItem('wishlist');
-    const likedIds = savedIds ? JSON.parse(savedIds).map(String) : [];
+// MyPage.tsx 약 337라인 부근의 loadWishlist를 이렇게 수정해보세요.
+// 1️⃣ 찜 데이터 불러오기 함수 (수정본)
+const loadWishlist = async () => {
+  if (!isLoggedIn) return;
+  setIsLoading(true); 
+  
+  try {
+    const token = localStorage.getItem('accessToken');
+    
+    const response = await fetch(`${API_BASE_URL}/api/wishlist`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
 
-    if (likedIds.length === 0) {
+    if (response.ok) {
+      const data = await response.json();
+      setWishlistItems(data);
+    } else {
+      // 💡 백엔드에 아직 데이터가 없다면 빈 배열로 처리
       setWishlistItems([]);
-      return;
     }
+  } catch (error) {
+    console.error("찜 목록 통신 오류:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-    try {
-      const response = await fetch('http://localhost:8000/api/events');
-      const result = await response.json();
-      const allEvents = result.data || (Array.isArray(result) ? result : []);
+// 2️⃣ 페이지 접속 시 자동으로 불러오기
+useEffect(() => {
+  if (isLoggedIn) {
+    loadWishlist();
+  }
+}, [isLoggedIn]);
 
-      const filtered = allEvents.filter((evt: any, index: number) => {
-        const sId = String(evt.id || "");
-        const sEventId = String(evt.event_id || "");
-        const sIndexId = String(index + 1);
-        return likedIds.includes(sId) || likedIds.includes(sEventId) || likedIds.includes(sIndexId);
-      });
 
-      setWishlistItems(filtered);
-    } catch (err) {
-      console.error("로딩 실패", err);
-    }
-  };
+
 
   // 2️⃣ 찜 해제 함수 (e 파라미터 추가해서 에러 해결!)
   const handleRemoveWishlist = (e: React.MouseEvent, id: any) => {
@@ -333,11 +350,13 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
     loadWishlist(); // 즉시 리로딩
   };
 
-  useEffect(() => {
-    loadWishlist();
-    window.addEventListener('storage', loadWishlist);
-    return () => window.removeEventListener('storage', loadWishlist);
-  }, []);
+useEffect(() => {
+    // 페이지 로드 시 로컬 스토리지에서 유저 정보를 가져옴
+    const savedUser = localStorage.getItem('artLogUser');
+    if (savedUser) {
+      setUserInfo(JSON.parse(savedUser));
+    }
+  }, [isLoggedIn]); // 로그인 상태가 변할 때마다 확인
   
   const [selectedBadge, setSelectedBadge] = useState<any>(null);
   const [myProfileBadge, setMyProfileBadge] = useState<any>(null); // 👈 이거 한 줄 추가!
@@ -873,12 +892,33 @@ case 'profileEdit':
               <MenuRow icon={<Bell size={18} />} label="알림 설정" onClick={() => setViewState('notifSetting')} />
               <MenuRow icon={<Settings size={18} />} label="개인정보 수정" onClick={() => setViewState('profileEdit')} />
             </div>
-            <button 
-              onClick={() => isLoggedIn ? setIsLoggedIn(false) : onLogout?.()}
-              style={{ width: '100%', padding: '16px', marginTop: '20px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#ffffff', cursor: 'pointer', fontWeight: 'bold' }}
-            >
-              {isLoggedIn ? "로그아웃" : "로그인하러 가기"}
-            </button>
+<button 
+  onClick={() => {
+    // 1. 저장된 로그인 정보 삭제
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('artLogUser');
+    
+    // 2. 로그인 상태 해제
+    setIsLoggedIn(false);
+    
+    // 3. 로그아웃 후 로그인 화면이 바로 나오도록 새로고침 (가장 확실한 방법)
+    alert("로그아웃 되었습니다.");
+    window.location.reload(); 
+  }}
+  style={{ 
+    width: '100%', 
+    padding: '16px', 
+    marginTop: '20px', 
+    borderRadius: '12px', 
+    border: '1px solid #eee', 
+    backgroundColor: '#ffffff', 
+    cursor: 'pointer', 
+    fontWeight: 'bold',
+    color: '#ff4d4d' // 로그아웃 느낌이 나도록 빨간색 강조 (선택사항)
+  }}
+>
+  {isLoggedIn ? "로그아웃" : "로그인하러 가기"}
+</button>
           </>
         );
     }
@@ -939,7 +979,7 @@ case 'profileEdit':
 
 <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
   {isLoggedIn 
-    ? (dummyUser.nickname ? `${dummyUser.nickname}님` : `${getRandomNickname()}님`)
+    ? (userInfo?.nickname || userInfo?.loginId || "예술가님") // 👈 dummyUser 대신 userInfo 사용!
     : "로그인이 필요합니다"}
 </h2>
   <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#666' }}>
