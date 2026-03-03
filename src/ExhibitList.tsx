@@ -41,7 +41,7 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange, onRes
         window.dispatchEvent(new Event('storage')); 
     }, [liked]);
 
-    const filters = ['전체', '전시', '공연', '인기', '오픈예정', '종료임박'];
+    const filters = ['전체', '전시', '공연', '오픈예정', '종료임박'];
 
     useEffect(() => {
         const loadData = async () => {
@@ -87,21 +87,53 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange, onRes
         if (onLikeChange) onLikeChange(nextLikedStatus);
     };
 
-    const filteredExhibits = exhibits.filter((item) => {
-        if (searchQuery) {
-            const lowerQuery = searchQuery.toLowerCase().replace('#', '');
-            const matchesTag = item.hashtags.some((tag) => tag.toLowerCase().includes(lowerQuery));
-            const matchesTitle = item.title.toLowerCase().includes(lowerQuery);
-            if (!matchesTag && !matchesTitle) return false;
-        }
-        if (activeFilter === '전체') return true;
-        if (activeFilter === '인기') return ['TRENDING', 'POPULAR', 'HOT'].includes(item.tag);
-        if (activeFilter === '전시') return item.category === '전시';
-        if (activeFilter === '공연') return item.category === '공연';
-        if (activeFilter === '오픈예정') return item.dDay !== undefined;
-        if (activeFilter === '종료임박') return item.tag === '종료임박';
-        return item.category === activeFilter;
-    });
+const filteredExhibits = exhibits.filter((item) => {
+    // 1. 검색어 필터링 (가장 우선순위)
+    if (searchQuery) {
+        const lowerQuery = searchQuery.toLowerCase().replace('#', '');
+        const matchesTag = item.hashtags.some((tag) => tag.toLowerCase().includes(lowerQuery));
+        const matchesTitle = item.title.toLowerCase().includes(lowerQuery);
+        if (!matchesTag && !matchesTitle) return false;
+    }
+
+    // 2. 카테고리/태그 필터링
+    if (activeFilter === '전체') return true;
+    
+    // '인기' 필터: tag에 인기 관련 단어가 있거나 특정 조건
+    if (activeFilter === '인기') {
+        return ['TRENDING', 'POPULAR', 'HOT', '인기'].includes(item.tag);
+    }
+
+    // '전시' 필터: category가 전시거나 제목/태그에 '전시' 포함
+    if (activeFilter === '전시') {
+        return item.category === '전시' || item.title.includes('전시');
+    }
+
+    // '공연' 필터: category가 공연이거나 제목/태그에 '공연', '뮤지컬', '콘서트' 포함
+    if (activeFilter === '공연') {
+        return item.category === '공연' || item.title.match(/공연|뮤지컬|콘서트|연극/);
+    }
+
+// '오픈예정' 필터: 제목(title)에 '4월' 또는 '(4월)'이 포함된 경우
+if (activeFilter === '오픈예정') {
+    // dDay가 있거나, 제목에 '4월'이라는 글자가 들어있을 때
+    return (
+        item.dDay !== undefined || 
+        (item.title && item.title.includes('4월'))
+    );
+}
+
+    // '종료임박' 필터: tag가 종료임박이거나 제목에 관련 문구
+    if (activeFilter === '종료임박') {
+    // dDay가 있거나, 제목에 '4월'이라는 글자가 들어있을 때
+    return (
+        item.dDay !== undefined || 
+        (item.title && item.title.includes('2월'))
+    );
+    }
+
+    return item.category === activeFilter;
+});
 
     return (
         <div className="exhibit-list-page">

@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 
-// ✅ 화요일에 백엔드 친구가 주는 서버 주소로 여기만 바꾸세요!
-const API_BASE_URL = 'http://54.180.234.226:8080/api/auth';
+const API_BASE_URL = 'http://54.180.234.226:8080';
 
-const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
+const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void }) => {
     const [mode, setMode] = useState<'login' | 'signup' | 'findPw'>('login');
     const [form, setForm] = useState({ id: '', pw: '', confirmPw: '', email: '', nick: '' });
     const [msg, setMsg] = useState({ id: '', pw: '', confirmPw: '', email: '' });
@@ -14,10 +13,10 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
     const [showPw, setShowPw] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    // [로그인 유지 확인] 페이지 로드 시 토큰 체크
     useEffect(() => {
+        const savedUser = localStorage.getItem('artLogUser');
         const savedToken = localStorage.getItem('accessToken');
-        if (savedToken) {
+        if (savedUser || savedToken) {
             onLoginSuccess();
         }
     }, [onLoginSuccess]);
@@ -37,132 +36,120 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
         else if (mode === 'findPw') handleFindPw();
     };
 
-    // 1️⃣ [로그인] 백엔드 통신 (JSON 응답 처리)
+    // 1️⃣ [로그인]
     const handleLogin = async () => {
         if (!form.id || !form.pw) return alert("아이디와 비밀번호를 입력해주세요.");
-        
         setIsLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: form.id, // 💡 백엔드 코드 기준: 'id' 입력값을 'email' 필드로 보냄
-                    password: form.pw
-                })
-            });
-
-            const result = await response.json(); // ✅ JSON으로 응답 받음
-
-            if (response.ok) {
-                // 백엔드에서 주는 필드명이 'token'인지 'accessToken'인지 확인 필요
-                const token = result.token || result.accessToken || result;
-                localStorage.setItem('accessToken', typeof token === 'string' ? token : JSON.stringify(token));
-                
-                onLoginSuccess();
-            } else {
-                alert(result.message || "이메일 또는 비밀번호가 올바르지 않습니다.");
-            }
-        } catch (err) {
-            alert("서버 연결 실패! 서버가 켜져 있는지 확인해주세요.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 2️⃣ [아이디 중복 확인]
-const checkDuplicateId = async () => {
-    if (!form.id) return alert('아이디를 입력해주세요.');
-
     try {
-        // ✅ API_BASE_URL 뒤에 경로가 꼬이지 않도록 직접 조립
-        // 친구가 준 서버 주소가 http://54.180.234.226:8080 라면 아래가 맞습니다.
-        const targetUrl = `${API_BASE_URL}/check-id?loginId=${form.id}`;
-        console.log("요청 주소 확인:", targetUrl); // 개발자 도구 콘솔에서 확인용
+        const signupData = {
+            loginId: form.id,       // login_id와 매칭
+            email: form.email,      // email과 매칭
+            password: form.pw,      // 보통 DTO에서는 password로 받음
+            nickname: form.nick || form.id,
+            role: "USER"            // 엔티티가 nullable=false라 필수일 확률 높음
+        };
 
-        const response = await fetch(targetUrl, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+        const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(signupData)
         });
-        
-        // 404가 뜨면 주소(경로) 문제, CORS가 뜨면 서버 보안 설정 문제입니다.
-        if (!response.ok) {
-            console.error("서버 응답 에러 상태:", response.status);
-            return alert(`서버 연결 실패 (${response.status}): 주소를 다시 확인하세요.`);
-        }
 
-        const result = await response.json();
-        if (result === true || result.isAvailable === true) {
-            setMsg((prev) => ({ ...prev, id: '✅ 사용 가능한 아이디입니다.' }));
-            setIsIdChecked(true);
+        if (response.ok) {
+            alert("회원가입 성공!");
+            setMode('login');
         } else {
-            setMsg((prev) => ({ ...prev, id: '❌ 이미 사용 중인 아이디입니다.' }));
-            setIsIdChecked(false);
+            // 상세 에러 확인을 위해 아래 코드를 추가하세요
+            const errorText = await response.text(); 
+            console.log("서버 응답 내용:", errorText);
+            throw new Error(`가입 실패: ${response.status}`);
         }
-    } catch (err) {
-        console.error("Fetch 에러 상세:", err);
-        alert("통신 오류가 발생했습니다. CORS 설정을 확인해 보세요.");
+    } catch (err: any) {
+        alert(err.message);
+    } finally {
+        setIsLoading(false);
     }
 };
 
-    // 3️⃣ [회원가입] 백엔드 통신
-    const handleSignupSubmit = async () => {
-        if (!isIdChecked) return alert('아이디 중복확인을 해주세요.');
-        if (msg.pw.includes('❌') || !form.pw) return alert('비밀번호 규칙을 확인해주세요.');
-        if (form.pw !== form.confirmPw) return alert('비밀번호가 일치하지 않습니다.');
-        if (!form.email || msg.email.includes('❌')) return alert('올바른 이메일을 입력해주세요.');
-
-        setIsLoading(true);
+    // 2️⃣ [아이디 중복 확인]
+    const checkDuplicateId = async () => {
+        if (!form.id) return alert('아이디를 입력해주세요.');
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    loginId: form.id,
-                    email: form.email,
-                    password: form.pw,
-                    passwordConfirm: form.confirmPw,
-                    nickname: form.nick
-                })
-            });
-
+            const targetUrl = `${API_BASE_URL}/api/auth/check-id?loginId=${encodeURIComponent(form.id)}`;
+            const response = await fetch(targetUrl);
             const result = await response.json();
 
-            if (response.ok) {
-                alert("회원가입 성공! 이제 로그인해주세요.");
-                setMode('login');
+            if (result.isAvailable === true) {
+                setMsg((prev) => ({ ...prev, id: '✅ 사용 가능한 아이디입니다.' }));
+                setIsIdChecked(true);
             } else {
-                alert(result.message || "가입 중 오류가 발생했습니다.");
+                setMsg((prev) => ({ ...prev, id: '❌ 이미 사용 중인 아이디입니다.' }));
+                setIsIdChecked(false);
             }
         } catch (err) {
-            alert("서버 통신 오류가 발생했습니다.");
-        } finally {
-            setIsLoading(false);
+            alert("중복 확인 통신 오류!");
         }
     };
 
-    // 4️⃣ [비밀번호 찾기] 
+    // 3️⃣ [회원가입 제출] - 엔티티 구조 반영
+const handleSignupSubmit = async () => {
+  setIsLoading(true);
+  try {
+    const signupData = {
+      loginId: form.id.trim(),
+      email: form.email.trim(),
+      password: form.pw,
+      passwordConfirm: form.confirmPw,
+      nickname: (form.nick || form.id).trim(), // 닉네임 없으면 아이디라도 강제로 넣음
+      role: "USER" // 👈 백엔드 엔티티 필수값일 확률 매우 높음
+    };
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(signupData)
+    });
+
+    if (!response.ok) {
+      // 💡 여기서 Object의 정체를 밝혀냅니다.
+      const errorJson = await response.json();
+      console.dir(errorJson); // 👈 console.log 대신 dir을 쓰면 내용을 다 펼쳐볼 수 있어요!
+      throw new Error(errorJson.message || "서버 내부 에러 (DB 중복 확인 필요)");
+    }
+
+    alert('회원가입 성공!');
+    setMode('login');
+  } catch (err: any) {
+    alert(err.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+    // 4️⃣ [비밀번호 찾기] - 중복 코드 수정 완료
     const handleFindPw = async () => {
         if (!form.id || !form.email) return alert('정보를 모두 입력해주세요.');
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/find-password`, {
+            const response = await fetch(`${API_BASE_URL}/api/auth/find-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ userId: form.id, email: form.email })
             });
+
             if (response.ok) {
                 alert('가입하신 이메일로 임시 비밀번호가 발송되었습니다.');
                 setMode('login');
             } else {
-                const result = await response.json();
-                alert(result.message || "정보가 일치하지 않습니다.");
+                alert("정보가 일치하지 않습니다.");
             }
-        } catch (err) { alert("서버 통신 오류!"); } 
-        finally { setIsLoading(false); }
+        } catch (err) {
+            alert("서버 통신 오류!");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    // 실시간 유효성 검사 (기존 코드 유지)
     useEffect(() => {
         if (mode !== 'signup') return;
         const pwValid = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/.test(form.pw);
@@ -191,7 +178,6 @@ const checkDuplicateId = async () => {
                 </p>
 
                 <form className="input-group" onSubmit={handleSubmit}>
-                    {/* --- 로그인 모드 --- */}
                     {mode === 'login' && (
                         <>
                             <input name="id" placeholder="이메일 또는 아이디" className="login-input" onChange={onChange} value={form.id} />
@@ -227,12 +213,11 @@ const checkDuplicateId = async () => {
                         </>
                     )}
 
-                    {/* --- 회원가입 모드 --- */}
                     {mode === 'signup' && (
                         <>
                             <div className="input-wrapper inner-req">
                                 <span className="req-mark">*</span>
-                                <input name="id" placeholder="아이디" className="login-input" onChange={onChange} />
+                                <input name="id" placeholder="아이디" className="login-input" onChange={onChange} value={form.id} />
                                 <button type="button" className="inline-check-btn" onClick={checkDuplicateId}>중복확인</button>
                             </div>
                             {msg.id && <p className={`status-msg ${msg.id.includes('✅') ? 'success' : 'error'}`}>{msg.id}</p>}
@@ -243,22 +228,22 @@ const checkDuplicateId = async () => {
                                 <button type="button" className="pw-toggle-btn" onClick={() => setShowPw(!showPw)}><LockIcon /></button>
                             </div>
                             {msg.pw && <p className={`status-msg ${msg.pw.includes('✅') ? 'success' : 'error'}`}>{msg.pw}</p>}
-                            
+
                             <div className="input-wrapper inner-req">
                                 <span className="req-mark">*</span>
                                 <input name="confirmPw" type={showPw ? 'text' : 'password'} placeholder="비밀번호 확인" className="login-input" onChange={onChange} />
                             </div>
                             {msg.confirmPw && <p className={`status-msg ${msg.confirmPw.includes('✅') ? 'success' : 'error'}`}>{msg.confirmPw}</p>}
-                            
+
                             <div className="input-wrapper inner-req">
                                 <span className="req-mark">*</span>
                                 <input name="email" type="email" placeholder="이메일 입력" className="login-input" onChange={onChange} />
                             </div>
                             {msg.email && <p className={`status-msg ${msg.email.includes('✅') ? 'success' : 'error'}`}>{msg.email}</p>}
-                            
+
                             <div className="divider-select"><span>선택 사항</span></div>
                             <input name="nick" placeholder="닉네임" className="login-input" onChange={onChange} />
-                            
+
                             <button type="submit" className="btn-main-login btn-signup-margin" disabled={isLoading}>
                                 {isLoading ? '처리 중...' : '가입하기'}
                             </button>
@@ -268,7 +253,6 @@ const checkDuplicateId = async () => {
                         </>
                     )}
 
-                    {/* --- 비밀번호 찾기 모드 --- */}
                     {mode === 'findPw' && (
                         <>
                             <input name="id" placeholder="아이디" className="login-input" onChange={onChange} />

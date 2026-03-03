@@ -890,7 +890,7 @@ case 'profileEdit':
       marginBottom: '10px', // 이름과의 간격
       
       // 디자인 핵심: 테두리와 배경, 둥근 모서리
-      border: '1px solid #b84dff', // 보라색 테두리
+      border: '1px solid #7C4DFF', // 보라색 테두리
       backgroundColor: 'rgb(255, 240, 245)', // 아주 연한 보라색 배경
       padding: '3px 8px', // 안쪽 여백
       borderRadius: '20px', // 완전 둥글게 (캡슐 모양)
