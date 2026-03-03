@@ -4,6 +4,17 @@ import {
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users,
   Eye, EyeOff, Mic, MessageCircle, Medal, Send, Trash2, Star, X 
 } from 'lucide-react';
+import { dummyUser } from './ProfileData';
+
+
+// 닉네임 미선택시 자동 랜덤 닉네임
+const getRandomNickname = () => {
+  const adjectives = ["행복한", "고독한", "예리한", "빛나는", "신비로운"];
+  const nouns = ["예술가", "탐험가", "관람객", "큐레이터", "수집가"];
+  const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
+  return `${adj} ${noun}${Math.floor(Math.random() * 100)}`;
+};
 
 // --- 4. 후기 등록 성공 모달 (추가 코드) ---
 const SuccessModal = ({ onClose }: { onClose: () => void }) => (
@@ -604,8 +615,19 @@ case 'profileEdit':
     <div className="sub-view">
       <SubViewHeader title="개인정보 수정" />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        <InputGroup label="닉네임" placeholder="예술가 김아트" />
-        <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
+        {/* placeholder 대신 defaultValue를 사용해 기존 데이터를 보여줍니다 */}
+{/* MyPage.tsx의 profileEdit 섹션 */}
+<InputGroup 
+  label="닉네임" 
+  placeholder="닉네임을 입력하세요" 
+  // placeholder 대신 실제 값을 보여주려면 input 태그에 전달될 속성이 필요합니다.
+  // 현재 InputGroup 구조상 placeholder에 값을 넣는 것도 좋은 방법입니다!
+  placeholder={dummyUser.nickname} 
+/>
+<InputGroup 
+  label="한 줄 소개" 
+  placeholder={dummyUser.bio} 
+/>
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>대표 뱃지 설정</label>
@@ -914,10 +936,15 @@ case 'profileEdit':
   )}
 
 
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {isLoggedIn ? "예술가 김아트님" : "로그인이 필요합니다"}
-          </h2>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#666' }}>미니멀리즘과 현대미술을 사랑하는 탐험가</p>
+
+<h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
+  {isLoggedIn 
+    ? (dummyUser.nickname ? `${dummyUser.nickname}님` : `${getRandomNickname()}님`)
+    : "로그인이 필요합니다"}
+</h2>
+  <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#666' }}>
+    {dummyUser.bio}
+  </p>
         </div>
       </div>
 
