@@ -117,19 +117,19 @@ const handleCreateCustomCourse = async (location: string, who: string) => {
             lng: 126.9780
         });
 
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Accept': 'application/json' 
-            },
+const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json' 
+    },
             // ✅ 2. 데이터 타입을 확실히 고정 (숫자는 숫자로, 문자는 문자로)
-            body: JSON.stringify({
-                exh_name: String(location),
-                who: String(who),
-                lat: Number(37.5665), // 반드시 숫자형
-                lng: Number(126.9780)  // 반드시 숫자형
-            }),
+body: JSON.stringify({
+        destination: String(location), // 👈 exh_name을 destination으로 반드시 변경!
+        who: String(who),
+        lat: Number(37.5665),
+        lng: Number(126.9780)
+    }),
         });
 
         // ✅ 3. 422 에러 발생 시 서버가 알려주는 구체적인 이유 출력
@@ -170,12 +170,12 @@ const handleCreateCustomCourse = async (location: string, who: string) => {
             };
             onStart(newAiCourse);
         }
-    } catch (error: any) {
-        console.error('Final 에러:', error);
-        alert(`생성 실패: ${error.message}`);
-    } finally {
-        setIsGenerating(false);
-    }
+} catch (error: any) {
+    console.error('🔥 에러 상세 정보:', error); // 콘솔에 빨간색으로 에러 원인이 뜹니다.
+    alert(`생성 실패: ${error.message}`);
+} finally {
+    setIsGenerating(false); // 로딩창을 닫아줍니다.
+}
 };
 
     return (

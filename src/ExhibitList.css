@@ -281,3 +281,64 @@
 .scroll-spacer {
     height: 100px;
 }
+
+
+
+/* 하단 정보 영역 정렬 수정 */
+.info-bottom-flex {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid #f8f8f8;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* 텍스트와 버튼 하단 정렬 */
+}
+
+.info-text-group {
+    flex: 1;
+}
+
+/* 🌟 오른쪽 하단 장바구니/예매 버튼 */
+.direct-reserve-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: #424242; /* 브랜드 컬러 */
+    color: white;
+    border: none;
+    border-radius: 14px;
+    width: 52px;
+    height: 52px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(113, 72, 252, 0.25);
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+.direct-reserve-btn:active {
+    transform: scale(0.92);
+    background: #5d39d9;
+}
+
+.direct-reserve-btn span {
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    font-size: 13px;
+    color: #666;
+}
+
+.info-date {
+    font-size: 11px;
+    color: #999;
+    padding-left: 20px;
+}

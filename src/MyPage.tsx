@@ -1,27 +1,157 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Settings, Heart, BookOpen, CreditCard, Bell, 
   ChevronRight, Camera, Gift, Package, Ticket, ChevronLeft, PenLine, Users,
-  Eye, EyeOff, Mic, MessageCircle, Medal, Send, Trash2 
+  Eye, EyeOff, Mic, MessageCircle, Medal, Send, Trash2, Star, X 
 } from 'lucide-react';
 
-// --- 가상의 하위 컴포넌트 ---
-const ReviewForm = ({ exhibitionTitle, onComplete }: any) => (
-  <div style={{ padding: '20px', border: '1px solid #eee', borderRadius: '12px' }}>
-    <p><b>{exhibitionTitle}</b>에 대한 후기를 작성 중...</p>
-    <button onClick={onComplete} style={{ width: '100%', padding: '12px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '8px' }}>작성 완료</button>
-  </div>
-);
-
-const SuccessModal = ({ onClose }: any) => (
-  <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-    <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '20px', textAlign: 'center' }}>
-      <h3>🎉 후기 등록 완료!</h3>
-      <button onClick={onClose} style={{ marginTop: '20px', padding: '10px 20px' }}>닫기</button>
+// --- 4. 후기 등록 성공 모달 (추가 코드) ---
+const SuccessModal = ({ onClose }: { onClose: () => void }) => (
+  <div style={{ 
+    position: 'fixed', top: 0, left: -30, width: '100%', height: '100%', 
+    backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', 
+    justifyContent: 'center', zIndex: 3000, padding: '20px' 
+  }}>
+    <div style={{ 
+      backgroundColor: '#fff', width: '100%', maxWidth: '320px', 
+      borderRadius: '24px', padding: '30px', textAlign: 'center',
+      boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+    }}>
+      <div style={{ 
+        width: '60px', height: '60px', backgroundColor: '#f0fdf4', 
+        borderRadius: '50%', display: 'flex', alignItems: 'center', 
+        justifyContent: 'center', margin: '0 auto 20px' 
+      }}>
+        <Medal size={30} color="#22c55e" />
+      </div>
+      <h3 style={{ margin: '0 0 10px', fontSize: '20px', fontWeight: 'bold' }}>후기 등록 완료!</h3>
+      <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.5', marginBottom: '25px' }}>
+        소중한 감상평을 남겨주셔서 감사합니다.<br/>작성하신 후기는 다른 분들께 큰 도움이 돼요.
+      </p>
+      <button 
+        onClick={onClose}
+        style={{ 
+          width: '100%', padding: '15px', backgroundColor: '#000', 
+          color: '#fff', border: 'none', borderRadius: '12px', 
+          fontWeight: 'bold', fontSize: '16px', cursor: 'pointer' 
+        }}
+      >
+        확인
+      </button>
     </div>
   </div>
 );
 
+// --- 사용자님이 만드신 진짜 리뷰 폼 ---
+const ReviewForm = ({ exhibitionTitle, onComplete }: { exhibitionTitle: string; onComplete: () => void }) => {
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [content, setContent] = useState('');
+  const [images, setImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const MAX_CHARS = 500;
+  
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (images.length + files.length > 5) {
+      alert("사진은 최대 5장까지 가능합니다.");
+      return;
+    }
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => setImages(prev => [...prev, reader.result as string]);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  return (
+    <div style={{ padding: '5px' }}>
+      <div style={{ marginBottom: '25px' }}>
+        <p style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>전시 정보</p>
+        <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>{exhibitionTitle}</h3>
+      </div>
+
+      <div style={{ marginBottom: '25px', padding: '24px', backgroundColor: '#fcfcfc', borderRadius: '18px', border: '1px solid #f0f0f0', textAlign: 'center' }}>
+        <p style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: '600' }}>전시는 어떠셨나요?</p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+          {[1, 2, 3, 4, 5].map((num) => (
+            <Star 
+              key={num} size={35} 
+              onClick={() => setRating(num)}
+              onMouseEnter={() => setHoverRating(num)}
+              onMouseLeave={() => setHoverRating(0)}
+              color={(hoverRating || rating) >= num ? "#FFD700" : "#ddd"} 
+              fill={(hoverRating || rating) >= num ? "#FFD700" : "none"}
+              style={{ 
+                cursor: 'pointer', 
+                transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                transform: (hoverRating || rating) >= num ? 'scale(1.2)' : 'scale(1)' 
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '20px', position: 'relative' }}>
+        <label style={{ fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>감상평</label>
+        <textarea 
+          value={content}
+          onChange={(e) => setContent(e.target.value.slice(0, MAX_CHARS))}
+          placeholder="작품을 통해 느낀 감동이나 전시 분위기를 자유롭게 적어주세요."
+          style={{ 
+            width: '100%', height: '160px', padding: '15px', borderRadius: '12px', 
+            border: '1px solid #eee', outline: 'none', fontSize: '14px', resize: 'none',
+            lineHeight: '1.6', backgroundColor: '#fafafa'
+          }}
+        />
+        <div style={{ textAlign: 'right', fontSize: '12px', color: content.length >= MAX_CHARS ? '#ff4d4d' : '#aaa', marginTop: '5px' }}>
+          {content.length} / {MAX_CHARS}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '30px' }}>
+        <label style={{ fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>사진 첨부</label>
+        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px', scrollbarWidth: 'none' }}>
+          <div 
+            onClick={() => fileInputRef.current?.click()}
+            style={{ 
+              width: '80px', height: '80px', borderRadius: '12px', border: '1px dashed #ccc',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', flexShrink: 0, backgroundColor: '#fff'
+            }}
+          >
+            <Camera size={24} color="#aaa" />
+            <span style={{ fontSize: '11px', color: '#aaa', marginTop: '4px' }}>{images.length}/5</span>
+            <input type="file" ref={fileInputRef} hidden accept="image/*" multiple onChange={handleFileChange} />
+          </div>
+          {images.map((img, idx) => (
+            <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
+              <img src={img} alt="preview" style={{ width: '100%', height: '100%', borderRadius: '12px', objectFit: 'cover' }} />
+              <X 
+                size={16} 
+                style={{ position: 'absolute', top: -5, right: -5, backgroundColor: '#333', color: '#fff', borderRadius: '50%', padding: '2px', cursor: 'pointer' }} 
+                onClick={() => setImages(images.filter((_, i) => i !== idx))}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button 
+        onClick={onComplete}
+        disabled={!rating || !content}
+        style={{ 
+          width: '100%', padding: '18px', borderRadius: '15px', border: 'none', 
+          backgroundColor: (!rating || !content) ? '#ccc' : '#000', 
+          color: '#fff', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer'
+        }}
+      >
+        등록 완료
+      </button>
+    </div>
+  );
+};
 // --- 1. 타입 정의 ---
 interface MyPageProps {
   isLoggedIn: boolean;       
@@ -40,12 +170,30 @@ interface FriendItem {
 }
 
 const BADGE_DETAILS = [
-  { id: 1, icon: '🎨', name: '현대미술 탐험가', condition: '현대미술 전시 3회 관람', isLocked: false },
-  { id: 2, icon: '🏛️', name: '박물관 매니아', condition: '국립 박물관 5회 방문', isLocked: true },
-  { id: 3, icon: '📸', name: '전시회 헌터', condition: '오픈 1주 이내 전시 방문', isLocked: true },
-  { id: 4, icon: '💎', name: '미니멀리스트', condition: '미니멀리즘 전시 2회 관람', isLocked: true },
-  { id: 5, icon: '🌿', name: '힐링 큐레이터', condition: '자연 테마 전시 3회 관람', isLocked: true },
-  { id: 6, icon: '🔍', name: '디테일러', condition: '관람 시간 2시간 이상 3회', isLocked: true },
+  { 
+    id: 1, 
+    icon: '🎨', 
+    name: '현대미술 탐험가', 
+    condition: '현대미술 전시 3회 관람', 
+    isLocked: false, 
+    reward: '현대 미술관 도슨트 50% 할인권' // 👈 이 줄을 꼭 추가해주세요!
+  },
+      {
+        id: 2,
+        icon: '🏛️',
+        name: '박물관 매니아',
+        condition: '국립 박물관 5회 방문',
+        isLocked: false,
+        reward: '국립 박물관 특별 전시 무료 입장권',
+    }, // 💡 이 부분이 팝업에 표시됩니다.
+
+    
+    { id: 3, icon: '📸', name: '전시회 헌터', condition: '오픈 1주 이내 전시 방문', isLocked: true },
+    { id: 4, icon: '✍️', name: '리뷰 마스터', condition: '후기 3회 작성', isLocked: true },
+    { id: 5, icon: '🌿', name: '힐링 큐레이터', condition: '자연 테마 전시 3회 관람', isLocked: true },
+    { id: 6, icon: '🔍', name: '디테일러', condition: '관람 시간 2시간 이상 3회', isLocked: true },
+    { id: 7, icon: '💎', name: '미니멀리스트', condition: '미니멀리즘 전시 2회 관람', isLocked: true },
+
 ];
 
 // --- 2. 하위 공통 UI 컴포넌트 ---
@@ -130,9 +278,58 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  // 뱃지 상태 추가
-  const [selectedBadge, setSelectedBadge] = useState<any>(null);
+  // 찜한 전시 상세 정보 상태
+  const [wishlistItems, setWishlistItems] = useState<any[]>([]);
 
+  // 1️⃣ 찜 데이터 불러오기 함수
+  const loadWishlist = async () => {
+    const savedIds = localStorage.getItem('wishlist');
+    const likedIds = savedIds ? JSON.parse(savedIds).map(String) : [];
+
+    if (likedIds.length === 0) {
+      setWishlistItems([]);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/api/events');
+      const result = await response.json();
+      const allEvents = result.data || (Array.isArray(result) ? result : []);
+
+      const filtered = allEvents.filter((evt: any, index: number) => {
+        const sId = String(evt.id || "");
+        const sEventId = String(evt.event_id || "");
+        const sIndexId = String(index + 1);
+        return likedIds.includes(sId) || likedIds.includes(sEventId) || likedIds.includes(sIndexId);
+      });
+
+      setWishlistItems(filtered);
+    } catch (err) {
+      console.error("로딩 실패", err);
+    }
+  };
+
+  // 2️⃣ 찜 해제 함수 (e 파라미터 추가해서 에러 해결!)
+  const handleRemoveWishlist = (e: React.MouseEvent, id: any) => {
+    e.stopPropagation();
+    const savedIds = localStorage.getItem('wishlist');
+    if (!savedIds) return;
+
+    const likedIds: any[] = JSON.parse(savedIds);
+    const updatedIds = likedIds.filter(itemId => String(itemId) !== String(id));
+    
+    localStorage.setItem('wishlist', JSON.stringify(updatedIds));
+    loadWishlist(); // 즉시 리로딩
+  };
+
+  useEffect(() => {
+    loadWishlist();
+    window.addEventListener('storage', loadWishlist);
+    return () => window.removeEventListener('storage', loadWishlist);
+  }, []);
+  
+  const [selectedBadge, setSelectedBadge] = useState<any>(null);
+  const [myProfileBadge, setMyProfileBadge] = useState<any>(null); // 👈 이거 한 줄 추가!
   const [friendEmail, setFriendEmail] = useState('');
   const [managingFriend, setManagingFriend] = useState<FriendItem | null>(null);
   const [friends, setFriends] = useState<FriendItem[]>([
@@ -205,22 +402,60 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
     </div>
   );
 
+
+  // 310라인 부근 상태 선언부
+const [historyEvents, setHistoryEvents] = useState<any[]>([]); // DB에서 가져온 전시 저장
+
+// 페이지가 열릴 때 DB에서 전시 목록을 가져옵니다.
+useEffect(() => {
+  fetch("http://localhost:8000/api/events") // 서버 주소에 맞게 수정하세요!
+    .then(res => res.json())
+    .then(res => {
+      if (res.status === "success") {
+        // 가져온 전체 데이터 중 랜덤으로 3개만 뽑아서 저장
+        const shuffled = res.data.sort(() => 0.5 - Math.random());
+        setHistoryEvents(shuffled.slice(0, 3));
+      }
+    })
+    .catch(err => console.error("데이터 로딩 실패:", err));
+}, []);
+
   const renderContent = () => {
     switch (viewState) {
-      case 'history':
+case 'history':
         return (
           <div className="sub-view">
             <SubViewHeader title="다녀온 전시 목록" />
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {[1, 2, 3].map(i => (
-                <div key={i} style={{ borderRadius: '15px', overflow: 'hidden', border: '1px solid #eee', cursor: 'pointer' }}>
-                  <div style={{ width: '100%', height: '120px', backgroundColor: '#f5f5f5' }} />
-                  <div style={{ padding: '12px' }}>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>전시 제목 {i}</p>
-                    <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#999' }}>방문 완료</p>
+              {historyEvents.length > 0 ? (
+                historyEvents.map((evt, i) => (
+                  <div key={i} style={{ borderRadius: '15px', overflow: 'hidden', border: '1px solid #eee', cursor: 'pointer', backgroundColor: '#fff' }}>
+                    <div style={{ 
+                      width: '100%', 
+                      height: '120px', 
+                      backgroundColor: '#f5f5f5',
+                      backgroundImage: `url(${evt.image_url || 'https://via.placeholder.com/150'})`, // DB의 이미지 URL 사용
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }} />
+                    <div style={{ padding: '12px' }}>
+                      <p style={{ 
+                        margin: 0, fontSize: '14px', fontWeight: 'bold',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' 
+                      }}>
+                        {evt.title}
+                      </p>
+                      <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#999' }}>
+                        {evt.place_name}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p style={{ gridColumn: 'span 2', textAlign: 'center', color: '#999', padding: '20px' }}>
+                  불러올 전시 데이터가 없습니다.
+                </p>
+              )}
             </div>
           </div>
         );
@@ -229,22 +464,75 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
         return (
           <div className="sub-view">
             <SubViewHeader title="보고싶은 전시" />
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {[1, 2].map(i => (
-                <div key={i} style={{ borderRadius: '15px', overflow: 'hidden', border: '1px solid #eee', cursor: 'pointer' }}>
-                  <div style={{ width: '100%', height: '120px', backgroundColor: '#fff0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Heart size={24} color="#ff4d4d" fill="#ff4d4d" />
+            {wishlistItems.length > 0 ? (
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '15px',
+                padding: '10px 0' 
+              }}>
+                {wishlistItems.map((item) => (
+                  <div key={item.id || item.event_id} style={{ 
+                    borderRadius: '15px', 
+                    overflow: 'hidden', 
+                    border: '1px solid #eee', 
+                    backgroundColor: '#fff',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                    position: 'relative'
+                  }}>
+                    <div style={{ 
+                      width: '100%', 
+                      height: '140px', 
+                      backgroundImage: `url(${item.image_url || item.main_img || item.img_url})`,
+                      backgroundSize: 'cover', 
+                      backgroundPosition: 'center',
+                      position: 'relative'
+                    }}>
+                      <div 
+                        onClick={(e) => handleRemoveWishlist(e, item.id || item.event_id)} 
+                        style={{ 
+                          position: 'absolute', 
+                          top: '8px', 
+                          right: '8px', 
+                          backgroundColor: 'rgba(255,255,255,0.9)', 
+                          borderRadius: '50%', 
+                          padding: '4px',
+                          display: 'flex',
+                          cursor: 'pointer',
+                          zIndex: 10
+                        }}
+                      >
+                        <Heart size={16} color="#ff4d4d" fill="#ff4d4d" />
+                      </div>
+                    </div>
+                    <div style={{ padding: '12px' }}>
+                      <p style={{ 
+                        margin: 0, 
+                        fontSize: '13px', 
+                        fontWeight: 'bold', 
+                        whiteSpace: 'nowrap', 
+                        overflow: 'hidden', 
+                        textOverflow: 'ellipsis' 
+                      }}>
+                        {item.title}
+                      </p>
+                      <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#999' }}>
+                        {item.place_name || item.location}
+                      </p>
+                    </div>
                   </div>
-                  <div style={{ padding: '12px' }}>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 'bold' }}>찜한 전시 {i}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '80px 0', color: '#bbb' }}>
+                <Heart size={48} color="#eee" style={{ marginBottom: '15px' }} />
+                <p style={{ fontSize: '14px' }}>아직 보고 싶은 전시가 없어요.</p>
+              </div>
+            )}
           </div>
         );
 
-      case 'reviews':
+case 'reviews':
         return (
           <div className="sub-view">
             <SubViewHeader title="후기 작성" />
@@ -272,7 +560,7 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
                 </div>
                 <button 
                   onClick={() => {
-                    setSelectedExhibition('새로운 전시 후기');
+                    setSelectedExhibition('예풍 신작 낭독쇼케이스, 기억 I'); 
                     setViewState('writeReview');
                   }}
                   style={{ width: '100%', padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
@@ -284,17 +572,20 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
           </div>
         );
 
-      case 'writeReview':
+        
+
+case 'writeReview': // 👈 "후기 작성하기" 버튼을 누르면 이리로 옵니다!
         return (
           <div className="sub-view">
             <SubViewHeader title="후기 남기기" backTo="reviews" />
             <ReviewForm 
               exhibitionTitle={selectedExhibition} 
-              onComplete={() => { setShowModal(true); }} 
+              onComplete={() => { 
+                setShowModal(true); 
+              }} 
             />
           </div>
         );
-
       case 'notifSetting':
         return (
           <div className="sub-view">
@@ -306,98 +597,78 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
             </div>
           </div>
         );
+
+
 case 'profileEdit':
-        return (
-          <div className="sub-view">
-            <SubViewHeader title="개인정보 수정" />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {/* 닉네임 수정 */}
-              <InputGroup label="닉네임" placeholder="예술가 김아트" />
-              
-              {/* 한 줄 소개 수정 */}
-              <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
-
-              {/* 🚀 대표 뱃지 설정 드롭다운 추가 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>대표 뱃지 설정</label>
-                <div style={{ position: 'relative' }}>
-                  <select 
-                    value={selectedBadge?.id || ""} 
-                    onChange={(e) => {
-                      const badgeId = parseInt(e.target.value);
-                      const badge = BADGE_DETAILS.find(b => b.id === badgeId);
-                      if (badge && !badge.isLocked) {
-                        setSelectedBadge(badge);
-                      } else if (badge?.isLocked) {
-                        alert("획득하지 못한 뱃지는 대표 뱃지로 설정할 수 없습니다.");
-                      }
-                    }}
-                    style={{ 
-                      width: '100%', 
-                      padding: '14px', 
-                      borderRadius: '10px', 
-                      border: '1px solid #eee', 
-                      outline: 'none', 
-                      fontSize: '14px',
-                      appearance: 'none', // 기본 화살표 숨김 (커스텀 디자인용)
-                      backgroundColor: '#fff',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <option value="" disabled>대표 뱃지를 선택해주세요</option>
-                    {BADGE_DETAILS.map(badge => (
-                      <option key={badge.id} value={badge.id} disabled={badge.isLocked}>
-                        {badge.isLocked ? `🔒 ${badge.name} (잠김)` : `${badge.icon} ${badge.name}`}
-                      </option>
-                    ))}
-                  </select>
-                  {/* 드롭다운 화살표 아이콘 */}
-                  <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                    <ChevronRight size={18} color="#999" style={{ transform: 'rotate(90deg)' }} />
-                  </div>
-                </div>
-                {selectedBadge && (
-                  <p style={{ fontSize: '11px', color: '#007aff', marginTop: '2px' }}>
-                    ✨ 현재 <b>{selectedBadge.name}</b>가 대표 뱃지로 설정되어 있습니다.
-                  </p>
-                )}
-              </div>
-
-              {/* 비밀번호 변경 */}
-              <InputGroup 
-                label="비밀번호 변경" 
-                placeholder="변경할 비밀번호를 입력하세요" 
-                type={showPassword ? "text" : "password"} 
-                rightElement={
-                  <div onClick={() => setShowPassword(!showPassword)} style={{ display: 'flex', color: '#999' }}>
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </div>
+  return (
+    <div className="sub-view">
+      <SubViewHeader title="개인정보 수정" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <InputGroup label="닉네임" placeholder="예술가 김아트" />
+        <InputGroup label="한 줄 소개" placeholder="미니멀리즘과 현대미술을 사랑하는 탐험가" />
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>대표 뱃지 설정</label>
+          <div 
+            style={{ position: 'relative' }}
+            onClick={(e) => e.stopPropagation()} 
+          >
+            <select 
+              value={myProfileBadge?.id || ""} 
+              onChange={(e) => {
+                const badgeId = parseInt(e.target.value);
+                const badge = BADGE_DETAILS.find(b => b.id === badgeId);
+                
+                if (badge && !badge.isLocked) {
+                  setMyProfileBadge(badge); // 👈 여기만 변경 (모달용 상태는 건드리지 않음!)
+                } else if (badge?.isLocked) {
+                  alert("획득하지 못한 뱃지는 대표 뱃지로 설정할 수 없습니다.");
                 }
-              /> 
-
-              {/* 저장 버튼 */}
-              <button 
-                onClick={() => { 
-                  alert('개인정보와 대표 뱃지가 수정되었습니다.'); 
-                  setViewState('main'); 
-                }}
-                style={{ 
-                  width: '100%', 
-                  padding: '16px', 
-                  borderRadius: '12px', 
-                  border: 'none', 
-                  fontWeight: 'bold', 
-                  cursor: 'pointer', 
-                  backgroundColor: '#000', 
-                  color: '#fff',
-                  marginTop: '10px'
-                }}
-              >
-                저장하기
-              </button>
+              }}
+              style={{ 
+                width: '100%', padding: '14px', borderRadius: '10px', 
+                border: '1px solid #eee', outline: 'none', fontSize: '14px',
+                backgroundColor: '#fff', cursor: 'pointer',
+                appearance: 'none'
+              }}
+            >
+              <option value="" disabled>대표 뱃지를 선택해주세요</option>
+              {BADGE_DETAILS.map(badge => (
+                <option key={badge.id} value={badge.id} disabled={badge.isLocked}>
+                  {badge.isLocked ? `🔒 ${badge.name}` : `${badge.icon} ${badge.name}`}
+                </option>
+              ))}
+            </select>
+            <div style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <ChevronRight size={18} color="#999" style={{ transform: 'rotate(90deg)' }} />
             </div>
           </div>
-        );
+          
+          {myProfileBadge && (
+            <p style={{ fontSize: '11px', color: '#007aff', marginTop: '2px' }}>
+              ✨ 현재 <b>{myProfileBadge.name}</b>가 선택되었습니다.
+            </p>
+          )}
+        </div>
+        
+        <button 
+          onClick={() => {
+            // 🚨 중요: 여기서 setSelectedBadge(myProfileBadge)를 지웠습니다!
+            // 대신 나중에 메인 프로필 화면에서 뱃지를 보여줄 때 myProfileBadge를 쓰도록 하면 됩니다.
+            alert("개인정보가 수정되었습니다.");
+            setViewState('main');
+          }}
+          style={{ 
+            marginTop: '10px', width: '100%', padding: '16px', borderRadius: '12px', 
+            border: 'none', backgroundColor: '#000', color: '#fff', fontWeight: 'bold', cursor: 'pointer' 
+          }}
+        >
+          저장하기
+        </button>
+      </div>
+    </div>
+  );
+
 
       case 'payments':
         return (
@@ -492,6 +763,8 @@ case 'profileEdit':
             </div>
           </div>
         );
+
+        
 
       case 'partner':
         return (
@@ -605,7 +878,42 @@ case 'profileEdit':
           </div>
           <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
         </div>
-        <div style={{ overflow: 'hidden' }}>
+
+        
+<div style={{ overflow: 'hidden' }}>
+  {/* 1️⃣ 칭호/뱃지 디자인 (추가 및 수정) */}
+  {myProfileBadge && (
+    <div style={{ 
+      display: 'inline-flex', // 글자 크기에 딱 맞게
+      alignItems: 'center', 
+      gap: '4px', // 아이콘과 글자 사이 간격
+      marginBottom: '10px', // 이름과의 간격
+      
+      // 디자인 핵심: 테두리와 배경, 둥근 모서리
+      border: '1px solid #b84dff', // 보라색 테두리
+      backgroundColor: 'rgb(255, 240, 245)', // 아주 연한 보라색 배경
+      padding: '3px 8px', // 안쪽 여백
+      borderRadius: '20px', // 완전 둥글게 (캡슐 모양)
+      
+      // 폰트 크기를 확 줄여서 아기자기하게
+      fontSize: '10px', 
+      fontWeight: 'bold', 
+      color: '#7265ff', 
+      
+      // 입체감을 위한 미세한 그림자
+      boxShadow: '0 1px 2px rgba(124, 77, 255, 0.1)',
+      
+      // 움직이는 효과 유지 (원하시면 빼셔도 됩니다)
+      animation: 'bounce 2s infinite' 
+    }}>
+      {/* 아이콘 크기 살짝만 크게 */}
+      <span style={{ fontSize: '12px' }}>{myProfileBadge.icon}</span>
+      {/* 뱃지 이름 표시 */}
+      <span>{myProfileBadge.name}</span>
+    </div>
+  )}
+
+
           <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {isLoggedIn ? "예술가 김아트님" : "로그인이 필요합니다"}
           </h2>
@@ -613,13 +921,18 @@ case 'profileEdit':
         </div>
       </div>
 
+      
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', marginBottom: '30px' }}>
         <StatCard val={isLoggedIn ? "3" : "-"} label="다녀온 전시" onClick={() => setViewState('history')} />
-        <StatCard val={isLoggedIn ? "2" : "-"} label="찜한 전시" onClick={() => setViewState('likes')} />
+        <StatCard 
+          val={isLoggedIn ? wishlistItems.length.toString() : "-"} 
+          label="찜한 전시" 
+          onClick={() => setViewState('likes')} 
+        />
         <StatCard val={isLoggedIn ? "0" : "-"} label="작성 후기" onClick={() => setViewState('reviews')} />
       </div>
 
-      {/* 🚀 뱃지 섹션 추가 (메인 화면일 때만 표시) */}
       {viewState === 'main' && (
         <div style={{ marginBottom: '30px' }}>
           <h4 style={{ fontSize: '12px', color: '#ccc', marginBottom: '15px', letterSpacing: '1px' }}>MY BADGES</h4>
@@ -627,7 +940,11 @@ case 'profileEdit':
             {BADGE_DETAILS.map(badge => (
               <div 
                 key={badge.id} 
-                onClick={() => setSelectedBadge(badge)}
+                onClick={() => {
+  // 최신 BADGE_DETAILS에서 해당 뱃지의 정보를 다시 찾아와서 넣어줍니다.
+  const latestBadgeInfo = BADGE_DETAILS.find(b => b.id === badge.id);
+  setSelectedBadge(latestBadgeInfo || badge);
+}}
                 style={{ flexShrink: 0, width: '60px', textAlign: 'center', cursor: 'pointer' }}
               >
                 <div style={{ 
@@ -651,17 +968,139 @@ case 'profileEdit':
 
       {renderContent()}
 
-      {/* 뱃지 상세 팝업 */}
-      {selectedBadge && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-          <div style={{ backgroundColor: '#fff', width: '280px', borderRadius: '25px', padding: '25px', textAlign: 'center' }}>
-            <div style={{ fontSize: '50px', marginBottom: '15px' }}>{selectedBadge.isLocked ? '🔒' : selectedBadge.icon}</div>
-            <h3 style={{ margin: '0 0 8px' }}>{selectedBadge.name}</h3>
-            <p style={{ fontSize: '13px', color: '#666', marginBottom: '20px' }}>{selectedBadge.condition}</p>
-            <button onClick={() => setSelectedBadge(null)} style={{ width: '100%', padding: '12px', backgroundColor: '#000', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>확인</button>
+
+
+
+      {/* 🚀 여기서부터 [뱃지 상세 팝업] 교체 시작 */}
+      {selectedBadge && viewState === 'main' && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: '#fff',
+              width: '320px',
+              borderRadius: '35px',
+              padding: '40px 30px',
+              textAlign: 'center',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              animation: 'popupShow 0.3s ease-out',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '70px',
+                marginBottom: '15px',
+                filter: selectedBadge.isLocked ? 'grayscale(1) opacity(0.4)' : 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {selectedBadge.isLocked ? '🔒' : selectedBadge.icon}
+            </div>
+
+            <h3 style={{ margin: '0 0 8px', fontSize: '24px', fontWeight: '800', color: '#111' }}>
+              {selectedBadge.name}
+            </h3>
+
+            <p style={{ fontSize: '15px', color: '#777', marginBottom: '25px', lineHeight: '1.4' }}>
+              {selectedBadge.condition}
+            </p>
+
+            
+
+            {/* 💡 [혜택 표시] 뱃지 데이터에 reward가 있을 경우만 표시 */}
+            {!selectedBadge.isLocked && selectedBadge.reward && (
+              <div
+                style={{
+                  background: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%)',
+                  color: '#006064',
+                  padding: '20px 15px',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  marginBottom: '30px',
+                  border: '2px dashed #00bcd4',
+                  lineHeight: '1.5',
+                }}
+              >
+                <span style={{ fontSize: '18px', marginRight: '5px' }}>🎁</span>
+                <span style={{ color: '#ff5722', fontSize: '15px' }}>혜택 지급 완료!</span>
+                <br />
+                <span style={{ fontSize: '16px', fontWeight: '800', color: '#00838f' }}>
+                  '{selectedBadge.reward}'
+                </span>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {!selectedBadge.isLocked && (
+                <button
+                  onClick={() => {
+                    setMyProfileBadge(selectedBadge); // 👈 프로필 뱃지로 설정
+                    setSelectedBadge(null);
+                    alert(`${selectedBadge.name}가 대표 뱃지로 설정되었습니다!`);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '16px',
+                    backgroundColor: '#111',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '18px',
+                    fontWeight: 'bold',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  대표 설정
+                </button>
+              )}
+
+              <button
+                onClick={() => setSelectedBadge(null)}
+                style={{
+                  flex: 1,
+                  padding: '16px',
+                  backgroundColor: '#f5f5f5',
+                  color: '#555',
+                  border: 'none',
+                  borderRadius: '18px',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                }}
+              >
+                닫기
+              </button>
+            </div>
           </div>
+
+          {/* 애니메이션 정의 */}
+          <style>
+            {`
+              @keyframes popupShow {
+                from { opacity: 0; transform: scale(0.9); }
+                to { opacity: 1; transform: scale(1); }
+              }
+            `}
+          </style>
         </div>
       )}
+      {/* 🚀 여기까지 교체 끝 */}
       
       {showModal && (
         <SuccessModal onClose={() => { setShowModal(false); setViewState('main'); }} />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './ExhibitList.css';
-import { ChevronLeft, Heart, MapPin, Search, X } from 'lucide-react';
+import { ChevronLeft, Heart, MapPin, Search, X, ShoppingBag } from 'lucide-react';
 
 interface Exhibit {
     id: number;
@@ -14,27 +15,27 @@ interface Exhibit {
     img_url?: string;
 }
 
-// 🌟 [수정] Props 인터페이스 정의: onLikeChange 추가
 interface ExhibitionProps {
     onBack: () => void;
-    onLikeChange?: (isLiked: boolean) => void;
+    onLikeChange: (isLiked: boolean) => void;
+    onReserve: (item: any) => void; // ⭐ 추가
 }
 
-// 🌟 [수정] React.FC에 ExhibitionProps 적용
-const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange }) => {
+const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange, onReserve }) => {
+    const navigate = useNavigate();
     const [exhibits, setExhibits] = useState<Exhibit[]>([]);
     const [activeFilter, setActiveFilter] = useState('전체');
     const [isSearching, setIsSearching] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
-
+    
     // 찜하기 상태 로드
     const [liked, setLiked] = useState<number[]>(() => {
         const saved = localStorage.getItem('wishlist');
         return saved ? JSON.parse(saved) : [];
     });
 
-    // 찜하기 상태 변경 시 로컬스토리지 저장 + 'storage' 이벤트 강제 발생(동기화용)
+    // 찜하기 상태 동기화
     useEffect(() => {
         localStorage.setItem('wishlist', JSON.stringify(liked));
         window.dispatchEvent(new Event('storage')); 
@@ -79,19 +80,11 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange }) => 
         loadData();
     }, []);
 
-    // 🌟 [수정] 하트 클릭 시 부모(App.tsx)의 상태도 함께 업데이트하도록 변경
     const toggleLike = (id: number) => {
         const isCurrentlyLiked = liked.includes(id);
         const nextLikedStatus = !isCurrentlyLiked;
-
-        setLiked((prev) => 
-            nextLikedStatus ? [...prev, id] : prev.filter((i) => i !== id)
-        );
-
-        // App.tsx에 정의된 handleLikeChange 실행
-        if (onLikeChange) {
-            onLikeChange(nextLikedStatus);
-        }
+        setLiked((prev) => nextLikedStatus ? [...prev, id] : prev.filter((i) => i !== id));
+        if (onLikeChange) onLikeChange(nextLikedStatus);
     };
 
     const filteredExhibits = exhibits.filter((item) => {
@@ -197,12 +190,29 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange }) => 
                                             <span key={`${item.id}-tag-${idx}`} className="hashtag-item">#{tag.trim()}</span>
                                         ))}
                                     </div>
-                                    <div className="info-bottom">
-                                        <div className="info-row">
-                                            <MapPin size={14} color="#888" />
-                                            <span>{item.location}</span>
+                                    
+                                    <div className="info-bottom-flex">
+                                        <div className="info-text-group">
+                                            <div className="info-row">
+                                                <MapPin size={14} color="#888" />
+                                                <span>{item.location}</span>
+                                            </div>
+                                            <div className="info-date">{item.date}</div>
                                         </div>
-                                        <div className="info-date">{item.date}</div>
+                                        
+                                        {/* 🌟 예매 페이지 이동 버튼 */}
+<button 
+    className="direct-reserve-btn"
+    onClick={() => {
+        // navigate 대신 부모(App.tsx)가 준 함수를 실행합니다!
+        if (onReserve) {
+            onReserve(item); 
+        }
+    }}
+>
+    <ShoppingBag size={18} />
+    <span>예매</span>
+</button>
                                     </div>
                                 </div>
                             </div>

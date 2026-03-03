@@ -6,7 +6,7 @@ import {
     CheckCircle2, ChevronRight, Gift, Loader2, Calendar
 } from 'lucide-react';
 
-// 컴포넌트 임포트 (파일 경로가 프로젝트 구조와 맞는지 확인하세요)
+// 컴포넌트 임포트
 import MyPage from './MyPage';
 import Exhibition from './ExhibitList';
 import RootPage from './Root';
@@ -15,6 +15,7 @@ import Giftshop from './GiftShop';
 import MapPage from './Map';
 import GuidePage from './GuidePage';
 import CourseNavigation from './CourseNavigation';
+import ReservationPage from './ReservationPage'; // ⭐ 꼭 파일이 있는지 확인!
 
 // 스타일 임포트
 import './ArtLog.css';
@@ -22,13 +23,9 @@ import './Login.css';
 import './GuidePage.css';
 import './Wishlist.css';
 
-// API 주소 분리
-const LOCAL_API_URL = 'http://localhost:8000'; // 기존 로컬 서버 (전체 목록용)
-const AI_API_URL = 'http://54.180.234.226:8000'; // 외부 서버 (AI 추천용)
-
-const handleExhibitClick = (exhibit: any) => {
-    console.log("선택된 전시:", exhibit);
-};
+// API 주소
+const LOCAL_API_URL = 'http://localhost:8000';
+const AI_API_URL = 'http://54.180.234.226:8000';
 
 // --- 컴포넌트: 취향 선택 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
@@ -77,7 +74,7 @@ const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => v
 };
 
 // --- 컴포넌트: 전시 카드 ---
-const ExhibitCard = ({ title, location, tag, imgUrl, onLikeChange }: any) => {
+const ExhibitCard = ({ title, location, tag, imgUrl, onLikeChange, onClick }: any) => {
     const [liked, setLiked] = useState(false);
     const displayTags = Array.isArray(tag) ? tag : [tag];
 
@@ -89,7 +86,7 @@ const ExhibitCard = ({ title, location, tag, imgUrl, onLikeChange }: any) => {
     };
 
     return (
-        <div className="exhibit-card">
+        <div className="exhibit-card" onClick={onClick} style={{ cursor: 'pointer' }}>
             <div
                 className="exhibit-image"
                 style={{ 
@@ -148,6 +145,9 @@ export default function App() {
     const [guideSubTab, setGuideSubTab] = useState<'human' | 'ai'>('human');
     const [likedCount, setLikedCount] = useState(0);
 
+    // 예매 관련 상태 추가
+    const [selectedExhibit, setSelectedExhibit] = useState<any>(null);
+
     const [serverExhibitions, setServerExhibitions] = useState<any[]>([]);
     const [recommendedExhibitions, setRecommendedExhibitions] = useState<any[]>([]);
     const [notifications, setNotifications] = useState([
@@ -155,62 +155,46 @@ export default function App() {
         { id: 2, icon: <CheckCircle2 size={18} color="#4CAF50" />, title: '도슨트 예약 완료', desc: '예약이 확정되었습니다.', time: '2시간 전', isRead: false },
     ]);
 
-    // 좋아요 상태 관리 함수
     const handleLikeChange = (isLiked: boolean) => {
         setLikedCount(prev => isLiked ? prev + 1 : Math.max(0, prev - 1));
     };
 
-    // 로그아웃 함수
     const handleLogout = () => {
         setIsLoggedIn(false);
         setStep('login');
         setActiveTab('home');
     };
 
-    // 1. 기존 전체 목록 (localhost DB 유지)
-useEffect(() => {
-    const fetchInitialData = async () => {
+    // 1. 기존 전체 목록 로드
+    useEffect(() => {
+        const fetchInitialData = async () => {
+            try {
+                const response = await axios.get(`${LOCAL_API_URL}/api/events`);
+                if (response.data && response.data.status === "success") {
+                    setServerExhibitions(response.data.data || []);
+                }
+            } catch (error) { 
+                console.error("❌ [전체보기] 에러:", error.message);
+            }
+        };
+        if (step === 'main' && activeTab === 'home') fetchInitialData();
+    }, [step, activeTab]);
+
+    // 2. AI 추천 로드
+    const handlePreferenceComplete = async (selectedTags: string[]) => {
+        setIsLoading(true);
         try {
-            const API_BASE_URL = window.location.hostname === 'localhost' 
-                ? 'http://localhost:8000' 
-                : 'http://54.180.234.226:8000';
-
-            console.log("📍 요청 보내는 주소:", `${API_BASE_URL}/api/events`);
-            const response = await axios.get(`${API_BASE_URL}/api/events`);
-            console.log("✅ 서버 응답 데이터:", response.data);
-
+            const cleanTags = selectedTags.map(tag => tag.replace('#', ''));
+            const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { tags: cleanTags });
             if (response.data && response.data.status === "success") {
-                setServerExhibitions(response.data.data || []);
+                setRecommendedExhibitions(response.data.data || []);
             }
         } catch (error) { 
-            console.error("❌ [전체보기] 에러:", error.message); // 에러 메시지 상세 출력
+            console.error("❌ [AI추천] 에러:", error.message);
+        } finally {
+            setTimeout(() => { setIsLoading(false); setStep('main'); }, 1000);
         }
     };
-    if (step === 'main' && activeTab === 'home') fetchInitialData();
-}, [step, activeTab]);
-
-   // --- 2. AI 추천용 (둘 다 안 뜨는 문제 확인용) ---
-const handlePreferenceComplete = async (selectedTags: string[]) => {
-    setIsLoading(true);
-    try {
-        const cleanTags = selectedTags.map(tag => tag.replace('#', ''));
-        console.log("📤 AI 서버로 보낼 태그:", cleanTags);
-
-        const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { 
-            tags: cleanTags 
-        });
-
-        console.log("📥 AI 서버 응답:", response.data);
-
-        if (response.data && response.data.status === "success") {
-            setRecommendedExhibitions(response.data.data || []);
-        }
-    } catch (error) { 
-        console.error("❌ [AI추천] 에러:", error.response?.data || error.message);
-    } finally {
-        setTimeout(() => { setIsLoading(false); setStep('main'); }, 1000);
-    }
-};
 
     const navigateToGuide = (subType: 'human' | 'ai') => {
         setGuideSubTab(subType);
@@ -226,7 +210,8 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
     };
 
     const hasUnread = notifications.some((n) => !n.isRead);
-    const isFullScreenMode = activeTab === 'exhibits' || isNavigating;
+    // 전시목록, 코스네비게이션, 예매페이지는 전체화면(탭바 숨김) 처리
+    const isFullScreenMode = activeTab === 'exhibits' || isNavigating || activeTab === 'reserve';
 
     return (
         <Router>
@@ -251,19 +236,12 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
                 <div className="art-log-container">
                     {!isFullScreenMode && (
                         <header className="main-header" style={{ 
-                            padding: '16px 20px', 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center', 
-                            background: '#fff',
-                            zIndex: 100 
+                            padding: '16px 20px', display: 'flex', justifyContent: 'space-between', 
+                            alignItems: 'center', background: '#fff', zIndex: 100 
                         }}>
                             <h1 onClick={() => setActiveTab('home')} style={{ 
                                 cursor: 'pointer', margin: 0, fontSize: '1.4rem', fontWeight: 'bold'
-                            }}>
-                                ArtLog
-                            </h1>
-                            
+                            }}>ArtLog</h1>
                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                 <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setIsNotifyOpen(true)}>
                                     <Bell size={24} />
@@ -295,7 +273,6 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
                                 </button>
                             </section>
 
-                            {/* --- 1. AI 취향 맞춤 추천 섹션 (외부 서버 데이터) --- */}
                             <section className="section" style={{ padding: '20px 0' }}>
                                 <div className="section-header" style={{ padding: '0 20px', marginBottom: '16px' }}>
                                     <div className="title-group">
@@ -310,40 +287,26 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
                                 <div className="horizontal-scroll" style={{ display: 'flex', gap: '16px', padding: '0 20px', overflowX: 'auto', scrollbarWidth: 'none' }}>
                                     {recommendedExhibitions.length > 0 ? (
                                         recommendedExhibitions.map((item, idx) => (
-                                            <div key={`ai-rec-${idx}`} className="pref-card" onClick={() => handleExhibitClick(item)} 
+                                            <div key={`ai-rec-${idx}`} className="pref-card" onClick={() => { setSelectedExhibit(item); setActiveTab('reserve'); }} 
                                                  style={{ minWidth: '180px', width: '180px', cursor: 'pointer' }}>
-                                                
                                                 <div className="pref-image-wrapper" style={{ height: '240px', borderRadius: '12px', overflow: 'hidden', marginBottom: '12px', position: 'relative' }}>
-                                                    <img 
-                                                        src={item.image_url || "/api/placeholder/180/240"} 
-                                                        alt={item.title} 
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                        onError={(e) => { e.currentTarget.src = "/api/placeholder/180/240" }}
-                                                    />
+                                                    <img src={item.image_url || "/api/placeholder/180/240"} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                                 </div>
-
                                                 <div className="pref-info">
                                                     <div style={{ display: 'inline-block', padding: '2px 0', marginBottom: '4px', fontSize: '0.75rem', color: '#7C4DFF', fontWeight: '600' }}>
                                                         {Array.isArray(item.hashtag) ? item.hashtag.join(', ') : (item.hashtag || '추천 스타일')}
                                                     </div>
-                                                    <h4 style={{ fontSize: '0.95rem', margin: '0 0 4px 0', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                        {item.title}
-                                                    </h4>
-                                                    <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
-                                                        📍 {item.place_name || '장소 미정'}
-                                                    </p>
+                                                    <h4 style={{ fontSize: '0.95rem', margin: '0 0 4px 0', fontWeight: '600', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.title}</h4>
+                                                    <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>📍 {item.place_name || '장소 미정'}</p>
                                                 </div>
                                             </div>
                                         ))
                                     ) : (
-                                        <div style={{ width: '100%', textAlign: 'center', padding: '40px 0', background: '#f8f8f8', borderRadius: '12px', fontSize: '0.85rem', color: '#888' }}>
-                                            취향 분석 결과에 맞는 전시를 불러오고 있어요..
-                                        </div>
+                                        <div style={{ width: '100%', textAlign: 'center', padding: '40px 0', background: '#f8f8f8', borderRadius: '12px', fontSize: '0.85rem', color: '#888' }}>취향 분석 결과에 맞는 전시를 불러오고 있어요..</div>
                                     )}
                                 </div>
                             </section>
 
-                            {/* --- 2. 지금 화제인 전시 (로컬 서버 데이터) --- */}
                             <section className="section">
                                 <div className="section-header">
                                     <h3>지금 화제인 전시</h3>
@@ -358,7 +321,8 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
                                                 title={item.title} 
                                                 location={item.place_name} 
                                                 imgUrl={item.image_url} 
-                                                onLikeChange={handleLikeChange} 
+                                                onLikeChange={handleLikeChange}
+                                                onClick={() => { setSelectedExhibit(item); setActiveTab('reserve'); }} 
                                             />
                                         ))
                                     ) : (
@@ -433,7 +397,26 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
                         </>
                         )}
 
-                        {activeTab === 'exhibits' && <Exhibition onBack={() => setActiveTab('home')} onLikeChange={handleLikeChange} />}
+                        {/* 각 페이지 연결 */}
+{activeTab === 'exhibits' && (
+    <Exhibition 
+        onBack={() => setActiveTab('home')} 
+        onLikeChange={handleLikeChange}
+        // ⭐ 아래 두 줄을 추가해 주세요!
+        onReserve={(item: any) => {
+            setSelectedExhibit(item);
+            setActiveTab('reserve');
+        }}
+    />
+)}
+                        
+                        {activeTab === 'reserve' && (
+                            <ReservationPage 
+                                exhibit={selectedExhibit} 
+                                onBack={() => setActiveTab('exhibits')} 
+                            />
+                        )}
+
                         {activeTab === 'map' && <MapPage />}
                         {activeTab === 'guide' && <GuidePage initialTab={guideSubTab} />}
                         {activeTab === 'course' && (
