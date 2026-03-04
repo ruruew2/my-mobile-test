@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 
-const API_BASE_URL = 'http://54.180.234.226:8080/api/auth/login';
+const LOGIN_API_URL = 'http://54.180.234.226:8080/api/auth/login';
+const SIGNUP_API_URL = 'http://54.180.234.226:8080/api/auth/signup';
+const API_BASE_URL = 'http://54.180.234.226:8080';
+
 
 const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void }) => {
     const [mode, setMode] = useState<'login' | 'signup' | 'findPw'>('login');
@@ -19,7 +22,7 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void
             const savedToken = localStorage.getItem('accessToken');
             if (savedToken) {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/api/me`, {
+                    const response = await fetch(`${API_BASE_URL}`, {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',
@@ -71,11 +74,11 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void
             };
 
             // [A] 로그인 요청 (토큰 받기)
-            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(loginData)
-            });
+const response = await fetch(LOGIN_API_URL, { // 변수명을 LOGIN_API_URL로 변경
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(loginData)
+});
 
             if (response.ok) {
                 const token = await response.text(); // 서버에서 토큰 문자열을 줌
@@ -111,13 +114,15 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void
         }
     };
 
-    const checkDuplicateId = async () => {
-        if (!form.id) return alert('아이디를 입력해주세요.');
-        try {
-            const targetUrl = `${API_BASE_URL}/api/auth/check-id?loginId=${encodeURIComponent(form.id)}`;
-            const response = await fetch(targetUrl);
+const checkDuplicateId = async () => {
+    if (!form.id) return alert('아이디를 입력해주세요.');
+    try {
+        // 🔥 수정: 주소가 중복되지 않도록 API_BASE_URL 사용
+        const targetUrl = `${API_BASE_URL}/api/auth/check-id?loginId=${encodeURIComponent(form.id)}`;
+        const response = await fetch(targetUrl);
+        
+        if (response.ok) {
             const result = await response.json();
-
             if (result.isAvailable === true) {
                 setMsg((prev) => ({ ...prev, id: '✅ 사용 가능한 아이디입니다.' }));
                 setIsIdChecked(true);
@@ -125,10 +130,14 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void
                 setMsg((prev) => ({ ...prev, id: '❌ 이미 사용 중인 아이디입니다.' }));
                 setIsIdChecked(false);
             }
-        } catch (err) {
-            alert("중복 확인 통신 오류!");
+        } else {
+            // 서버 에러(404 등)가 났을 때
+            alert("서버 응답 오류 (주소를 확인하세요)");
         }
-    };
+    } catch (err) {
+        alert("중복 확인 통신 오류!");
+    }
+};
 
     const handleSignupSubmit = async () => {
         setIsLoading(true);
@@ -142,11 +151,11 @@ const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void
                 role: "USER"
             };
 
-            const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(signupData)
-            });
+const response = await fetch(SIGNUP_API_URL, { // 변수명을 SIGNUP_API_URL로 변경
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(signupData)
+});
 
             if (!response.ok) {
                 const errorJson = await response.json();

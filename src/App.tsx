@@ -37,8 +37,8 @@ import './GuidePage.css';
 import './Wishlist.css';
 
 // API 주소
-const LOCAL_API_URL = 'http://localhost:8000';
-const AI_API_URL = 'http://54.180.234.226:8000';
+const LOCAL_API_URL = 'http://localhost:8000';   // local
+const AI_API_URL = 'http://54.180.234.226:8000'; // vercel
 
 // --- 컴포넌트: 취향 선택 ---
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
