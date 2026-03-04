@@ -227,7 +227,7 @@ export default function App() {
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                const response = await axios.get(`${LOCAL_API_URL}/api/events`);
+                const response = await axios.get(`${AI_API_URL}/api/events`);
                 if (response.data && response.data.status === 'success') {
                     setServerExhibitions(response.data.data || []);
                 }
