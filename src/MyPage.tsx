@@ -350,13 +350,14 @@ const loadFriends = async () => {
 
 
 
-// 2️⃣ 페이지 접속 시 자동으로 불러오기
+// MyPage.tsx 내의 useEffect 수정
+
 useEffect(() => {
   if (isLoggedIn) {
-    loadWishlist(); // 마이페이지 들어오자마자 실행
+    loadWishlist(); 
     loadFriends();
   }
-}, [isLoggedIn]); // 로그인 상태가 확인되면 즉시 호출
+}, [isLoggedIn, viewState]); // viewState를 추가하여 탭을 이동할 때마다 최신화
 
 
 

@@ -80,13 +80,53 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange, onRes
         loadData();
     }, []);
 
-    const toggleLike = (id: number) => {
-        const isCurrentlyLiked = liked.includes(id);
-        const nextLikedStatus = !isCurrentlyLiked;
-        setLiked((prev) => nextLikedStatus ? [...prev, id] : prev.filter((i) => i !== id));
-        if (onLikeChange) onLikeChange(nextLikedStatus);
-    };
 
+
+// ExhibitList.tsx 내 toggleLike 함수 수정 제안
+const toggleLike = async (id: number) => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    alert('로그인이 필요한 기능입니다.');
+    return;
+  }
+
+  const isCurrentlyLiked = liked.includes(id);
+
+  try {
+    // ✅ 체크리스트대로 Query Parameter(?eventId=) 방식을 사용합니다.
+    const url = `http://54.180.234.226:8080/api/favorites?eventId=${id}`;
+    
+    if (!isCurrentlyLiked) {
+      // 찜 추가 (POST)
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setLiked((prev) => [...prev, id]);
+        onLikeChange?.(true);
+      } else {
+        console.error('찜 추가 실패:', res.status);
+      }
+    } else {
+      // 찜 삭제 (DELETE)
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setLiked((prev) => prev.filter((i) => i !== id));
+        onLikeChange?.(false);
+      } else {
+        console.error('찜 삭제 실패:', res.status);
+      }
+    }
+  } catch (err) {
+    console.error('찜하기 통신 에러:', err);
+  }
+};
 const filteredExhibits = exhibits.filter((item) => {
     // 1. 검색어 필터링 (가장 우선순위)
     if (searchQuery) {
