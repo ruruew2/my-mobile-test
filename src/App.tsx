@@ -344,7 +344,7 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
                                 style={{
                                     cursor: 'pointer',
                                     margin: 0,
-                                    fontSize: '2.0rem',
+                                    fontSize: '1.4rem',
                                     fontWeight: 'bold',
                                 }}
                             >

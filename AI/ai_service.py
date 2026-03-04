@@ -227,59 +227,91 @@ def get_kakao_place_by_keyword(keyword, category_code):
     return None
 
 # 2. 지역 & 동행자 기반 코스 생성 로직 (전시회 포함)
+import json
+
+# 1. 이상한 동네로 안 튀게 카카오 검색 로직 수정
+def get_kakao_place_by_keyword(keyword, category_code):
+    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
+    # 🚨 키워드 장난 금지! 대신 15개를 가져와서 최상위 5개 중 랜덤으로 뽑습니다.
+    params = {"query": keyword, "category_group_code": category_code, "size": 15, "sort": "accuracy"}
+    
+    try:
+        res = requests.get(url, headers=headers, params=params)
+        data = res.json()
+        if data.get('documents'):
+            top_places = data['documents'][:5] # 가장 정확도 높은 5개
+            place = random.choice(top_places)  # 그 중에서 1개 랜덤 픽!
+            return {
+                "name": place['place_name'],
+                "url": place['place_url']
+            }
+    except: return None
+    return None
+
+# 2. 코스 생성 로직 업그레이드
 def generate_course_text_v3(destination, who, exhibition_db=None):
-    # 1. [핵심] 이제 DB(exhibition_db) 무시하고 GPT에게 지역 기반 핫플을 물어봅니다.
-    # 맛집/카페 검색을 위해 GPT에게 먼저 그 동네 유명한 곳을 리스트업 해달라고 합니다.
+    # '로컬' 같은 단어 빼고 정직하게 검색!
+    restaurant = get_kakao_place_by_keyword(f"{destination} 맛집", "FD6")
+    cafe = get_kakao_place_by_keyword(f"{destination} 카페", "CE7")
     
-    # 2. 맛집/카페 검색어 다양화 (대성갈비 탈출 작전)
-    # 검색어 뒤에 랜덤 키워드를 붙여서 카카오가 매번 다른 결과를 주게 만듭니다.
-    sub_keywords = ["핫플", "분위기 좋은", "새로 오픈한", "로컬", "인기 있는"]
-    rand_sub = random.choice(sub_keywords)
+    res_name = restaurant['name'] if restaurant else "주변 맛집"
+    cafe_name = cafe['name'] if cafe else "주변 카페"
     
-    restaurant = get_kakao_place_by_keyword(f"{destination} {rand_sub} 맛집", "FD6")
-    cafe = get_kakao_place_by_keyword(f"{destination} {rand_sub} 카페", "CE7")
+    if exhibition_db:
+        exh_name = exhibition_db.get('title')
+        exh_info = f"{exh_name}"
+    else:
+        exh_name = f"{destination} 핫플레이스"
+        exh_info = f"{destination}에서 가장 인기 있는 갤러리나 복합문화공간"
 
-    # 3. GPT 프롬프트: DB 데이터 대신 본인의 지식을 쓰라고 명확히 지시
+    # 🚨 AI에게 '각 장소별 한줄평'을 JSON으로 달라고 멱살 잡기!
     prompt = f"""
-    당신은 {destination} 지역 전문 나들이 가이드입니다. 
-    지금 DB에 데이터가 없으니, 당신이 아는 {destination}의 실제 유명 갤러리, 미술관 또는 핫플레이스 하나를 선정해서 코스를 짜주세요.
-
-    [정보]
-    - 지역: {destination}
-    - 동행: {who}
-    - 추천 식당: {restaurant['name'] if restaurant else '당신이 아는 맛집'}
-    - 추천 카페: {cafe['name'] if cafe else '당신이 아는 카페'}
-
-    [지침]
-    1. {destination}에서 {who}와 가기 가장 좋은 '전시/문화공간' 하나를 직접 선정하세요. (가상의 장소 금지)
-    2. 선정된 장소와 위 식당, 카페를 엮어서 다정한 말투로 200자 이내 코스를 짜주세요.
+    당신은 {destination} 전문 가이드입니다. {who}와 가기 좋은 코스를 짰습니다.
+    1. 전시: {exh_info}
+    2. 식당: {res_name}
+    3. 카페: {cafe_name}
+    
+    위 장소들에 대해 아래 JSON 형식으로만 딱 떨어지게 답변하세요.
+    {{
+        "story": "오늘의 전체 코스 테마를 1줄로 요약",
+        "exh_desc": "이 전시(또는 공간)를 첫 번째 코스로 추천하는 이유 1줄",
+        "res_desc": "이 식당을 추천하는 다정한 이유 1줄",
+        "cafe_desc": "이 카페에서 어떤 여유를 즐기면 좋을지 1줄"
+    }}
     """
 
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[{"role": "system", "content": "친절한 가이드 아띠입니다."},
-                      {"role": "user", "content": prompt}]
+            response_format={ "type": "json_object" }, # 무조건 JSON으로 대답하게 강제
+            messages=[{"role": "user", "content": prompt}]
         )
-        story = response.choices[0].message.content.strip()
+        ai_data = json.loads(response.choices[0].message.content)
     except:
-        story = f"{destination}에서 즐거운 나들이를 즐겨보세요!"
+        # 혹시 AI가 뻗어도 에러 안 나게 기본값 세팅
+        ai_data = {
+            "story": f"{destination}에서 완벽한 하루를 보내세요!",
+            "exh_desc": "예술과 감성이 가득한 공간입니다.",
+            "res_desc": "든든하고 맛있는 식사를 즐겨보세요.",
+            "cafe_desc": "식사 후 여유로운 커피 한 잔을 추천합니다."
+        }
 
-    # 4. 결과 반환 (전시 url은 GPT가 준 이름으로 카카오맵 검색하게 연결 가능)
-    # 일단 에러 방지를 위해 깔끔하게 정리
     return {
-        "story": story,
+        "story": ai_data["story"],
         "places": {
+            "exhibition": {
+                "name": exh_name,
+                "desc": ai_data["exh_desc"]
+            },
             "restaurant": {
-                "name": restaurant['name'] if restaurant else "주변 맛집",
+                "name": res_name,
+                "desc": ai_data["res_desc"],
                 "url": restaurant['url'] if restaurant else "#"
             },
-            "exhibition": {
-                "name": f"{destination} 핫플레이스", # GPT 문맥에 맞게 프론트에서 표시
-                "url": f"https://map.kakao.com/link/search/{destination} 핫플레이스"
-            },
             "cafe": {
-                "name": cafe['name'] if cafe else "주변 카페",
+                "name": cafe_name,
+                "desc": ai_data["cafe_desc"],
                 "url": cafe['url'] if cafe else "#"
             }
         }
