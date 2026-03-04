@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 
-const API_BASE_URL = 'http://54.180.234.226:8080';
+const API_BASE_URL = 'http://54.180.234.226:8080/api/auth/login';
 
 const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void }) => {
     const [mode, setMode] = useState<'login' | 'signup' | 'findPw'>('login');

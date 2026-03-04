@@ -248,7 +248,7 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
 
         // 2. 주소를 LOCAL_API_URL로 통일하고 POST 방식으로 호출
         // 만약 LOCAL_API_URL이 정의되지 않았다면 'http://localhost:8000'를 직접 넣으셔도 됩니다.
-        const response = await axios.post(`${LOCAL_API_URL}/api/ai/recommend`, { 
+        const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { 
             tags: cleanTags 
         });
 
