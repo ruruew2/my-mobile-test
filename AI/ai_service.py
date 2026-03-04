@@ -3,6 +3,9 @@ from openai import OpenAI
 import os
 import requests
 from dotenv import load_dotenv
+import re
+from numpy import random
+
 
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -168,95 +171,115 @@ def get_kakao_nearby_place(lat, lng, category_group_code):
 
 # 1. 카카오 키워드 검색 함수 (맛집, 카페 찾기용)
 def get_kakao_place_by_keyword(keyword, category_code):
+    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+    # 🚨 꼭! REST API 키인지 확인하세요
+    headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
+    params = {"query": keyword, "category_group_code": category_code, "size": 1}
+    
+    try:
+        res = requests.get(url, headers=headers, params=params)
+        data = res.json()
+        
+        # 🧐 CCTV: 카카오가 뭐라고 대답하는지 터미널에 찍어봅니다.
+        if res.status_code != 200:
+            print(f"❌ 카카오 API 호출 실패! 상태코드: {res.status_code}, 사유: {data}")
+            return None
+
+        if data.get('documents'):
+            place = data['documents'][0]
+            return {
+                "name": place['place_name'],
+                "address": place['address_name'],
+                "url": place['place_url']
+            }
+        else:
+            print(f"⚠️ '{keyword}' 검색 결과가 카카오에 없습니다.")
+    except Exception as e:
+        print(f"❌ 카카오 통신 에러: {e}")
+    return None
+
+# 2. 지역 & 동행자 기반 코스 생성 로직 (전시회 포함)
+def get_kakao_place_by_keyword(keyword, category_code):
     """
     keyword: 검색어 (예: '성수 맛집')
     category_code: FD6(식당), CE7(카페)
     """
     url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-    headers = {"Authorization": f"KakaoAK {KAKAO_REST_API_KEY}"}
+    headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
     params = {
         "query": keyword,
         "category_group_code": category_code,
-        "size": 1  # 가장 연관성 높은 1곳만 선정
+        "size": 10  # 가장 연관성 높은 1곳만 선정
     }
     
     try:
         res = requests.get(url, headers=headers, params=params)
         data = res.json()
-        if data['documents']:
-            place = data['documents'][0]
+        if data.get('documents'):
+            # 🚨 검색 결과 중 하나를 랜덤으로 선택 (맨날 대성갈비 안 나오게!)
+            place = random.choice(data['documents'])
             return {
                 "name": place['place_name'],
                 "address": place['address_name'],
-                "url": place['place_url'],  # ⭐ Open Map 버튼에 쓸 카카오맵 주소
-                "lat": place['y'],
-                "lng": place['x']
+                "url": place['place_url']
             }
-    except Exception as e:
-        print(f"❌ 카카오 검색 에러 ({keyword}): {e}")
+    except: return None
     return None
 
 # 2. 지역 & 동행자 기반 코스 생성 로직 (전시회 포함)
-def generate_course_text_v3(destination, who, exhibition):
-    # 1. 전시 데이터가 있을 때와 없을 때를 명확히 구분
-    if exhibition:
-        exh_info = f"전시 제목: {exhibition['title']}, 장소: {exhibition['place_name']}"
-        search_base = exhibition['place_name'] # 맛집 검색 기준점
-    else:
-        # DB에 없을 경우 GPT에게 가짜를 만들지 말라고 경고합니다.
-        exh_info = "현재 해당 지역에 등록된 특정 전시회가 없음"
-        search_base = destination
+def generate_course_text_v3(destination, who, exhibition_db=None):
+    # 1. [핵심] 이제 DB(exhibition_db) 무시하고 GPT에게 지역 기반 핫플을 물어봅니다.
+    # 맛집/카페 검색을 위해 GPT에게 먼저 그 동네 유명한 곳을 리스트업 해달라고 합니다.
+    
+    # 2. 맛집/카페 검색어 다양화 (대성갈비 탈출 작전)
+    # 검색어 뒤에 랜덤 키워드를 붙여서 카카오가 매번 다른 결과를 주게 만듭니다.
+    sub_keywords = ["핫플", "분위기 좋은", "새로 오픈한", "로컬", "인기 있는"]
+    rand_sub = random.choice(sub_keywords)
+    
+    restaurant = get_kakao_place_by_keyword(f"{destination} {rand_sub} 맛집", "FD6")
+    cafe = get_kakao_place_by_keyword(f"{destination} {rand_sub} 카페", "CE7")
 
-    # 2. 실제 맛집/카페 데이터 가져오기 (카카오 API)
-    restaurant = get_kakao_place_by_keyword(f"{search_base} 맛집", "FD6")
-    cafe = get_kakao_place_by_keyword(f"{search_base} 카페", "CE7")
-
-    # 3. GPT 프롬프트 (강력한 제약 조건 추가)
+    # 3. GPT 프롬프트: DB 데이터 대신 본인의 지식을 쓰라고 명확히 지시
     prompt = f"""
-    당신은 나들이 가이드입니다. 아래 제공된 [실제 정보]만을 사용하여 코스를 짜주세요.
-    절대로 존재하지 않는 전시회나 장소를 지어내지 마세요.
+    당신은 {destination} 지역 전문 나들이 가이드입니다. 
+    지금 DB에 데이터가 없으니, 당신이 아는 {destination}의 실제 유명 갤러리, 미술관 또는 핫플레이스 하나를 선정해서 코스를 짜주세요.
 
-    [실제 정보]
+    [정보]
     - 지역: {destination}
-    - 타겟: {who}
-    - 제공된 전시: {exh_info}
-    - 제공된 식당: {restaurant['name'] if restaurant else '정보 없음'}
-    - 제공된 카페: {cafe['name'] if cafe else '정보 없음'}
+    - 동행: {who}
+    - 추천 식당: {restaurant['name'] if restaurant else '당신이 아는 맛집'}
+    - 추천 카페: {cafe['name'] if cafe else '당신이 아는 카페'}
 
     [지침]
-    1. 만약 '제공된 전시'가 '정보 없음'이라면, 전시 관람 대신 '{destination}' 거리 산책을 추천하세요.
-    2. 모든 장소 명칭은 위 [실제 정보]에 적힌 이름 그대로 사용하세요.
-    3. {who}의 취향에 맞춰 200자 이내로 다정하게 써주세요.
+    1. {destination}에서 {who}와 가기 가장 좋은 '전시/문화공간' 하나를 직접 선정하세요. (가상의 장소 금지)
+    2. 선정된 장소와 위 식당, 카페를 엮어서 다정한 말투로 200자 이내 코스를 짜주세요.
     """
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    
-    story = response.choices[0].message.content.strip()
 
-    # 4. 프론트엔드가 쓰기 좋게 최종 결과 반환
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": "친절한 가이드 아띠입니다."},
+                      {"role": "user", "content": prompt}]
+        )
+        story = response.choices[0].message.content.strip()
+    except:
+        story = f"{destination}에서 즐거운 나들이를 즐겨보세요!"
+
+    # 4. 결과 반환 (전시 url은 GPT가 준 이름으로 카카오맵 검색하게 연결 가능)
+    # 일단 에러 방지를 위해 깔끔하게 정리
     return {
-        "story": story, 
+        "story": story,
         "places": {
             "restaurant": {
-                "name": restaurant['name'] if restaurant else "근처 맛집 정보 없음",
-                "address": restaurant['address'] if restaurant else "정보 없음",
-                "desc": "아띠의 식당 추천 이유", 
+                "name": restaurant['name'] if restaurant else "주변 맛집",
                 "url": restaurant['url'] if restaurant else "#"
             },
-                # ai_service.py의 return 부분 중 exhibition 섹션
             "exhibition": {
-                "name": exhibition['title'] if exhibition else "현재 등록된 전시 없음",
-                "address": exhibition['place_name'] if exhibition else "정보 없음",
-                "desc": "아띠의 전시 / 공연 추천 이유", 
-                # exhibition 객체에 'url'이 없을 경우를 대비해 get 사용
-                "url": exhibition.get('url', "#") if exhibition else "#" 
+                "name": f"{destination} 핫플레이스", # GPT 문맥에 맞게 프론트에서 표시
+                "url": f"https://map.kakao.com/link/search/{destination} 핫플레이스"
             },
             "cafe": {
-                "name": cafe['name'] if cafe else "근처 카페 정보 없음",
-                "address": cafe['address'] if cafe else "정보 없음",
-                "desc": "아띠의 카페 추천 이유",
+                "name": cafe['name'] if cafe else "주변 카페",
                 "url": cafe['url'] if cafe else "#"
             }
         }

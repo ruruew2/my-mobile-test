@@ -126,100 +126,66 @@ const handleCreateCustomCourse = async (location: string, who: string) => {
     setIsGenerating(true);
     setShowAiMaker(false);
 
-    // ✅ 1. 주소 확인: 현재 로컬 터미널에서 서버가 8000번으로 돌고 있으므로 localhost로 시도
-    // (만약 54.180... 서버를 쓰실 거면 그 주소로 바꾸되, 지금 띄워놓은 터미널은 localhost입니다.)
     const API_URL = 'http://localhost:8000/api/ai/course';
 
     try {
-        console.log("🚀 서버로 보내는 데이터:", {
-            exh_name: location,
-            who: who,
-            lat: 37.5665,
-            lng: 126.9780
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                destination: String(location),
+                who: String(who),
+                lat: 37.5665,
+                lng: 126.9780
+            }),
         });
 
-const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json' 
-    },
-            // ✅ 2. 데이터 타입을 확실히 고정 (숫자는 숫자로, 문자는 문자로)
-body: JSON.stringify({
-        destination: String(location), // 👈 exh_name을 destination으로 반드시 변경!
-        who: String(who),
-        lat: Number(37.5665),
-        lng: Number(126.9780)
-    }),
-        });
+        const res = await response.json(); // 팀장님 예시의 'res' 객체
 
-        // ✅ 3. 422 에러 발생 시 서버가 알려주는 구체적인 이유 출력
-        if (!response.ok) {
-            const errorJson = await response.json();
-            console.error("❌ 서버가 말하는 에러 원인:", errorJson); 
-            // 💡 여기서 콘솔을 보면 "body -> lat 이 틀렸다" 같은 메시지가 나옵니다.
-            
-            throw new Error(`서버 에러 ${response.status}: ${JSON.stringify(errorJson.detail)}`);
+        if (res.status === 'success' || res.data) {
+            const aiData = res.data;
+
+            // 🚨 팀장님이 주신 규격 그대로 조립 (newCourse)
+            const newCourse = {
+                id: Date.now(),
+                title: `${locationInput || location} AI 추천 코스`,
+                desc: aiData.story, // 👈 AI가 써준 전체 스토리
+                steps: [
+                    {
+                        type: 'EXHIBITION',
+                        name: aiData.places.exhibition.name,
+                        comment: "아티의 추천 포인트: 예술과 감성이 가득한 전시입니다.",
+                        url: aiData.directions_url // 👈 팀장님이 만든 카카오맵 링크!
+                    },
+                    {
+                        type: 'RESTAURANT',
+                        name: aiData.places.restaurant.name,
+                        comment: "든든한 식사를 위해 선정했어요.",
+                        url: aiData.places.restaurant.url
+                    },
+                    {
+                        type: 'CAFE',
+                        name: aiData.places.cafe.name,
+                        comment: "여유로운 커피 한 잔 어떠세요?",
+                        url: aiData.places.cafe.url
+                    }
+                ]
+            };
+
+            console.log("✅ 팀장님 규격 맞춤 완료:", newCourse);
+
+            // 화면 전환을 위해 부모 함수 호출
+            onStart(newCourse);
         }
 
-        const resData = await response.json();
-        console.log("✅ 서버 응답 데이터:", resData); // 응답이 오는지 확인용
-        
-if (resData.status === 'success' || resData.data) {
-    const aiData = resData.data;
-
-    // 🚩 데이터가 예상과 다르게 들어올 경우를 대비한 안전한 추출
-    const restaurant = aiData.places?.restaurant || {};
-    const cafe = aiData.places?.cafe || {};
-    const exhibition = aiData.exhibition || {};
-
-           const newAiCourse = {
-        id: Date.now(),
-        // AI가 추천한 전시 제목이 있으면 넣고, 없으면 입력한 지역명 사용
-        title: exhibition.title ? `AI 추천: ${exhibition.title}` : `AI 추천: ${location} ${who} 코스`,
-        desc: aiData.story ? aiData.story.substring(0, 80) + '...' : "특별한 추천 코스입니다.",
-        steps: [
-            { 
-                type: 'RESTAURANT', 
-                name: restaurant.name || '추천 맛집', 
-                sub: restaurant.address || '근처 맛집 탐방',
-                directions_url: restaurant.url || "", // 👈 식당 카카오맵 링크
-                comment: `🍴 식당 정보\n${restaurant.name || '근처 맛집'}에서 식사를 즐겨보세요.\n\n📖 AI 한줄평\n${aiData.story || ""}`,
-                tip: "방문 전 영업 시간을 확인해 주세요!"
-            },
-            { 
-                type: 'EXHIBITION', 
-                name: exhibition.title || `${location} 전시`, 
-                sub: exhibition.place_name || '전시 관람',
-                directions_url: aiData.directions_url || "", // 👈 전시회 길찾기 링크
-                comment: `🎨 전시 정보\n장소: ${exhibition.place_name || '전시장'}\n\n${aiData.story ? "전시와 어울리는 분위기의 코스입니다." : ""}`,
-                lat: exhibition.lat,
-                lng: exhibition.lng
-            },
-            { 
-                type: 'CAFE', 
-                name: cafe.name || '추천 카페', 
-                sub: cafe.address || '커피 한 잔의 여유',
-                directions_url: cafe.url || "", // 👈 카페 링크 (있을 경우)
-                comment: "전시 관람 후 여유로운 시간을 보내보세요.",
-                tip: "시그니처 메뉴가 인기가 많아요."
-            },
-        ],
-    };
-
-    console.log("🚀 완성된 코스 데이터:", newAiCourse); // 전달 직전 최종 확인
-
-    // 🚩 이 함수가 호출되어야 로딩창이 닫히고 화면이 전환됩니다.
-    onStart(newAiCourse); 
-}
-
-} catch (error: any) {
-    console.error('🔥 에러 상세 정보:', error); // 콘솔에 빨간색으로 에러 원인이 뜹니다.
-    alert(`생성 실패: ${error.message}`);
-} finally {
-    setIsGenerating(false); // 로딩창을 닫아줍니다.
-}
+    } catch (error: any) {
+        console.error('🔥 에러:', error);
+        alert(`생성 실패: ${error.message}`);
+    } finally {
+        setIsGenerating(false);
+    }
 };
+
 
     return (
         <div className="course-container">

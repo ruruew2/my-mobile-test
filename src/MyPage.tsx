@@ -6,7 +6,13 @@ import {
 } from 'lucide-react';
 import { dummyUser } from './ProfileData';
 
-const API_BASE_URL = 'http://54.180.234.226:8080'; // 👈 실제 백엔드 IP 주소
+const API_BASE_URL = 'http://54.180.234.226:8080/api';// 👈 실제 백엔드 IP 주소
+
+type FriendDto = { 
+  friendUserId: number; 
+  email: string; 
+  friendName: string; 
+};
 
 // 닉네임 미선택시 자동 랜덤 닉네임
 const getRandomNickname = () => {
@@ -175,9 +181,11 @@ interface MyPageProps {
 type ViewState = 'main' | 'history' | 'likes' | 'payments' | 'gift' | 'notifSetting' | 'profileEdit' | 'reviews' | 'writeReview' | 'friend' | 'docent' | 'partner' | 'inquiry';
 
 interface FriendItem {
-  id: number;
+  friendUserId: number; // id 대신 friendUserId를 추가하거나 함께 정의
+  id: number;           
   email: string;
   name: string;
+  friendName?: string;  // 백엔드 필드명 대비용
   memo: string;
 }
 
@@ -295,60 +303,90 @@ const MyPage = ({ isLoggedIn, setIsLoggedIn, onLogout, onTabChange }: MyPageProp
   // 찜한 전시 상세 정보 상태
   const [wishlistItems, setWishlistItems] = useState<any[]>([]);
 
-  // 1️⃣ 찜 데이터 불러오기 함수
-// MyPage.tsx 약 337라인 부근의 loadWishlist를 이렇게 수정해보세요.
-// 1️⃣ 찜 데이터 불러오기 함수 (수정본)
+
+
+  
+
+// 335번대: 찜 목록 불러오기
 const loadWishlist = async () => {
   if (!isLoggedIn) return;
-  setIsLoading(true); 
-  
+  setIsLoading(true);
   try {
     const token = localStorage.getItem('accessToken');
-    
-    const response = await fetch(`${API_BASE_URL}/api/wishlist`, {
+    const res = await fetch(`http://54.180.234.226:8080/api/favorites`, { // 8080 명시
       method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+      headers: { Authorization: `Bearer ${token}` },
     });
-
-    if (response.ok) {
-      const data = await response.json();
-      setWishlistItems(data);
-    } else {
-      // 💡 백엔드에 아직 데이터가 없다면 빈 배열로 처리
-      setWishlistItems([]);
-    }
-  } catch (error) {
-    console.error("찜 목록 통신 오류:", error);
-  } finally {
-    setIsLoading(false);
-  }
+    
+    if (!res.ok) { setWishlistItems([]); return; }
+    
+    const result = await res.json();
+    // 백엔드 응답이 { data: [...] } 형태인지, 아니면 바로 [...] 형태인지 확인 필요
+    const actualData = result.data || result; 
+    setWishlistItems(Array.isArray(actualData) ? actualData : []);
+  } catch (e) {
+    console.error('찜 목록 통신 오류:', e);
+    setWishlistItems([]);
+  } finally { setIsLoading(false); }
 };
+
+
+
+
+// 3. 친구 목록 불러오기
+const loadFriends = async () => {
+  if (!isLoggedIn) return;
+  try {
+    const token = localStorage.getItem('accessToken');
+    const res = await fetch(`${API_BASE_URL}/friends`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) { setFriends([]); return; }
+    const data = await res.json();
+    setFriends(Array.isArray(data) ? data : []);
+  } catch (e) { console.error(e); setFriends([]); }
+};
+
+
+
 
 // 2️⃣ 페이지 접속 시 자동으로 불러오기
 useEffect(() => {
   if (isLoggedIn) {
-    loadWishlist();
+    loadWishlist(); // 마이페이지 들어오자마자 실행
+    loadFriends();
   }
-}, [isLoggedIn]);
+}, [isLoggedIn]); // 로그인 상태가 확인되면 즉시 호출
 
 
 
 
-  // 2️⃣ 찜 해제 함수 (e 파라미터 추가해서 에러 해결!)
-  const handleRemoveWishlist = (e: React.MouseEvent, id: any) => {
-    e.stopPropagation();
-    const savedIds = localStorage.getItem('wishlist');
-    if (!savedIds) return;
 
-    const likedIds: any[] = JSON.parse(savedIds);
-    const updatedIds = likedIds.filter(itemId => String(itemId) !== String(id));
+// 364번대: 찜 삭제 수정
+const handleRemoveWishlist = async (e: React.MouseEvent, item: any) => {
+  e.stopPropagation();
+  if (!isLoggedIn) return;
+  const token = localStorage.getItem('accessToken');
+  
+  // item 구조에 따라 eventId를 가져오는 경로가 다를 수 있음
+  const eventId = item?.eventId || item?.id; 
+  if (!eventId) return;
+
+  try {
+    const res = await fetch(`http://54.180.234.226:8080/api/favorites?eventId=${eventId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
     
-    localStorage.setItem('wishlist', JSON.stringify(updatedIds));
-    loadWishlist(); // 즉시 리로딩
-  };
+    if (res.ok) {
+      // 갱신 방법 1: 서버에서 다시 불러오기
+      await loadWishlist();
+      // 갱신 방법 2: (더 빠름) 로컬 상태에서 즉시 제거
+      // setWishlistItems(prev => prev.filter(i => (i.eventId || i.id) !== eventId));
+    }
+  } catch (err) { console.error(err); }
+};
+
 
 useEffect(() => {
     // 페이지 로드 시 로컬 스토리지에서 유저 정보를 가져옴
@@ -361,11 +399,8 @@ useEffect(() => {
   const [selectedBadge, setSelectedBadge] = useState<any>(null);
   const [myProfileBadge, setMyProfileBadge] = useState<any>(null); // 👈 이거 한 줄 추가!
   const [friendEmail, setFriendEmail] = useState('');
-  const [managingFriend, setManagingFriend] = useState<FriendItem | null>(null);
-  const [friends, setFriends] = useState<FriendItem[]>([
-    { id: 1, email: 'friend1@test.com', name: '친구1', memo: '전시 메이트' },
-    { id: 2, email: 'friend2@test.com', name: '친구2', memo: '대학 동기' },
-  ]);
+  const [managingFriend, setManagingFriend] = useState<FriendDto | null>(null);
+  const [friends, setFriends] = useState<FriendDto[]>([]);
 
   const [reviewItems, setReviewItems] = useState<string[]>([]); 
   
@@ -393,28 +428,65 @@ useEffect(() => {
     }
   };
 
-  const handleAddFriend = () => {
-    if (!friendEmail.trim()) {
-      alert('이메일을 입력해주세요.');
-      return;
-    }
-    const newFriend: FriendItem = {
-      id: Date.now(),
-      email: friendEmail,
-      name: friendEmail.split('@')[0],
-      memo: ''
-    };
-    setFriends([newFriend, ...friends]);
+// 4. 친구 추가 (기존 handleAddFriend 교체)
+const handleAddFriend = async () => {
+  const email = friendEmail.trim();
+  if (!email) return alert('이메일을 입력해주세요.');
+  try {
+    const token = localStorage.getItem('accessToken');
+    const res = await fetch(`${API_BASE_URL}/friends`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) return alert('친구 추가 실패');
     setFriendEmail('');
-    alert(`${friendEmail} 님이 친구로 추가되었습니다.`);
-  };
+    await loadFriends();
+    alert(`${email} 님이 추가되었습니다.`);
+  } catch (e) { console.error(e); }
+};
 
-  const handleDeleteFriend = (id: number) => {
-    if (window.confirm("정말 친구를 삭제하시겠습니까?")) {
-      setFriends(friends.filter(f => f.id !== id));
-      setManagingFriend(null);
-    }
-  };
+
+
+// 5. 친구 수정/삭제
+const renameFriend = async (friendUserId: number, friendName: string) => {
+  const token = localStorage.getItem('accessToken');
+  await fetch(`${API_BASE_URL}/friends/${friendUserId}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ friendName }),
+  });
+};
+
+const deleteFriend = async (friendUserId: number) => {
+  const token = localStorage.getItem('accessToken');
+  await fetch(`${API_BASE_URL}/friends/${friendUserId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+
+// 405번대: 친구 삭제
+const handleDeleteFriend = async (friendUserId: number) => {
+  if (!window.confirm("정말 친구를 삭제하시겠습니까?")) return;
+  try {
+    const token = localStorage.getItem('accessToken');
+    // 백엔드 API 명세에 따라 URL 확인 필요 (예: /friends/${friendUserId})
+    await fetch(`${API_BASE_URL}/friends/${friendUserId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setManagingFriend(null);
+    await loadFriends(); // 삭제 후 목록 갱신
+  } catch (e) { console.error(e); }
+};
+
+
+
 
   const handleSendTicket = (friend: FriendItem) => {
     setManagingFriend(null);
@@ -723,7 +795,7 @@ case 'profileEdit':
           </div>
         );
 
-      case 'friend':
+case 'friend':
         return (
           <div className="sub-view" style={{ position: 'relative', minHeight: '600px' }}>
             <SubViewHeader title="친구" />
@@ -747,42 +819,90 @@ case 'profileEdit':
               </div>
               <div style={{ marginTop: '20px' }}>
                 <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>내 친구 {friends.length}명</p>
-                {friends.map(friend => (
-                  <ListCard 
-                    key={friend.id} 
-                    icon={<span>👤</span>} 
-                    title={friend.name} 
-                    sub={friend.email} 
-                    btnLabel="관리" 
-                    onBtnClick={() => setManagingFriend(friend)}
-                  />
-                ))}
+{friends.map(friend => (
+  <ListCard 
+    key={friend.friendUserId} // id 대신 friendUserId
+    title={friend.friendName || friend.email} // name 대신 friendName
+    sub={friend.email} 
+    btnLabel="관리" 
+    onBtnClick={() => setManagingFriend(friend)}
+  />
+))}
               </div>
             </div>
+
             {managingFriend && (
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 100, display: 'flex', alignItems: 'flex-end' }}>
                 <div style={{ width: '100%', backgroundColor: '#fff', borderRadius: '20px 20px 0 0', padding: '20px', boxSizing: 'border-box' }}>
                   <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                     <div style={{ width: '40px', height: '4px', backgroundColor: '#eee', borderRadius: '2px', margin: '0 auto 15px' }} />
-                    <h3 style={{ margin: 0, fontSize: '16px' }}><b>{managingFriend.name}</b>님 관리</h3>
+                    <h3 style={{ margin: 0, fontSize: '16px' }}>
+                      <b>{managingFriend.friendName || managingFriend.email}</b>님 관리
+                    </h3>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button onClick={() => {
-                        const newName = prompt('수정할 이름을 입력하세요', managingFriend.name);
-                        if (newName && newName.trim()) {
-                          setFriends(friends.map(f => f.id === managingFriend.id ? { ...f, name: newName } : f));
-                          setManagingFriend(null);
+                    {/* 1. 이름 수정 버튼 */}
+                    <button
+                      onClick={async () => {
+                        const currentName = managingFriend.friendName || managingFriend.email || '';
+                        const newName = prompt('수정할 이름을 입력하세요', currentName);
+
+                        if (managingFriend && newName && newName.trim()) {
+                          try {
+                            await renameFriend(managingFriend.friendUserId, newName.trim());
+                            setManagingFriend(null);
+                            await loadFriends();
+                          } catch (e) {
+                            alert('이름 수정 실패');
+                          }
                         }
-                      }} style={{ padding: '16px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>✏️ 이름 수정하기</button>
-                    <button onClick={() => handleSendTicket(managingFriend)} style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>🎁 전시 초대권 · 굿즈 보내기</button>
-                    <button onClick={() => handleDeleteFriend(managingFriend.id)} style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}>삭제하기</button>
-                    <button onClick={() => setManagingFriend(null)} style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}>취소</button>
+                      }} 
+                      style={{ padding: '16px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', color: '#333', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+                    >
+                      ✏️ 이름 수정하기
+                    </button>
+
+                    {/* 2. 초대권 보내기 */}
+                    <button 
+                      onClick={() => handleSendTicket(managingFriend as any)} 
+                      style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#f0f7ff', color: '#007aff', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+                    >
+                      🎁 전시 초대권 · 굿즈 보내기
+                    </button>
+
+                    {/* 3. 삭제하기 버튼 */}
+                    <button
+                      onClick={async () => {
+                        if (!managingFriend) return;
+                        if (!window.confirm('정말 친구를 삭제하시겠습니까?')) return;
+
+                        try {
+                          await deleteFriend(managingFriend.friendUserId);
+                          setManagingFriend(null);
+                          await loadFriends();
+                        } catch (e) {
+                          alert('삭제 실패');
+                        }
+                      }}
+                      style={{ padding: '16px', borderRadius: '12px', border: 'none', backgroundColor: '#fff0f0', color: '#ff4d4d', fontWeight: 'bold', fontSize: '15px', cursor: 'pointer' }}
+                    >
+                      친구 삭제하기
+                    </button>
+
+                    {/* 4. 취소 버튼 */}
+                    <button 
+                      onClick={() => setManagingFriend(null)} 
+                      style={{ padding: '16px', marginTop: '5px', borderRadius: '12px', border: '1px solid #eee', backgroundColor: '#fff', fontSize: '15px', cursor: 'pointer', color: '#999' }}
+                    >
+                      취소
+                    </button>
                   </div>
                 </div>
               </div>
             )}
           </div>
         );
+
 
       case 'docent':
         return (
