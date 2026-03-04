@@ -44,24 +44,24 @@ const AI_API_URL = 'http://54.180.234.226:8000';
 const PreferenceSelection = ({ onComplete }: { onComplete: (tags: string[]) => void }) => {
     const [selected, setSelected] = useState<string[]>([]);
     const tags = [
-        '#화려한',
-        '#몽환적인',
-        '#생생한',
-        '#정갈한',
-        '#트렌디한',
-        '#톡톡튀는',
-        '#우아한',
-        '#은은한',
-        '#과감한',
-        '#능동적인',
-        '#웅장한',
-        '#깊이있는',
-        '#고전적인',
-        '#자유로운',
-        '#압도적인',
-        '#입체적인',
-        '#다채로운',
-        '#섬세한',
+        '화려한',
+        '몽환적인',
+        '생생한',
+        '정갈한',
+        '트렌디한',
+        '톡톡튀는',
+        '우아한',
+        '은은한',
+        '과감한',
+        '능동적인',
+        '웅장한',
+        '깊이있는',
+        '고전적인',
+        '자유로운',
+        '압도적인',
+        '입체적인',
+        '다채로운',
+        '섬세한',
     ];
 
     const toggleTag = (tag: string) => {
@@ -238,29 +238,32 @@ export default function App() {
         if (step === 'main' && activeTab === 'home') fetchInitialData();
     }, [step, activeTab]);
 
-    // 2. AI 추천 로드
-// App.tsx 내의 handlePreferenceComplete 함수 수정
+
+// 2. AI 추천 로드
 const handlePreferenceComplete = async (selectedTags: string[]) => {
     setIsLoading(true);
     try {
+        // 1. 태그 가공 (axios 호출보다 반드시 위에 있어야 함)
         const cleanTags = selectedTags.map(tag => tag.replace('#', ''));
-        const response = await axios.post(`${AI_API_URL}/api/ai/recommend`, { 
+
+        // 2. 주소를 LOCAL_API_URL로 통일하고 POST 방식으로 호출
+        // 만약 LOCAL_API_URL이 정의되지 않았다면 'http://localhost:8000'를 직접 넣으셔도 됩니다.
+        const response = await axios.post(`${LOCAL_API_URL}/api/ai/recommend`, { 
             tags: cleanTags 
         });
 
+        console.log("🔥 서버에서 받은 진짜 결과:", response.data.data);
+
         if (response.data && response.data.status === "success") {
-            const allResults = response.data.data; // 서버가 준 10개 (혹은 전체)
-            
-            // 🎲 랜덤하게 섞기
-            const shuffled = [...allResults].sort(() => Math.random() - 0.5);
-            
-            // 🎯 그중 앞의 3개만 선택해서 보여주기
-            const finalThree = shuffled.slice(0, 3);
+            const allResults = response.data.data; 
+
+            // 3. 랜덤 섞기 없이 서버가 준 순서대로 상위 3개만 선택
+            const finalThree = allResults.slice(0, 3);
             
             setRecommendedExhibitions(finalThree);
         }
     } catch (error) {
-        console.error('에러:', error);
+        console.error('추천 로딩 에러:', error);
     } finally {
         setTimeout(() => {
             setIsLoading(false);
