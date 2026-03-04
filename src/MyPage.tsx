@@ -710,16 +710,16 @@ case 'profileEdit':
         {/* placeholder 대신 defaultValue를 사용해 기존 데이터를 보여줍니다 */}
 {/* MyPage.tsx의 profileEdit 섹션 */}
 <InputGroup 
-  label="닉네임" 
-  placeholder="닉네임을 입력하세요" 
-  // placeholder 대신 실제 값을 보여주려면 input 태그에 전달될 속성이 필요합니다.
-  // 현재 InputGroup 구조상 placeholder에 값을 넣는 것도 좋은 방법입니다!
-  placeholder={dummyUser.nickname} 
-/>
-<InputGroup 
-  label="한 줄 소개" 
-  placeholder={dummyUser.bio} 
-/>
+          label="닉네임" 
+          // 서버에서 온 실제 닉네임, 데이터가 없으면 '닉네임 없음' 표시
+          placeholder={userInfo?.nickname || "닉네임을 입력하세요"} 
+        />
+        
+        <InputGroup 
+          label="한 줄 소개" 
+          // 서버 데이터 필드명에 따라 bio 또는 message 등으로 수정하세요
+          placeholder={userInfo?.bio || "한 줄 소개를 입력하세요"} 
+        />
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#666' }}>대표 뱃지 설정</label>
