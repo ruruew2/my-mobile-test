@@ -126,7 +126,7 @@ const handleCreateCustomCourse = async (location: string, who: string) => {
     setIsGenerating(true);
     setShowAiMaker(false);
 
-    const API_URL = 'http://localhost:8000/api/ai/course';
+    const API_URL = 'http://54.180.234.226:8000/api/ai/course';
 
     try {
         const response = await fetch(API_URL, {
