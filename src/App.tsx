@@ -344,11 +344,11 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
                                 style={{
                                     cursor: 'pointer',
                                     margin: 0,
-                                    fontSize: '1.4rem',
+                                    fontSize: '2.0rem',
                                     fontWeight: 'bold',
                                 }}
                             >
-                                ArtLog
+                                <i>Art-Log</i>
                             </h1>
                             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                                 <div

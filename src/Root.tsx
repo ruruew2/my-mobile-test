@@ -163,34 +163,56 @@ body: JSON.stringify({
         }
 
         const resData = await response.json();
+        console.log("✅ 서버 응답 데이터:", resData); // 응답이 오는지 확인용
         
-        if (resData.status === 'success' || resData.data) {
-            const aiData = resData.data;
-            const newAiCourse = {
-                id: Date.now(),
-                title: `AI 추천: ${location} ${who} 코스`,
-                desc: aiData.story ? aiData.story.substring(0, 60) + '...' : "특별한 추천 코스",
-                aiPlan: aiData,
-                steps: [
-                    { 
-                        type: 'RESTAURANT', 
-                        name: aiData.places?.restaurant?.name || '근처 맛집', 
-                        sub: aiData.places?.restaurant?.address || '식사 코스' 
-                    },
-                    { 
-                        type: 'EXHIBITION', 
-                        name: aiData.exhibition?.title || `${location} 전시`, 
-                        sub: aiData.exhibition?.place_name || '전시 관람' 
-                    },
-                    { 
-                        type: 'CAFE', 
-                        name: aiData.places?.cafe?.name || '근처 카페', 
-                        sub: aiData.places?.cafe?.address || '커피 한잔' 
-                    },
-                ],
-            };
-            onStart(newAiCourse);
-        }
+if (resData.status === 'success' || resData.data) {
+    const aiData = resData.data;
+
+    // 🚩 데이터가 예상과 다르게 들어올 경우를 대비한 안전한 추출
+    const restaurant = aiData.places?.restaurant || {};
+    const cafe = aiData.places?.cafe || {};
+    const exhibition = aiData.exhibition || {};
+
+           const newAiCourse = {
+        id: Date.now(),
+        // AI가 추천한 전시 제목이 있으면 넣고, 없으면 입력한 지역명 사용
+        title: exhibition.title ? `AI 추천: ${exhibition.title}` : `AI 추천: ${location} ${who} 코스`,
+        desc: aiData.story ? aiData.story.substring(0, 80) + '...' : "특별한 추천 코스입니다.",
+        steps: [
+            { 
+                type: 'RESTAURANT', 
+                name: restaurant.name || '추천 맛집', 
+                sub: restaurant.address || '근처 맛집 탐방',
+                directions_url: restaurant.url || "", // 👈 식당 카카오맵 링크
+                comment: `🍴 식당 정보\n${restaurant.name || '근처 맛집'}에서 식사를 즐겨보세요.\n\n📖 AI 한줄평\n${aiData.story || ""}`,
+                tip: "방문 전 영업 시간을 확인해 주세요!"
+            },
+            { 
+                type: 'EXHIBITION', 
+                name: exhibition.title || `${location} 전시`, 
+                sub: exhibition.place_name || '전시 관람',
+                directions_url: aiData.directions_url || "", // 👈 전시회 길찾기 링크
+                comment: `🎨 전시 정보\n장소: ${exhibition.place_name || '전시장'}\n\n${aiData.story ? "전시와 어울리는 분위기의 코스입니다." : ""}`,
+                lat: exhibition.lat,
+                lng: exhibition.lng
+            },
+            { 
+                type: 'CAFE', 
+                name: cafe.name || '추천 카페', 
+                sub: cafe.address || '커피 한 잔의 여유',
+                directions_url: cafe.url || "", // 👈 카페 링크 (있을 경우)
+                comment: "전시 관람 후 여유로운 시간을 보내보세요.",
+                tip: "시그니처 메뉴가 인기가 많아요."
+            },
+        ],
+    };
+
+    console.log("🚀 완성된 코스 데이터:", newAiCourse); // 전달 직전 최종 확인
+
+    // 🚩 이 함수가 호출되어야 로딩창이 닫히고 화면이 전환됩니다.
+    onStart(newAiCourse); 
+}
+
 } catch (error: any) {
     console.error('🔥 에러 상세 정보:', error); // 콘솔에 빨간색으로 에러 원인이 뜹니다.
     alert(`생성 실패: ${error.message}`);

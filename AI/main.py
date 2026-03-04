@@ -167,8 +167,6 @@ def api_course(req: CourseReq):
     conn = get_connection()
     try:
         with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-            # [DB 검색] 사용자가 입력한 지역에 있는 전시회 1개를 먼저 찾습니다.
-            # 주소(place_name)나 제목(title)에 검색어가 포함된 최신 전시를 가져옵니다.
             sql = """
                 SELECT title, place_name, lat, lng 
                 FROM event 
@@ -177,17 +175,30 @@ def api_course(req: CourseReq):
                 ORDER BY start_date DESC LIMIT 1
             """
             cursor.execute(sql, (f"%{req.destination}%", f"%{req.destination}%"))
-            exhibition = cursor.fetchone()
+            exhibition_db = cursor.fetchone()
             
-        # [AI 호출] 
-        # 전시회가 있으면 전시회 기반으로, 없으면 지역명 기반으로 코스를 짭니다.
-        # (ai_service.py에 새로 만든 v3 함수를 호출합니다.)
-        plan = generate_course_text_v3(req.destination, req.who, exhibition)
+        # 1. AI 서비스 호출 (plan 안에는 'story'와 'places'가 들어있음)
+        plan = generate_course_text_v3(req.destination, req.who, exhibition_db)
         
+        # 2. 길찾기 링크 조립 (ai_service에서 준 places 내부 데이터를 활용)
+        # exhibition_db(DB 데이터)가 있다면 그 좌표를 활용해 전시회 길찾기 링크 생성
+        if exhibition_db:
+            place_name = exhibition_db.get("place_name", "전시장")
+            lat = exhibition_db.get("lat")
+            lng = exhibition_db.get("lng")
+            plan["directions_url"] = f"https://map.kakao.com/link/to/{place_name},{lat},{lng}"
+        else:
+            plan["directions_url"] = ""
+        
+        # 3. 🚨 [중요] 프론트엔드 RootPage.tsx의 구조와 맞추기 위해 
+        # ai_service에서 만든 'places' 내부 데이터를 최상위로 올리거나 유지
         return {"status": "success", "data": plan}
         
     except Exception as e:
         print(f"❌ 코스 생성 중 에러 발생: {e}")
+        # 상세 에러 로그 출력 (어디서 'url' 에러가 났는지 확인용)
+        import traceback
+        traceback.print_exc()
         return {"status": "error", "message": str(e)}
     finally:
         conn.close()

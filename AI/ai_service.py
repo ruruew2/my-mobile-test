@@ -245,11 +245,13 @@ def generate_course_text_v3(destination, who, exhibition):
                 "desc": "아띠의 식당 추천 이유", 
                 "url": restaurant['url'] if restaurant else "#"
             },
+                # ai_service.py의 return 부분 중 exhibition 섹션
             "exhibition": {
                 "name": exhibition['title'] if exhibition else "현재 등록된 전시 없음",
                 "address": exhibition['place_name'] if exhibition else "정보 없음",
                 "desc": "아띠의 전시 / 공연 추천 이유", 
-                "url": exhibition['url'] if exhibition else "#"
+                # exhibition 객체에 'url'이 없을 경우를 대비해 get 사용
+                "url": exhibition.get('url', "#") if exhibition else "#" 
             },
             "cafe": {
                 "name": cafe['name'] if cafe else "근처 카페 정보 없음",
