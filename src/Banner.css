@@ -1,99 +1,92 @@
 .banner-viewport {
-    /* 🛠️ 상단 여백 수정: 이미지에서 위쪽이 너무 비어 보였으므로 -25px 정도로 더 당깁니다 */
     width: calc(100% - 40px);
     height: 240px;
-    margin: -25px 20px 80px 20px;
+    margin: 20px auto 80px auto;
     overflow: hidden;
     position: relative;
-    border-radius: 20px; /* 조금 더 둥글게 깎아 부드러운 느낌 추가 */
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    background-color: #121212;
 }
 
 .banner-slider {
     display: flex;
-    width: 100%;
     height: 100%;
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.8s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .banner-slide {
     min-width: 100%;
     height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 0 35px; /* 패딩을 살짝 넓혀 안정감 부여 */
-    box-sizing: border-box;
-    color: white;
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
     position: relative;
 }
 
-/* 💡 가독성 핵심: 텍스트 영역에만 그림자 레이어를 겹쳐서 글자를 더 튀어나오게 함 */
+.banner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, rgba(0, 0, 0, 0) 100%);
+    z-index: 1;
+}
+
 .banner-text-content {
+    position: absolute;
+    bottom: 65px; /* 위아래 균형을 위해 살짝 올림 */
+    left: 25px;
     z-index: 2;
-    /* 여러 겹의 그림자로 가독성을 극대화합니다 */
-    text-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.3),
-        0 4px 12px rgba(0, 0, 0, 0.5);
+    text-align: left;
 }
 
 .banner-tag {
-    font-size: 0.75rem;
-    font-weight: 900;
-    letter-spacing: 1.8px;
-    color: #ffda00;
-    margin-bottom: 10px;
     display: block;
-    /* 태그도 잘 보이도록 약간의 광택 효과 */
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    color: #ffda00;
+    font-size: 0.7rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
 }
 
 .banner-main-title {
-    font-size: 1.8rem; /* 제목 크기를 약간 키움 */
+    font-size: 1.6rem;
     font-weight: 800;
-    margin-bottom: 12px;
-    line-height: 1.25;
-    word-break: keep-all;
+    color: white;
+    margin: 0 0 6px 0;
+    line-height: 1.2;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
 }
 
 .banner-sub-desc {
     font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.95); /* 흰색에 더 가깝게 조정 */
-    margin-bottom: 22px;
-    line-height: 1.4;
-    font-weight: 400;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0 0 12px 0;
 }
 
 .banner-date {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.6);
-    letter-spacing: 0.5px;
 }
 
-/* 인디케이터 */
 .banner-indicators {
     position: absolute;
     bottom: 25px;
-    left: 35px;
+    left: 25px;
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    z-index: 3;
 }
 
 .indicator {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.4);
-    transition: all 0.4s ease;
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .indicator.active {
-    background: #fff;
-    width: 22px;
+    background: white;
+    width: 18px;
     border-radius: 10px;
-    /* 활성화된 점은 살짝 빛나게 */
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
 }

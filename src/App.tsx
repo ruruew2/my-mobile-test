@@ -258,7 +258,7 @@ const handlePreferenceComplete = async (selectedTags: string[]) => {
             const allResults = response.data.data; 
 
             // 3. 랜덤 섞기 없이 서버가 준 순서대로 상위 3개만 선택
-            const finalThree = allResults.slice(0, 3);
+            const finalThree = allResults.slice(0, 10);
             
             setRecommendedExhibitions(finalThree);
         }
