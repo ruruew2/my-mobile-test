@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import './ExhibitList.css';
 import { ChevronLeft, Heart, MapPin, Search, X, ShoppingBag } from 'lucide-react';
 
+const AI_API_URL = 'http://54.180.234.226:8000'; 
+const AUTH_API_URL = 'http://54.180.234.226:8080'; // 찜하기 전용 서버
+
 interface Exhibit {
     id: number;
     tag: string;
@@ -18,7 +21,7 @@ interface Exhibit {
 interface ExhibitionProps {
     onBack: () => void;
     onLikeChange: (isLiked: boolean) => void;
-    onReserve: (item: any) => void; // ⭐ 추가
+    onReserve: (item: any) => void; 
 }
 
 const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange, onReserve }) => {
@@ -29,13 +32,11 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange, onRes
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     
-    // 찜하기 상태 로드
     const [liked, setLiked] = useState<number[]>(() => {
         const saved = localStorage.getItem('wishlist');
         return saved ? JSON.parse(saved) : [];
     });
 
-    // 찜하기 상태 동기화
     useEffect(() => {
         localStorage.setItem('wishlist', JSON.stringify(liked));
         window.dispatchEvent(new Event('storage')); 
@@ -43,32 +44,30 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange, onRes
 
     const filters = ['전체', '전시', '공연', '오픈예정', '종료임박'];
 
+    // ✅ 중첩되었던 useEffect를 하나로 통합하여 정상화
     useEffect(() => {
         const loadData = async () => {
             try {
-                const response = await fetch('http://127.0.0.1:8000/api/events');
+                setLoading(true);
+                const response = await fetch(`${AI_API_URL}/api/events`);
                 const result = await response.json();
+                
                 const realData = result.data || result;
                 
                 if (Array.isArray(realData)) {
-                    const mappedData = realData.map((item: any, index: number) => {
-                        const rawId = item.id ?? item.event_id ?? (index + 1);
-                        const finalId = isNaN(Number(rawId)) ? index + 1 : Number(rawId);
-
-                        return {
-                            id: finalId,
-                            tag: item.tag || (item.d_day ? 'COMING SOON' : 'TRENDING'),
-                            category: item.category || '전시',
-                            title: item.title || '제목 없음',
-                            location: item.place_name || item.location || '장소 미정',
-                            date: item.date || '기간 정보 없음',
-                            hashtags: Array.isArray(item.hashtags) 
-                                ? item.hashtags 
-                                : (item.hashtags ? item.hashtags.split(',') : []),
-                            dDay: item.d_day,
-                            img_url: item.image_url 
-                        };
-                    });
+                    const mappedData = realData.map((item: any, index: number) => ({
+                        id: item.id ?? item.event_id ?? (index + 1),
+                        tag: item.tag || (item.d_day ? 'COMING SOON' : 'TRENDING'),
+                        title: item.title || '제목 없음',
+                        location: item.place_name || item.location || '장소 미정',
+                        date: item.date || '기간 정보 없음',
+                        category: item.category || '전시',
+                        hashtags: Array.isArray(item.hashtags) 
+                            ? item.hashtags 
+                            : (item.hashtags ? item.hashtags.split(',') : []),
+                        dDay: item.d_day,
+                        img_url: item.image_url || item.img_url
+                    }));
                     setExhibits(mappedData);
                 }
             } catch (err) {
@@ -80,100 +79,62 @@ const ExhibitionList: React.FC<ExhibitionProps> = ({ onBack, onLikeChange, onRes
         loadData();
     }, []);
 
+    const toggleLike = async (id: number) => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            alert('로그인이 필요한 기능입니다.');
+            return;
+        }
 
+        const isCurrentlyLiked = liked.includes(id);
 
-// ExhibitList.tsx 내 toggleLike 함수 수정 제안
-const toggleLike = async (id: number) => {
-  const token = localStorage.getItem('accessToken');
-  if (!token) {
-    alert('로그인이 필요한 기능입니다.');
-    return;
-  }
+        try {
+            // ✅ 찜하기는 AUTH_API_URL(8080)을 사용합니다.
+            const url = `${AUTH_API_URL}/api/favorites?eventId=${id}`;
+            
+            if (!isCurrentlyLiked) {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
 
-  const isCurrentlyLiked = liked.includes(id);
+                if (res.ok) {
+                    setLiked((prev) => [...prev, id]);
+                    onLikeChange?.(true);
+                }
+            } else {
+                const res = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                });
 
-  try {
-    // ✅ 체크리스트대로 Query Parameter(?eventId=) 방식을 사용합니다.
-    const url = `http://54.180.234.226:8080/api/favorites?eventId=${id}`;
-    
-    if (!isCurrentlyLiked) {
-      // 찜 추가 (POST)
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+                if (res.ok) {
+                    setLiked((prev) => prev.filter((i) => i !== id));
+                    onLikeChange?.(false);
+                }
+            }
+        } catch (err) {
+            console.error('찜하기 통신 에러:', err);
+        }
+    };
 
-      if (res.ok) {
-        setLiked((prev) => [...prev, id]);
-        onLikeChange?.(true);
-      } else {
-        console.error('찜 추가 실패:', res.status);
-      }
-    } else {
-      // 찜 삭제 (DELETE)
-      const res = await fetch(url, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+    const filteredExhibits = exhibits.filter((item) => {
+        if (searchQuery) {
+            const lowerQuery = searchQuery.toLowerCase().replace('#', '');
+            const matchesTag = item.hashtags.some((tag) => tag.toLowerCase().includes(lowerQuery));
+            const matchesTitle = item.title.toLowerCase().includes(lowerQuery);
+            if (!matchesTag && !matchesTitle) return false;
+        }
 
-      if (res.ok) {
-        setLiked((prev) => prev.filter((i) => i !== id));
-        onLikeChange?.(false);
-      } else {
-        console.error('찜 삭제 실패:', res.status);
-      }
-    }
-  } catch (err) {
-    console.error('찜하기 통신 에러:', err);
-  }
-};
-const filteredExhibits = exhibits.filter((item) => {
-    // 1. 검색어 필터링 (가장 우선순위)
-    if (searchQuery) {
-        const lowerQuery = searchQuery.toLowerCase().replace('#', '');
-        const matchesTag = item.hashtags.some((tag) => tag.toLowerCase().includes(lowerQuery));
-        const matchesTitle = item.title.toLowerCase().includes(lowerQuery);
-        if (!matchesTag && !matchesTitle) return false;
-    }
+        if (activeFilter === '전체') return true;
+        if (activeFilter === '인기') return ['TRENDING', 'POPULAR', 'HOT', '인기'].includes(item.tag);
+        if (activeFilter === '전시') return item.category === '전시' || item.title.includes('전시');
+        if (activeFilter === '공연') return item.category === '공연' || item.title.match(/공연|뮤지컬|콘서트|연극/);
+        if (activeFilter === '오픈예정') return item.dDay !== undefined || (item.title && item.title.includes('4월'));
+        if (activeFilter === '종료임박') return item.dDay !== undefined || (item.title && item.title.includes('2월'));
 
-    // 2. 카테고리/태그 필터링
-    if (activeFilter === '전체') return true;
-    
-    // '인기' 필터: tag에 인기 관련 단어가 있거나 특정 조건
-    if (activeFilter === '인기') {
-        return ['TRENDING', 'POPULAR', 'HOT', '인기'].includes(item.tag);
-    }
-
-    // '전시' 필터: category가 전시거나 제목/태그에 '전시' 포함
-    if (activeFilter === '전시') {
-        return item.category === '전시' || item.title.includes('전시');
-    }
-
-    // '공연' 필터: category가 공연이거나 제목/태그에 '공연', '뮤지컬', '콘서트' 포함
-    if (activeFilter === '공연') {
-        return item.category === '공연' || item.title.match(/공연|뮤지컬|콘서트|연극/);
-    }
-
-// '오픈예정' 필터: 제목(title)에 '4월' 또는 '(4월)'이 포함된 경우
-if (activeFilter === '오픈예정') {
-    // dDay가 있거나, 제목에 '4월'이라는 글자가 들어있을 때
-    return (
-        item.dDay !== undefined || 
-        (item.title && item.title.includes('4월'))
-    );
-}
-
-    // '종료임박' 필터: tag가 종료임박이거나 제목에 관련 문구
-    if (activeFilter === '종료임박') {
-    // dDay가 있거나, 제목에 '4월'이라는 글자가 들어있을 때
-    return (
-        item.dDay !== undefined || 
-        (item.title && item.title.includes('2월'))
-    );
-    }
-
-    return item.category === activeFilter;
-});
+        return item.category === activeFilter;
+    });
 
     return (
         <div className="exhibit-list-page">
@@ -258,7 +219,7 @@ if (activeFilter === '오픈예정') {
                                     <span className="card-tag-red">{item.tag}</span>
                                     <h3 className="card-title-bold">{item.title}</h3>
                                     <div className="hashtag-row">
-                                        {item.hashtags.map((tag, idx) => (
+                                        {(item.hashtags || []).map((tag, idx) => (
                                             <span key={`${item.id}-tag-${idx}`} className="hashtag-item">#{tag.trim()}</span>
                                         ))}
                                     </div>
@@ -272,19 +233,13 @@ if (activeFilter === '오픈예정') {
                                             <div className="info-date">{item.date}</div>
                                         </div>
                                         
-                                        {/* 🌟 예매 페이지 이동 버튼 */}
-<button 
-    className="direct-reserve-btn"
-    onClick={() => {
-        // navigate 대신 부모(App.tsx)가 준 함수를 실행합니다!
-        if (onReserve) {
-            onReserve(item); 
-        }
-    }}
->
-    <ShoppingBag size={18} />
-    <span>예매</span>
-</button>
+                                        <button 
+                                            className="direct-reserve-btn"
+                                            onClick={() => onReserve?.(item)}
+                                        >
+                                            <ShoppingBag size={18} />
+                                            <span>예매</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
