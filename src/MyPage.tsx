@@ -7,6 +7,8 @@ import {
 import { dummyUser } from './ProfileData';
 
 const API_BASE_URL = 'http://54.180.234.226:8080/api';// 👈 실제 백엔드 IP 주소
+const FRI_BASE_URL = 'http://54.180.234.226:8080/api/friends/'; // 친구 수정 
+
 
 type FriendDto = { 
   friendUserId: number; 
@@ -452,38 +454,31 @@ const handleAddFriend = async () => {
 
 
 
-// 5. 친구 수정/삭제
+
+// 5. 친구 수정
 const renameFriend = async (friendUserId: number, friendName: string) => {
   const token = localStorage.getItem('accessToken');
-  await fetch(`${API_BASE_URL}/friends/${friendUserId}`, {
+  // FRI_BASE_URL 뒤에 바로 id만 붙도록 수정
+  await fetch(`${FRI_BASE_URL}/${friendUserId}`, {
     method: 'PATCH',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    headers: { 
+      'Authorization': `Bearer ${token}`, 
+      'Content-Type': 'application/json' 
+    },
     body: JSON.stringify({ friendName }),
   });
 };
 
+// 친구 삭제
 const deleteFriend = async (friendUserId: number) => {
   const token = localStorage.getItem('accessToken');
-  await fetch(`${API_BASE_URL}/friends/${friendUserId}`, {
+  // FRI_BASE_URL 뒤에 바로 id만 붙도록 수정
+  await fetch(`${FRI_BASE_URL}/${friendUserId}`, {
     method: 'DELETE',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { 
+      'Authorization': `Bearer ${token}` 
+    },
   });
-};
-
-
-// 405번대: 친구 삭제
-const handleDeleteFriend = async (friendUserId: number) => {
-  if (!window.confirm("정말 친구를 삭제하시겠습니까?")) return;
-  try {
-    const token = localStorage.getItem('accessToken');
-    // 백엔드 API 명세에 따라 URL 확인 필요 (예: /friends/${friendUserId})
-    await fetch(`${API_BASE_URL}/friends/${friendUserId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setManagingFriend(null);
-    await loadFriends(); // 삭제 후 목록 갱신
-  } catch (e) { console.error(e); }
 };
 
 
