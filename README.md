@@ -44,7 +44,10 @@
 ## 📸 Preview
 
 ### 메인 화면
-<img src="./assets/main.png" width="700"/>
+<img src="./assets/1.png" width="700"/>
+<img src="./assets/2.png" width="700"/>
+<img src="./assets/3.png" width="700"/>
+<img src="./assets/4.png" width="700"/>
 
 ### AI 작품 스캔
 <img src="./assets/scan.png" width="700"/>
