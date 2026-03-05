@@ -455,7 +455,7 @@ const handleAddFriend = async () => {
 
 
 
-// 5. 친구 수정
+// 5. 친구 수정 // fetch
 const renameFriend = async (friendUserId: number, friendName: string) => {
   const token = localStorage.getItem('accessToken');
   // API 주소 구성 시 중복 슬래시 방지
