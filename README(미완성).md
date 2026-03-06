@@ -16,6 +16,8 @@ Styling: Pure CSS (BEM 방법론), Lucide-React (Icons)
 API & Library: Kakao Maps API, Portone (결제 API)
 Deployment: Vercel
 
+@@@@@@@
+
 
 
 🚀 주요 구현 기능
