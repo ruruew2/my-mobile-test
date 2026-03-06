@@ -11,10 +11,11 @@ const FRI_BASE_URL = 'http://54.180.234.226:8080/api/friends'; // 👈 끝에 / 
 
 
 type FriendDto = { 
-  friendUserId: number; 
-  email: string; 
-  friendName: string; 
+  id: number;
+  email: string;
+  friendName: string | null;
 };
+
 
 // 닉네임 미선택시 자동 랜덤 닉네임
 const getRandomNickname = () => {
@@ -456,10 +457,9 @@ const handleAddFriend = async () => {
 
 
 // 5. 친구 수정 fetch 형식
-const renameFriend = async (friendUserId: number, friendName: string) => {
+const renameFriend = async (friendId: number, friendName: string) => {
   const token = localStorage.getItem('accessToken');
-  // API 주소 구성 시 중복 슬래시 방지
-  const response = await fetch(`${FRI_BASE_URL}/${friendUserId}`, {
+  const response = await fetch(`${FRI_BASE_URL}/${friendId}`, {
     method: 'PATCH',
     headers: { 
       'Authorization': `Bearer ${token}`, 
@@ -471,9 +471,9 @@ const renameFriend = async (friendUserId: number, friendName: string) => {
 };
 
 // 친구 삭제
-const deleteFriend = async (friendUserId: number) => {
+const deleteFriend = async (friendId: number) => {
   const token = localStorage.getItem('accessToken');
-  const response = await fetch(`${FRI_BASE_URL}/${friendUserId}`, {
+  const response = await fetch(`${FRI_BASE_URL}/${friendId}`, {
     method: 'DELETE',
     headers: { 
       'Authorization': `Bearer ${token}` 
@@ -817,8 +817,8 @@ case 'friend':
                 <p style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>내 친구 {friends.length}명</p>
 {friends.map(friend => (
   <ListCard 
-    key={friend.friendUserId} // id 대신 friendUserId
-    title={friend.friendName || friend.email} // name 대신 friendName
+    key={friend.id}
+    title={friend.friendName || friend.email}
     sub={friend.email} 
     btnLabel="관리" 
     onBtnClick={() => setManagingFriend(friend)}
@@ -845,7 +845,7 @@ case 'friend':
 
                         if (managingFriend && newName && newName.trim()) {
                           try {
-                            await renameFriend(managingFriend.friendUserId, newName.trim());
+                            await renameFriend(managingFriend.id, newName.trim());
                             setManagingFriend(null);
                             await loadFriends();
                           } catch (e) {
@@ -873,7 +873,7 @@ case 'friend':
                         if (!window.confirm('정말 친구를 삭제하시겠습니까?')) return;
 
                         try {
-                          await deleteFriend(managingFriend.friendUserId);
+                          await deleteFriend(managingFriend.id);
                           setManagingFriend(null);
                           await loadFriends();
                         } catch (e) {
