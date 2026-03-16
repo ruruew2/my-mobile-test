@@ -506,7 +506,7 @@ const [historyEvents, setHistoryEvents] = useState<any[]>([]); // DB에서 가�
 
 // 페이지가 열릴 때 DB에서 전시 목록을 가져옵니다.
 useEffect(() => {
-  fetch("http://localhost:8000/api/events") // 서버 주소에 맞게 수정하세요!
+  fetch("http://54.180.234.226:8000/api/events") // ← 이렇게 고정
     .then(res => res.json())
     .then(res => {
       if (res.status === "success") {
