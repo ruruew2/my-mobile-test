@@ -76,7 +76,7 @@ const GuidePage = ({ initialTab }: any) => {
                     artist: 'AI 도슨트',
                     year: '2024',
                     description: script,
-                    audioPath: `http://54.180.234.226:8000/${audioUrl}`,
+                    audioPath: `http://54.180.234.226:8000/${audioUrl.replace(/^\//, '')}`,
                     imagePreview: previewUrl
                 });
                 setIsAnalyzing(false);
@@ -111,7 +111,7 @@ const GuidePage = ({ initialTab }: any) => {
         }
         const audio = new Audio(scannedArt.audioPath);
         audio.play();
-        setAudioElement(audio);
+        setAudioElement(audio);  // play는 useEffect에게 위임
         setShowPlayer(true);
         setIsPlaying(true);
         audio.onended = () => {
