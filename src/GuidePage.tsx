@@ -61,7 +61,7 @@ const GuidePage = ({ initialTab }: any) => {
         formData.append('lang', selectedLang);
 
         try {
-            const response = await fetch('http://54.180.234.226:8000/api/ai/docent', { 
+            const response = await fetch('/api/backend/api/ai/docent', { 
                 method: 'POST',
                 body: formData,
             });
@@ -76,7 +76,7 @@ const GuidePage = ({ initialTab }: any) => {
                     artist: 'AI 도슨트',
                     year: '2024',
                     description: script,
-                    audioPath: `http://54.180.234.226:8000/${audioUrl.replace(/^\//, '')}`,
+                    audioPath: `/api/backend/${audioUrl.replace(/^\//, '')}`,
                     imagePreview: previewUrl
                 });
                 setIsAnalyzing(false);

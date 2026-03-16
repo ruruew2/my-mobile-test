@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 
-const LOGIN_API_URL = 'http://54.180.234.226:8080/api/auth/login';
-const SIGNUP_API_URL = 'http://54.180.234.226:8080/api/auth/signup';
-const API_BASE_URL = 'http://54.180.234.226:8080';
-
+const LOGIN_API_URL = '/api/auth/login';
+const SIGNUP_API_URL = '/api/auth/signup';
+const API_BASE_URL = ''
 
 const LoginPage = ({ onLoginSuccess }: { onLoginSuccess: (type?: string) => void }) => {
     const [mode, setMode] = useState<'login' | 'signup' | 'findPw'>('login');
@@ -87,7 +86,7 @@ const response = await fetch(LOGIN_API_URL, { // 변수명을 LOGIN_API_URL로 �
                     localStorage.setItem('accessToken', token);
 
                     // [B] 🔥 내 정보 가져오기 (fetchMyInfo 로직 실행)
-                    const userResponse = await fetch(`${API_BASE_URL}/api/me`, {
+                    const userResponse = await fetch(`/api/me`, {
                         method: 'GET',
                         headers: {
                             'Content-Type': 'application/json',

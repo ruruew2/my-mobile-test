@@ -1,8 +1,16 @@
 {
   "rewrites": [
     {
-      "source": "/api_proxy/:path*",
+      "source": "/api/backend/:path*",
       "destination": "http://54.180.234.226:8000/:path*"
+    },
+    {
+      "source": "/api/auth/:path*",
+      "destination": "http://54.180.234.226:8080/api/auth/:path*"
+    },
+    {
+      "source": "/api/me",
+      "destination": "http://54.180.234.226:8080/api/me"
     }
   ]
 }
