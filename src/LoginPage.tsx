@@ -223,7 +223,7 @@ const response = await fetch(SIGNUP_API_URL, { // 변수명을 SIGNUP_API_URL로
                 <form className="input-group" onSubmit={handleSubmit}>
                     {mode === 'login' && (
                         <>
-                            <input name="id" placeholder="이메일을 입력해주세요" className="login-input" onChange={onChange} value={form.id} />
+                            <input name="id" placeholder="아이디를 입력해주세요" className="login-input" onChange={onChange} value={form.id} />
                             <div className="input-wrapper">
                                 <input name="pw" type={showPw ? 'text' : 'password'} placeholder="비밀번호" className="login-input" onChange={onChange} value={form.pw} />
                                 <button type="button" className="pw-toggle-btn" onClick={() => setShowPw(!showPw)}>
